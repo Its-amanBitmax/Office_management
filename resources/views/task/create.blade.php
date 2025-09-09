@@ -109,19 +109,7 @@
                                 @enderror
                             </div>
 
-                            <div class="mb-3 team-select-section" style="display: none;">
-                                <label for="selected_team" class="form-label fw-bold">Select Team</label>
-                                <select class="form-select @error('selected_team') is-invalid @enderror" id="selected_team" name="selected_team">
-                                    <option value="">Select Team</option>
-                                    <option value="Development Team" {{ old('selected_team') == 'Development Team' ? 'selected' : '' }}>Development Team</option>
-                                    <option value="Design Team" {{ old('selected_team') == 'Design Team' ? 'selected' : '' }}>Design Team</option>
-                                    <option value="QA Team" {{ old('selected_team') == 'QA Team' ? 'selected' : '' }}>QA Team</option>
-                                    <option value="Marketing Team" {{ old('selected_team') == 'Marketing Team' ? 'selected' : '' }}>Marketing Team</option>
-                                </select>
-                                @error('selected_team')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+
                         </div>
 
                         <div class="mb-3">
@@ -206,8 +194,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Select2 for team members, assigned_to, team_lead_id, and selected_team
-    $('#team_members, #assigned_to, #team_lead_id, #selected_team').select2({
+    // Initialize Select2 for team members, assigned_to, and team_lead_id
+    $('#team_members, #assigned_to, #team_lead_id').select2({
         placeholder: "Select an option",
         allowClear: true,
         width: '100%'
@@ -229,8 +217,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('team_created_by').removeAttribute('required');
             document.getElementById('team_lead_id').removeAttribute('required');
             document.querySelector('.team-lead-required').style.display = 'none';
-            // Hide team select section when Individual is selected
-            document.querySelector('.team-select-section').style.display = 'none';
         } else if (value === 'Team') {
             individualFields.style.display = 'none';
             teamFields.style.display = 'block';
@@ -242,10 +228,6 @@ document.addEventListener('DOMContentLoaded', function() {
             teamCreatedBy.value = 'admin';
             // Trigger change event to update team members state
             teamCreatedBy.dispatchEvent(new Event('change'));
-            // Show team select section when Team is selected and created by is admin
-            if (teamCreatedBy.value === 'admin') {
-                document.querySelector('.team-select-section').style.display = 'block';
-            }
         } else {
             individualFields.style.display = 'none';
             teamFields.style.display = 'none';
@@ -253,30 +235,21 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('team_created_by').removeAttribute('required');
             document.getElementById('team_lead_id').removeAttribute('required');
             document.querySelector('.team-lead-required').style.display = 'none';
-            // Hide team select section when no valid assignment type is selected
-            document.querySelector('.team-select-section').style.display = 'none';
         }
     }
 
-    // Handle team created by change to disable/enable team members and toggle team select section
+    // Handle team created by change to disable/enable team members
     function handleTeamCreatedByChange() {
         const value = teamCreatedBy.value;
         if (value === 'team_lead') {
             // Enable team members selection
             teamMembers.disabled = false;
-            // Hide team select section because team created by is team lead
-            document.querySelector('.team-select-section').style.display = 'none';
         } else if (value === 'admin') {
             // Enable team members selection
             teamMembers.disabled = false;
-            // Show team select section if assigned team is Team and created by is admin
-            if (assignedTeam.value === 'Team') {
-                document.querySelector('.team-select-section').style.display = 'block';
-            }
         } else {
-            // Default case: enable team members and hide team select section
+            // Default case: enable team members
             teamMembers.disabled = false;
-            document.querySelector('.team-select-section').style.display = 'none';
         }
     }
 

@@ -69,7 +69,7 @@
                                     @if($task->assigned_team == 'Individual')
                                         {{ $task->assignedEmployee ? $task->assignedEmployee->name : 'N/A' }}
                                     @else
-                                        Team Task
+                                        {{ $task->teamLead ? $task->teamLead->name : 'N/A' }}
                                     @endif
                                 </td>
                                 <td>{{ $task->assigned_team }}</td>

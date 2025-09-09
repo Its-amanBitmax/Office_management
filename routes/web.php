@@ -67,6 +67,8 @@ Route::prefix('admin')->group(function () {
             'update' => 'activities.update',
             'destroy' => 'activities.destroy',
         ]);
+        Route::post('activities/{activity}/add-to-ratings/{employee}', [\App\Http\Controllers\ActivityController::class, 'addToRatings'])->name('activities.add-to-ratings');
+        Route::post('activities/{activity}/reject-rating/{employee}', [\App\Http\Controllers\ActivityController::class, 'rejectRating'])->name('activities.reject-rating');
     });
 });
 
