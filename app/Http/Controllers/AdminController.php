@@ -139,9 +139,9 @@ class AdminController extends Controller
         return redirect(route('admin.login'));
     }
 
-    public function performance(Request $request)
+public function performance(Request $request)
     {
-        $period = $request->get('period', 'monthly');
+        $period = $request->get('period', 'all');
         $employeeId = $request->get('employee_id'); 
 
         // Get date range based on period

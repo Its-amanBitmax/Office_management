@@ -1,5 +1,6 @@
-# TODO List for Adding Action Column to Activities Show Page
-
-- [x] Add POST route for add-to-ratings in routes/web.php
-- [x] Add addToRatings method in ActivityController.php
-- [x] Update show.blade.php to add Action column with Add and Reject buttons
+- [x] Change default period in AdminController::performance from 'monthly' to 'all'
+- [x] Update employee index to show all departments dynamically in department filter dropdown
+- [x] Fix task edit form to have consistent Select2 initialization for team lead and assigned to dropdowns
+- [ ] Test the performance page to verify it shows all records initially
+- [ ] Test the employee index page to verify department filter dropdown shows all departments correctly
+- [ ] Test the task edit form to verify team lead selection behavior matches create form

@@ -238,19 +238,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Function to update team members selection state
+    function updateTeamMembersState() {
+        const teamCreatedByValue = teamCreatedBy.value;
+        // Disable team members selection if team_created_by is 'team_lead' regardless of team lead selection
+        if (teamCreatedByValue === 'team_lead') {
+            teamMembers.disabled = true;
+            // Disable the Select2 control using jQuery prop
+            $('#team_members').prop('disabled', true);
+            $('#team_members').val(null).trigger('change');
+        } else {
+            // Enable team members selection
+            teamMembers.disabled = false;
+            // Enable the Select2 control using jQuery prop
+            $('#team_members').prop('disabled', false);
+            $('#team_members').trigger('change');
+        }
+    }
+
     // Handle team created by change to disable/enable team members
     function handleTeamCreatedByChange() {
-        const value = teamCreatedBy.value;
-        if (value === 'team_lead') {
-            // Enable team members selection
-            teamMembers.disabled = false;
-        } else if (value === 'admin') {
-            // Enable team members selection
-            teamMembers.disabled = false;
-        } else {
-            // Default case: enable team members
-            teamMembers.disabled = false;
-        }
+        updateTeamMembersState();
     }
 
     // Trigger toggle on change and on page load
@@ -262,6 +270,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('assigned_to').value = teamLeadId;
             $('#assigned_to').trigger('change');
         }
+        // Update team members state based on new team lead selection
+        updateTeamMembersState();
     });
     toggleFields(); // Call immediately to set initial state
 

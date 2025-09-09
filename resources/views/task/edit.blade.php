@@ -108,7 +108,7 @@
                                     <option value="team_lead" {{ old('team_created_by', $task->team_created_by ?? '') == 'team_lead' ? 'selected' : '' }}>Team Lead</option>
                                 </select>
                                 @error('team_created_by')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-    ">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -174,8 +174,6 @@
                                 <i class="fas fa-save me-2"></i>Update Task
                             </button>
                         </div>
-
-
                     </form>
                 </div>
             </div>
@@ -183,13 +181,14 @@
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Select2 for team members
-    $('#team_members').select2({
+    // Initialize Select2 for team members, assigned_to, and team_lead_id
+    $('#team_members, #assigned_to, #team_lead_id').select2({
         placeholder: "Select an option",
         allowClear: true,
         width: '100%'
@@ -200,35 +199,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const individualFields = document.querySelector('.individual-fields');
     const teamFields = document.querySelectorAll('.team-fields');
     const teamCreatedBy = document.getElementById('team_created_by');
+    const teamMembers = document.getElementById('team_members');
 
-    function toggleTeamMembers() {
-        const teamMembersSelect = document.getElementById('team_members');
-        if (teamMembersSelect) {
-            if (assignedTeam.value === 'Team' && teamCreatedBy.value === 'team_lead') {
-                teamMembersSelect.disabled = true;
-                teamMembersSelect.style.opacity = '0.5';
-            } else {
-                teamMembersSelect.disabled = false;
-                teamMembersSelect.style.opacity = '1';
-            }
-        }
-    }
-
-    assignedTeam.addEventListener('change', function() {
-        if (this.value === 'Individual') {
+    function toggleFields() {
+        const value = assignedTeam.value;
+        if (value === 'Individual') {
             individualFields.style.display = 'block';
             teamFields.forEach(field => field.style.display = 'none');
             document.getElementById('assigned_to').setAttribute('required', 'required');
             document.getElementById('team_created_by').removeAttribute('required');
             document.getElementById('team_lead_id').removeAttribute('required');
             document.querySelector('.team-lead-required').style.display = 'none';
-        } else if (this.value === 'Team') {
+        } else if (value === 'Team') {
             individualFields.style.display = 'none';
             teamFields.forEach(field => field.style.display = 'block');
             document.getElementById('assigned_to').removeAttribute('required');
             document.getElementById('team_created_by').setAttribute('required', 'required');
             document.getElementById('team_lead_id').setAttribute('required', 'required');
             document.querySelector('.team-lead-required').style.display = 'inline';
+            // Automatically set Team Created By to admin when Team is selected
+            if (!teamCreatedBy.value) {
+                teamCreatedBy.value = 'admin';
+            }
+            // Trigger change event to update team members state
+            teamCreatedBy.dispatchEvent(new Event('change'));
         } else {
             individualFields.style.display = 'none';
             teamFields.forEach(field => field.style.display = 'none');
@@ -237,34 +231,55 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('team_lead_id').removeAttribute('required');
             document.querySelector('.team-lead-required').style.display = 'none';
         }
-    });
+    }
 
-    teamCreatedBy.addEventListener('change', function() {
-        toggleTeamMembers();
-    });
-
-    // Additional handler to enable/disable team members based on team_created_by value
-    function handleTeamCreatedByChange() {
-        const value = teamCreatedBy.value;
-        if (value === 'team_lead') {
-            // Enable team members selection
-            teamMembers.disabled = false;
-        } else if (value === 'admin') {
-            // Enable team members selection
-            teamMembers.disabled = false;
+    // Function to update team members selection state
+    function updateTeamMembersState() {
+        const teamCreatedByValue = teamCreatedBy.value;
+        // Disable team members selection if team_created_by is 'team_lead' regardless of team lead selection
+        if (teamCreatedByValue === 'team_lead') {
+            // Disable the underlying select element
+            teamMembers.disabled = true;
+            // Clear selection and trigger change for Select2 UI update
+            $('#team_members').val(null).trigger('change');
         } else {
-            // Default case: enable team members
+            // Enable the underlying select element
             teamMembers.disabled = false;
+            // Trigger change for UI update
+            $('#team_members').trigger('change');
         }
     }
 
-    teamCreatedBy.addEventListener('change', handleTeamCreatedByChange);
-    // Trigger on page load
-    handleTeamCreatedByChange();
+    // Handle team created by change to disable/enable team members
+    function handleTeamCreatedByChange() {
+        updateTeamMembersState();
+    }
 
-    // Trigger change on page load
-    assignedTeam.dispatchEvent(new Event('change'));
-    teamCreatedBy.dispatchEvent(new Event('change'));
+    // Trigger toggle on change and on page load
+    assignedTeam.addEventListener('change', toggleFields);
+    teamCreatedBy.addEventListener('change', handleTeamCreatedByChange);
+    document.getElementById('team_lead_id').addEventListener('change', function() {
+        const teamLeadId = this.value;
+        if (teamLeadId && assignedTeam.value === 'Team') {
+            document.getElementById('assigned_to').value = teamLeadId;
+            $('#assigned_to').trigger('change');
+        }
+        // Update team members state based on new team lead selection
+        updateTeamMembersState();
+    });
+    toggleFields(); // Call immediately to set initial state
+    updateTeamMembersState(); // Ensure team members select is disabled/enabled correctly on page load
+
+    // Ensure form submission validates required fields
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (assignedTeam.value === 'Individual' && !document.getElementById('assigned_to').value) {
+            e.preventDefault();
+            alert('Please select Assigned To for Individual assignment.');
+        } else if (assignedTeam.value === 'Team' && (!document.getElementById('team_lead_id').value || !document.getElementById('team_created_by').value)) {
+            e.preventDefault();
+            alert('Please select Team Lead and Team Created By for Team assignment.');
+        }
+    });
 });
 </script>
 
