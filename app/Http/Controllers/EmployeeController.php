@@ -20,7 +20,11 @@ class EmployeeController extends Controller
     public function index()
     {
         $employees = Employee::select('id', 'employee_code', 'name', 'email', 'phone', 'position', 'department', 'status', 'profile_image')->paginate(10);
-        return view('employee.index', compact('employees'));
+
+        // Fetch distinct departments for filter dropdown
+        $departments = Employee::select('department')->distinct()->whereNotNull('department')->orderBy('department')->pluck('department');
+
+        return view('employee.index', compact('employees', 'departments'));
     }
 
     /**
@@ -592,7 +596,7 @@ class EmployeeController extends Controller
 
         $tasks = \App\Models\Task::where(function($query) use ($employee) {
             $query->where('assigned_to', $employee->id)
-                  ->orWhereJsonContains('team_members', (int)$employee->id)
+                  ->orWhereJsonContains('team_members', (string)$employee->id)
                   ->orWhere('team_lead_id', $employee->id);
         })
         ->with(['assignedEmployee', 'teamLead'])
@@ -710,14 +714,14 @@ class EmployeeController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        $teamTask = \App\Models\Task::whereJsonContains('team_members', (int)$employee->id)->first();
+        $teamTask = \App\Models\Task::whereJsonContains('team_members', (string)$employee->id)->first();
         $hasTeamLead = !is_null($teamTask);
         $teamLead = $hasTeamLead ? $teamTask->teamLead : null;
 
         // Fetch tasks assigned to employee, where employee is team member, or where employee is team lead
         $tasks = \App\Models\Task::where(function($query) use ($employee) {
             $query->where('assigned_to', $employee->id)
-                  ->orWhereJsonContains('team_members', (int)$employee->id)
+                  ->orWhereJsonContains('team_members', (string)$employee->id)
                   ->orWhere('team_lead_id', $employee->id);
         })->orderBy('created_at', 'desc')->get();
 

@@ -37,9 +37,11 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <select class="form-select" id="departmentFilter">
+                    <select class="form-select" id="departmentFilter" aria-label="Filter by department">
                         <option value="">All Departments</option>
-                        <!-- Add dynamic department options if available -->
+                        @foreach($departments as $department)
+                            <option value="{{ $department }}">{{ $department }}</option>
+                        @endforeach
                     </select>
                 </div>
             </div>

@@ -1,10 +1,6 @@
-# TODO: Add Criteria to Activity Creation
-
-- [x] Create Criteria model (app/Models/Criteria.php)
-- [ ] Create migration for criteria table (database/migrations/[timestamp]_create_criteria_table.php)
-- [ ] Update Activity model to add criteria() relationship
-- [ ] Update Point model to add criteria() relationship
-- [ ] Modify create.blade.php to add criteria input section
-- [ ] Update ActivityController store method to handle criteria
-- [ ] Run migrations
-- [ ] Test the functionality
+- [x] Change default period in AdminController::performance from 'monthly' to 'all'
+- [x] Update employee index to show all departments dynamically in department filter dropdown
+- [x] Fix task edit form to have consistent Select2 initialization for team lead and assigned to dropdowns
+- [ ] Test the performance page to verify it shows all records initially
+- [ ] Test the employee index page to verify department filter dropdown shows all departments correctly
+- [ ] Test the task edit form to verify team lead selection behavior matches create form

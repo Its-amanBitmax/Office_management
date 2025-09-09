@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Activity;
 use App\Models\Employee;
+use App\Models\Rating;
 use Illuminate\Http\Request;
 
 class ActivityController extends Controller
@@ -63,7 +64,24 @@ public function store(Request $request)
 
     public function show(Activity $activity)
     {
-        return view('activities.show', compact('activity'));
+        // Get employees based on scoring scope
+        if ($activity->scoring_scope === 'all') {
+            $employees = Employee::all();
+        } else {
+            $employees = $activity->employees;
+        }
+
+        // Get all points for this activity
+        $points = \App\Models\Point::where('activity_id', $activity->id)->get();
+
+        // Get criteria for this activity
+        $criterias = $activity->criteria;
+
+        // Check if employees already have ratings today
+        $today = now()->toDateString();
+        $ratedEmployeeIds = \App\Models\Rating::where('rating_date', $today)->pluck('employee_id')->toArray();
+
+        return view('activities.show', compact('activity', 'employees', 'points', 'criterias', 'ratedEmployeeIds'));
     }
 
     public function edit(Activity $activity)
@@ -117,5 +135,56 @@ public function update(Request $request, Activity $activity)
         $activity->delete();
 
         return redirect()->route('activities.index')->with('success', 'Activity deleted successfully.');
+    }
+
+    public function addToRatings(Activity $activity, Employee $employee)
+    {
+        // Calculate total points for this employee in this activity
+        $totalPoints = \App\Models\Point::where('activity_id', $activity->id)
+            ->where('to_employee_id', $employee->id)
+            ->sum('points');
+
+        // Check if rating already exists for this employee and activity date (optional)
+        $existingRating = Rating::where('employee_id', $employee->id)
+            ->whereDate('rating_date', now()->toDateString())
+            ->first();
+
+        if ($existingRating) {
+            return redirect()->back()->with('error', 'Action already performed for this employee today.');
+        }
+
+        if ($totalPoints > 0) {
+            // Create new rating with actual total points
+            Rating::create([
+                'employee_id' => $employee->id,
+                'stars' => $totalPoints,
+                'rating_date' => now(),
+            ]);
+
+            return redirect()->back()->with('success', 'Points added to ratings successfully.');
+        }
+
+        return redirect()->back()->with('error', 'No points found for this employee in this activity.');
+    }
+
+    public function rejectRating(Activity $activity, Employee $employee)
+    {
+        // Check if rating already exists for this employee and activity date
+        $existingRating = Rating::where('employee_id', $employee->id)
+            ->whereDate('rating_date', now()->toDateString())
+            ->first();
+
+        if ($existingRating) {
+            return redirect()->back()->with('error', 'Action already performed for this employee today.');
+        }
+
+        // Create a rating with 0 stars to indicate rejection
+        Rating::create([
+            'employee_id' => $employee->id,
+            'stars' => 0,
+            'rating_date' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Employee rejected successfully.');
     }
 }

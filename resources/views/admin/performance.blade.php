@@ -8,8 +8,8 @@
     <div class="col-12 mb-4">
         <div class="d-flex justify-content-between align-items-center">
             <h4>Performance Overview</h4>
-            <div class="btn-group" role="group" aria-label="Period selection">
-                @foreach(['daily', 'weekly', 'monthly'] as $p)
+                <div class="btn-group" role="group" aria-label="Period selection">
+                @foreach(['daily', 'weekly', 'monthly', 'all'] as $p)
                     <a href="{{ route('admin.performance', array_merge(['period' => $p], request()->only(['employee_id']))) }}"
                        class="btn btn-outline-primary {{ $period == $p ? 'active' : '' }}">
                         {{ ucfirst($p) }}
@@ -17,7 +17,7 @@
                 @endforeach
             </div>
         </div>
-        <p class="text-muted">Period: {{ $startDate->format('M d, Y') }} - {{ $endDate->format('M d, Y') }}</p>
+        <p class="text-muted">Period: {{ $period === 'all' ? 'All Time' : $startDate->format('M d, Y') . ' - ' . $endDate->format('M d, Y') }}</p>
     </div>
 </div>
 
@@ -35,11 +35,11 @@
             <div class="card-body d-flex flex-column justify-content-center">
                 <h5 class="card-title">Average Rating</h5>
                 <h2 class="text-success">{{ $averageRating }}</h2>
-                <div class="star-rating" aria-label="Average star rating">
-                    @for($i = 1; $i <= 5; $i++)
+                {{-- <div class="star-rating" aria-label="Average star rating">
+                    @for($i = 1; $i <= ceil($averageRating); $i++)
                         <i class="fas fa-star {{ $i <= round($averageRating) ? 'text-warning' : 'text-muted' }}" aria-hidden="true"></i>
                     @endfor
-                </div>
+                </div> --}}
             </div>
         </div>
     </div>
@@ -101,7 +101,7 @@
                                 <th scope="col">Employee</th>
                                 <th scope="col" class="text-center">Total Ratings</th>
                                 <th scope="col" class="text-center">Average Rating</th>
-                                <th scope="col" class="text-center">Star Rating</th>
+                                {{-- <th scope="col" class="text-center">Star Rating</th> --}}
                                 <th scope="col" class="text-center">Total Stars</th>
                                 {{-- <th scope="col">Rating Breakdown</th> --}}
                             </tr>
@@ -124,13 +124,13 @@
                                 <td class="text-center">
                                     <span class="badge bg-primary">{{ $performance['average_rating'] }}</span>
                                 </td>
-                                <td class="text-center">
+                                {{-- <td class="text-center">
                                     <div class="star-rating" aria-label="Star rating">
-                                        @for($i = 1; $i <= 5; $i++)
+                                        @for($i = 1; $i <= ceil($performance['average_rating']); $i++)
                                             <i class="fas fa-star {{ $i <= round($performance['average_rating']) ? 'text-warning' : 'text-muted' }}" aria-hidden="true"></i>
                                         @endfor
                                     </div>
-                                </td>
+                                </td> --}}
                                 <td class="text-center">{{ $performance['total_stars'] }}</td>
                                 {{-- <td>
                                     <div class="rating-breakdown">
@@ -161,19 +161,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const ratingCtx = document.getElementById('ratingDistributionChart').getContext('2d');
     const ratingData = @json($ratingDistribution);
 
+    const ratingLabels = Object.keys(ratingData).sort((a,b) => a - b).map(key => key + ' Star' + (key > 1 ? 's' : ''));
+    const ratingValues = Object.keys(ratingData).sort((a,b) => a - b).map(key => ratingData[key]);
+    const colors = ['#dc3545', '#fd7e14', '#ffc107', '#20c997', '#28a745', '#6f42c1', '#e83e8c', '#17a2b8', '#ffc107', '#28a745'];
+
     new Chart(ratingCtx, {
         type: 'doughnut',
         data: {
-            labels: ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
+            labels: ratingLabels,
             datasets: [{
-                data: Object.values(ratingData),
-                backgroundColor: [
-                    '#dc3545',
-                    '#fd7e14',
-                    '#ffc107',
-                    '#20c997',
-                    '#28a745'
-                ],
+                data: ratingValues,
+                backgroundColor: colors.slice(0, ratingLabels.length),
                 borderWidth: 1
             }]
         },
@@ -226,8 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         display: true,
                         text: 'Average Rating'
                     },
-                    min: 0,
-                    max: 5
+                    min: 0
                 },
                 y1: {
                     type: 'linear',

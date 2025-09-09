@@ -23,7 +23,29 @@ class TaskController extends Controller
      */
     public function create()
     {
-        $employees = Employee::select('id', 'name', 'employee_code')->where('status', 'active')->get();
+        // Get employees who are not already assigned to any task
+        $assignedEmployeeIds = Task::whereNotNull('assigned_to')
+            ->pluck('assigned_to')
+            ->toArray();
+
+        $teamLeadIds = Task::whereNotNull('team_lead_id')
+            ->pluck('team_lead_id')
+            ->toArray();
+
+        $teamMemberIds = [];
+        Task::whereNotNull('team_members')->each(function ($task) use (&$teamMemberIds) {
+            if ($task->team_members) {
+                $teamMemberIds = array_merge($teamMemberIds, $task->team_members);
+            }
+        });
+
+        $excludedIds = array_unique(array_merge($assignedEmployeeIds, $teamLeadIds, $teamMemberIds));
+
+        $employees = Employee::select('id', 'name', 'employee_code')
+            ->where('status', 'active')
+            ->whereNotIn('id', $excludedIds)
+            ->get();
+
         return view('task.create', compact('employees'));
     }
 
@@ -75,7 +97,53 @@ class TaskController extends Controller
      */
     public function edit(Task $task)
     {
-        $employees = Employee::select('id', 'name', 'employee_code')->where('status', 'active')->get();
+        // Get employees who are not already assigned to any task (excluding current task's assignments)
+        $assignedEmployeeIds = Task::whereNotNull('assigned_to')
+            ->where('id', '!=', $task->id)
+            ->pluck('assigned_to')
+            ->toArray();
+
+        $teamLeadIds = Task::whereNotNull('team_lead_id')
+            ->where('id', '!=', $task->id)
+            ->pluck('team_lead_id')
+            ->toArray();
+
+        $teamMemberIds = [];
+        Task::whereNotNull('team_members')
+            ->where('id', '!=', $task->id)
+            ->each(function ($t) use (&$teamMemberIds) {
+                if ($t->team_members) {
+                    $teamMemberIds = array_merge($teamMemberIds, $t->team_members);
+                }
+            });
+
+        $excludedIds = array_unique(array_merge($assignedEmployeeIds, $teamLeadIds, $teamMemberIds));
+
+        // Get available employees (not assigned to other tasks)
+        $availableEmployees = Employee::select('id', 'name', 'employee_code')
+            ->where('status', 'active')
+            ->whereNotIn('id', $excludedIds)
+            ->get();
+
+        // Get currently assigned employees for this task (to include them in the dropdown)
+        $currentAssignedIds = [];
+        if ($task->assigned_to) {
+            $currentAssignedIds[] = $task->assigned_to;
+        }
+        if ($task->team_lead_id) {
+            $currentAssignedIds[] = $task->team_lead_id;
+        }
+        if ($task->team_members) {
+            $currentAssignedIds = array_merge($currentAssignedIds, $task->team_members);
+        }
+
+        $currentEmployees = Employee::select('id', 'name', 'employee_code')
+            ->whereIn('id', $currentAssignedIds)
+            ->get();
+
+        // Merge available and current employees
+        $employees = $availableEmployees->merge($currentEmployees)->unique('id');
+
         $tasks = Task::select('id', 'task_name')->get();
         return view('task.edit', compact('task', 'employees', 'tasks'));
     }

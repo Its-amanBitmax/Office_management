@@ -139,35 +139,39 @@ class AdminController extends Controller
         return redirect(route('admin.login'));
     }
 
-    public function performance(Request $request)
+public function performance(Request $request)
     {
-        $period = $request->get('period', 'monthly');
+        $period = $request->get('period', 'all');
         $employeeId = $request->get('employee_id'); 
 
         // Get date range based on period
         $now = now();
-        switch ($period) {
-            case 'daily':
-                $startDate = $now->startOfDay();
-                $endDate = $now->endOfDay();
-                break;
-            case 'weekly':
-                $startDate = $now->startOfWeek();
-                $endDate = $now->endOfWeek();
-                break;
-            case 'monthly':
-            default:
-                $startDate = $now->startOfMonth();
-                $endDate = $now->endOfMonth();
-                break;
+        if ($period === 'all') {
+            $startDate = now()->startOfYear(); // dummy for view
+            $endDate = now()->endOfYear();
+            $ratingsQuery = \App\Models\Rating::with('employee');
+        } else {
+            switch ($period) {
+                case 'daily':
+                    $startDate = $now->startOfDay();
+                    $endDate = $now->endOfDay();
+                    break;
+                case 'weekly':
+                    $startDate = $now->startOfWeek();
+                    $endDate = $now->endOfWeek();
+                    break;
+                case 'monthly':
+                default:
+                    $startDate = $now->startOfMonth();
+                    $endDate = $now->endOfMonth();
+                    break;
+            }
+            $ratingsQuery = \App\Models\Rating::whereBetween('rating_date', [$startDate->toDateString(), $endDate->toDateString()])
+                ->with('employee');
         }
 
         // Get all employees for dropdown
         $employees = \App\Models\Employee::select('id', 'name', 'employee_code')->orderBy('name')->get();
-
-        // Get ratings from the ratings table within the period
-        $ratingsQuery = \App\Models\Rating::whereBetween('rating_date', [$startDate->toDateString(), $endDate->toDateString()])
-            ->with('employee');
 
         // Apply employee filter if specified
         if ($employeeId) {
@@ -178,7 +182,7 @@ class AdminController extends Controller
 
         // Group by employee and calculate metrics based on ratings table
         $employeePerformance = [];
-        $ratingDistribution = [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0];
+        $ratingDistribution = [];
         $totalRatings = 0;
         $averageRating = 0;
         $totalRatingSum = 0;
@@ -194,7 +198,7 @@ class AdminController extends Controller
                     'average_rating' => 0,
                     'rating_sum' => 0,
                     'total_stars' => 0,
-                    'rating_counts' => [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0],
+                    'rating_counts' => [],
                     'performance_score' => 0
                 ];
             }
@@ -202,12 +206,20 @@ class AdminController extends Controller
             $employeePerformance[$empId]['total_ratings']++;
             $employeePerformance[$empId]['rating_sum'] += $stars;
             $employeePerformance[$empId]['total_stars'] += $stars;
+            // Use actual stars for rating_counts
+            if (!isset($employeePerformance[$empId]['rating_counts'][$stars])) {
+                $employeePerformance[$empId]['rating_counts'][$stars] = 0;
+            }
             $employeePerformance[$empId]['rating_counts'][$stars]++;
             $employeePerformance[$empId]['average_rating'] = round($employeePerformance[$empId]['rating_sum'] / $employeePerformance[$empId]['total_ratings'], 1);
 
             // Calculate performance score (weighted average)
             $employeePerformance[$empId]['performance_score'] = $this->calculatePerformanceScore($employeePerformance[$empId]);
 
+            // Use actual stars for ratingDistribution
+            if (!isset($ratingDistribution[$stars])) {
+                $ratingDistribution[$stars] = 0;
+            }
             $ratingDistribution[$stars]++;
             $totalRatings++;
             $totalRatingSum += $stars;
@@ -250,7 +262,7 @@ class AdminController extends Controller
         $consistencyBonus = min($totalRatings * 0.1, 1.0); // Max 1.0 bonus
 
         // Bonus for high ratings (5-star ratings get extra points)
-        $highRatingBonus = ($employeeData['rating_counts'][5] / max($totalRatings, 1)) * 0.5;
+        $highRatingBonus = (isset($employeeData['rating_counts'][5]) ? $employeeData['rating_counts'][5] : 0) / max($totalRatings, 1) * 0.5;
 
         return round($baseScore + $consistencyBonus + $highRatingBonus, 1);
     }

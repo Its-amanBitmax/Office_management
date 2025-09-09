@@ -108,7 +108,7 @@
                                     <option value="team_lead" {{ old('team_created_by', $task->team_created_by ?? '') == 'team_lead' ? 'selected' : '' }}>Team Lead</option>
                                 </select>
                                 @error('team_created_by')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-    ">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -174,22 +174,6 @@
                                 <i class="fas fa-save me-2"></i>Update Task
                             </button>
                         </div>
-
-                        @if(old('team_created_by', $task->team_created_by ?? '') == 'admin')
-                        <div class="mb-3 team-select-section" style="display: {{ old('assigned_team', $task->assigned_team) == 'Team' ? 'block' : 'none' }};">
-                            <label for="selected_team" class="form-label fw-bold">Select Team</label>
-                            <select class="form-select @error('selected_team') is-invalid @enderror" id="selected_team" name="selected_team">
-                                <option value="">Select Team</option>
-                                <option value="Development Team" {{ old('selected_team', $task->selected_team) == 'Development Team' ? 'selected' : '' }}>Development Team</option>
-                                <option value="Design Team" {{ old('selected_team', $task->selected_team) == 'Design Team' ? 'selected' : '' }}>Design Team</option>
-                                <option value="QA Team" {{ old('selected_team', $task->selected_team) == 'QA Team' ? 'selected' : '' }}>QA Team</option>
-                                <option value="Marketing Team" {{ old('selected_team', $task->selected_team) == 'Marketing Team' ? 'selected' : '' }}>Marketing Team</option>
-                            </select>
-                            @error('selected_team')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        @endif
                     </form>
                 </div>
             </div>
@@ -197,13 +181,14 @@
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Select2 for team members and selected_team
-    $('#team_members, #selected_team').select2({
+    // Initialize Select2 for team members, assigned_to, and team_lead_id
+    $('#team_members, #assigned_to, #team_lead_id').select2({
         placeholder: "Select an option",
         allowClear: true,
         width: '100%'
@@ -213,92 +198,88 @@ document.addEventListener('DOMContentLoaded', function() {
     const assignedTeam = document.getElementById('assigned_team');
     const individualFields = document.querySelector('.individual-fields');
     const teamFields = document.querySelectorAll('.team-fields');
-    const teamSelectSection = document.querySelector('.team-select-section');
     const teamCreatedBy = document.getElementById('team_created_by');
+    const teamMembers = document.getElementById('team_members');
 
-    function toggleTeamSelect() {
-        if (teamSelectSection && assignedTeam.value === 'Team' && teamCreatedBy.value === 'admin') {
-            teamSelectSection.style.display = 'block';
-        } else {
-            if (teamSelectSection) teamSelectSection.style.display = 'none';
-        }
-    }
-
-    function toggleTeamMembers() {
-        const teamMembersSelect = document.getElementById('team_members');
-        if (teamMembersSelect) {
-            if (assignedTeam.value === 'Team' && teamCreatedBy.value === 'team_lead') {
-                teamMembersSelect.disabled = true;
-                teamMembersSelect.style.opacity = '0.5';
-            } else {
-                teamMembersSelect.disabled = false;
-                teamMembersSelect.style.opacity = '1';
-            }
-        }
-    }
-
-    assignedTeam.addEventListener('change', function() {
-        if (this.value === 'Individual') {
+    function toggleFields() {
+        const value = assignedTeam.value;
+        if (value === 'Individual') {
             individualFields.style.display = 'block';
             teamFields.forEach(field => field.style.display = 'none');
-            if (teamSelectSection) teamSelectSection.style.display = 'none';
             document.getElementById('assigned_to').setAttribute('required', 'required');
             document.getElementById('team_created_by').removeAttribute('required');
             document.getElementById('team_lead_id').removeAttribute('required');
             document.querySelector('.team-lead-required').style.display = 'none';
-        } else if (this.value === 'Team') {
+        } else if (value === 'Team') {
             individualFields.style.display = 'none';
             teamFields.forEach(field => field.style.display = 'block');
-            toggleTeamSelect();
             document.getElementById('assigned_to').removeAttribute('required');
             document.getElementById('team_created_by').setAttribute('required', 'required');
             document.getElementById('team_lead_id').setAttribute('required', 'required');
             document.querySelector('.team-lead-required').style.display = 'inline';
+            // Automatically set Team Created By to admin when Team is selected
+            if (!teamCreatedBy.value) {
+                teamCreatedBy.value = 'admin';
+            }
+            // Trigger change event to update team members state
+            teamCreatedBy.dispatchEvent(new Event('change'));
         } else {
             individualFields.style.display = 'none';
             teamFields.forEach(field => field.style.display = 'none');
-            if (teamSelectSection) teamSelectSection.style.display = 'none';
             document.getElementById('assigned_to').removeAttribute('required');
             document.getElementById('team_created_by').removeAttribute('required');
             document.getElementById('team_lead_id').removeAttribute('required');
             document.querySelector('.team-lead-required').style.display = 'none';
         }
-    });
+    }
 
-    teamCreatedBy.addEventListener('change', function() {
-        toggleTeamSelect();
-        toggleTeamMembers();
-    });
-
-    // Additional handler to show/hide team select section based on team_created_by value
-    function handleTeamCreatedByChange() {
-        const value = teamCreatedBy.value;
-        if (value === 'team_lead') {
-            // Enable team members selection
-            teamMembers.disabled = false;
-            // Hide team select section because team created by is team lead
-            if (teamSelectSection) teamSelectSection.style.display = 'none';
-        } else if (value === 'admin') {
-            // Enable team members selection
-            teamMembers.disabled = false;
-            // Show team select section if assigned team is Team and created by is admin
-            if (assignedTeam.value === 'Team' && teamSelectSection) {
-                teamSelectSection.style.display = 'block';
-            }
+    // Function to update team members selection state
+    function updateTeamMembersState() {
+        const teamCreatedByValue = teamCreatedBy.value;
+        // Disable team members selection if team_created_by is 'team_lead' regardless of team lead selection
+        if (teamCreatedByValue === 'team_lead') {
+            // Disable the underlying select element
+            teamMembers.disabled = true;
+            // Clear selection and trigger change for Select2 UI update
+            $('#team_members').val(null).trigger('change');
         } else {
-            // Default case: enable team members and hide team select section
+            // Enable the underlying select element
             teamMembers.disabled = false;
-            if (teamSelectSection) teamSelectSection.style.display = 'none';
+            // Trigger change for UI update
+            $('#team_members').trigger('change');
         }
     }
 
-    teamCreatedBy.addEventListener('change', handleTeamCreatedByChange);
-    // Trigger on page load
-    handleTeamCreatedByChange();
+    // Handle team created by change to disable/enable team members
+    function handleTeamCreatedByChange() {
+        updateTeamMembersState();
+    }
 
-    // Trigger change on page load
-    assignedTeam.dispatchEvent(new Event('change'));
-    teamCreatedBy.dispatchEvent(new Event('change'));
+    // Trigger toggle on change and on page load
+    assignedTeam.addEventListener('change', toggleFields);
+    teamCreatedBy.addEventListener('change', handleTeamCreatedByChange);
+    document.getElementById('team_lead_id').addEventListener('change', function() {
+        const teamLeadId = this.value;
+        if (teamLeadId && assignedTeam.value === 'Team') {
+            document.getElementById('assigned_to').value = teamLeadId;
+            $('#assigned_to').trigger('change');
+        }
+        // Update team members state based on new team lead selection
+        updateTeamMembersState();
+    });
+    toggleFields(); // Call immediately to set initial state
+    updateTeamMembersState(); // Ensure team members select is disabled/enabled correctly on page load
+
+    // Ensure form submission validates required fields
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (assignedTeam.value === 'Individual' && !document.getElementById('assigned_to').value) {
+            e.preventDefault();
+            alert('Please select Assigned To for Individual assignment.');
+        } else if (assignedTeam.value === 'Team' && (!document.getElementById('team_lead_id').value || !document.getElementById('team_created_by').value)) {
+            e.preventDefault();
+            alert('Please select Team Lead and Team Created By for Team assignment.');
+        }
+    });
 });
 </script>
 
