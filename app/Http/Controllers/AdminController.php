@@ -67,7 +67,7 @@ class AdminController extends Controller
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'company_name' => 'nullable|string|max:255',
-            'dark_mode' => 'nullable|boolean',
+            // 'dark_mode' => 'nullable|boolean',
         ]);
 
         $data = [
@@ -76,7 +76,7 @@ class AdminController extends Controller
             'phone' => $request->phone,
             'bio' => $request->bio,
             'company_name' => $request->company_name,
-            'dark_mode' => $request->dark_mode ?? false,
+            // 'dark_mode' => $request->dark_mode ?? false,
         ];
 
         if ($request->hasFile('profile_image')) {
