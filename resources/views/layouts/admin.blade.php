@@ -206,6 +206,59 @@
             text-align: center;
         }
 
+        /* Dropdown menu styling to match sidebar */
+        .sidebar-menu .dropdown-menu {
+            position: static;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            display: none;
+        }
+
+        .sidebar-menu .dropdown-menu.show {
+            display: block;
+        }
+
+        .sidebar-menu .dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 2rem 0.5rem 3.5rem;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-menu .dropdown-item:hover,
+        .sidebar-menu .dropdown-item.active {
+            background-color: #e9ecef;
+            color: #007bff;
+            border-left-color: #007bff;
+        }
+
+        .sidebar-menu .dropdown-item i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .sidebar-menu .dropdown-toggle::after {
+            content: "▼";
+            margin-left: auto;
+            font-size: 0.7rem;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-menu .dropdown-toggle[aria-expanded="true"]::after {
+            transform: rotate(180deg);
+        }
+
         .main-content {
             margin-left: 250px;
             margin-top: 70px;
@@ -354,6 +407,15 @@
                         <i>👥</i> Employees
                     </a>
                 </li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" id="hrm-dropdown-toggle" onclick="toggleDropdown('hrm')" aria-expanded="false">
+                        <i>👨‍💼</i> HRM
+                    </a>
+                    <ul class="dropdown-menu" id="hrm-dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('attendance.index') }}"><i>⏰</i> Attendance</a></li>
+                        <li><a class="dropdown-item" href="{{ route('salary-slips.index') }}"><i>💰</i> Salary Slips</a></li>
+                    </ul>
+                </li>
                 <li>
                     <a href="{{ route('tasks.index') }}" class="{{ request()->routeIs('tasks.*') ? 'active' : '' }}">
                         <i>📋</i> Tasks
@@ -419,15 +481,17 @@
                     </div>
                 @endif
 
-                @if($errors->any())
-                    <div style="background: #f8d7da; color: #721c24; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem; border: 1px solid #f5c6cb; font-size: 0.9rem;">
-                        <ul style="margin: 0; padding-left: 1rem;">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+                @isset($errors)
+                    @if($errors->any())
+                        <div style="background: #f8d7da; color: #721c24; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem; border: 1px solid #f5c6cb; font-size: 0.9rem;">
+                            <ul style="margin: 0; padding-left: 1rem;">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                @endisset
 
                 <form method="POST" action="{{ route('admin.profile.update') }}" enctype="multipart/form-data">
                     @csrf
@@ -488,6 +552,41 @@
     </div>
 
     <script>
+        // Dropdown persistence functions
+        function toggleDropdown(dropdownId) {
+            const toggle = document.getElementById(dropdownId + '-dropdown-toggle');
+            const menu = document.getElementById(dropdownId + '-dropdown-menu');
+
+            if (menu.style.display === 'block') {
+                menu.style.display = 'none';
+                toggle.setAttribute('aria-expanded', 'false');
+                localStorage.setItem(dropdownId + '-dropdown-state', 'closed');
+            } else {
+                menu.style.display = 'block';
+                toggle.setAttribute('aria-expanded', 'true');
+                localStorage.setItem(dropdownId + '-dropdown-state', 'open');
+            }
+        }
+
+        // Initialize dropdown states on page load
+        function initializeDropdowns() {
+            const dropdowns = ['hrm'];
+
+            dropdowns.forEach(function(dropdownId) {
+                const toggle = document.getElementById(dropdownId + '-dropdown-toggle');
+                const menu = document.getElementById(dropdownId + '-dropdown-menu');
+                const state = localStorage.getItem(dropdownId + '-dropdown-state');
+
+                if (state === 'open') {
+                    menu.style.display = 'block';
+                    toggle.setAttribute('aria-expanded', 'true');
+                } else {
+                    menu.style.display = 'none';
+                    toggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('show');
@@ -529,6 +628,11 @@
             if (event.key === 'Escape') {
                 closeProfileModal();
             }
+        });
+
+        // Initialize dropdowns when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDropdowns();
         });
     </script>
 </body>

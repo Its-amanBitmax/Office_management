@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\AttendanceController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -26,6 +27,8 @@ Route::prefix('admin')->group(function () {
         Route::get('/profile', [AdminController::class, 'profile'])->name('admin.profile');
         Route::put('/profile', [AdminController::class, 'updateProfile'])->name('admin.profile.update');
         Route::put('/password', [AdminController::class, 'updatePassword'])->name('admin.password.update');
+
+    
 
         // Employee Management Routes
         Route::resource('employees', \App\Http\Controllers\EmployeeController::class)->names([
@@ -69,6 +72,33 @@ Route::prefix('admin')->group(function () {
         ]);
         Route::post('activities/{activity}/add-to-ratings/{employee}', [\App\Http\Controllers\ActivityController::class, 'addToRatings'])->name('activities.add-to-ratings');
         Route::post('activities/{activity}/reject-rating/{employee}', [\App\Http\Controllers\ActivityController::class, 'rejectRating'])->name('activities.reject-rating');
+
+        // Attendance Management Routes
+        Route::get('attendance/monthly/{employee?}', [AttendanceController::class, 'monthly'])->name('attendance.monthly');
+        Route::get('attendance/show-monthly', [AttendanceController::class, 'showMonthly'])->name('attendance.showMonthly');
+        Route::post('attendance/bulk-update', [AttendanceController::class, 'bulkUpdate'])->name('attendance.bulk-update');
+        Route::get('attendance/report/{date?}', [AttendanceController::class, 'report'])->name('attendance.report');
+        Route::resource('attendance', AttendanceController::class)->names([
+            'index' => 'attendance.index',
+            'create' => 'attendance.create',
+            'store' => 'attendance.store',
+            'show' => 'attendance.show',
+            'edit' => 'attendance.edit',
+            'update' => 'attendance.update',
+            'destroy' => 'attendance.destroy',
+        ]);
+
+        // Salary Slips Management Routes
+        Route::get('salary-slips/{salarySlip}/download-pdf', [\App\Http\Controllers\SalarySlipController::class, 'downloadPdf'])->name('salary-slips.download-pdf');
+        Route::resource('salary-slips', \App\Http\Controllers\SalarySlipController::class)->names([
+            'index' => 'salary-slips.index',
+            'create' => 'salary-slips.create',
+            'store' => 'salary-slips.store',
+            'show' => 'salary-slips.show',
+            'edit' => 'salary-slips.edit',
+            'update' => 'salary-slips.update',
+            'destroy' => 'salary-slips.destroy',
+        ]);
     });
 });
 
