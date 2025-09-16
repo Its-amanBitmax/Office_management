@@ -28,7 +28,7 @@ Route::prefix('admin')->group(function () {
         Route::put('/profile', [AdminController::class, 'updateProfile'])->name('admin.profile.update');
         Route::put('/password', [AdminController::class, 'updatePassword'])->name('admin.password.update');
 
-    
+
 
         // Employee Management Routes
         Route::resource('employees', \App\Http\Controllers\EmployeeController::class)->names([
@@ -99,6 +99,31 @@ Route::prefix('admin')->group(function () {
             'update' => 'salary-slips.update',
             'destroy' => 'salary-slips.destroy',
         ]);
+
+        // Visitors Management Routes
+        Route::resource('visitors', \App\Http\Controllers\VisitorController::class)->names([
+            'index' => 'visitors.index',
+            'create' => 'visitors.create',
+            'store' => 'visitors.store',
+            'show' => 'visitors.show',
+            'edit' => 'visitors.edit',
+            'update' => 'visitors.update',
+            'destroy' => 'visitors.destroy',
+        ]);
+        Route::get('visitors/{visitor}/card', [\App\Http\Controllers\VisitorController::class, 'card'])->name('visitors.card');
+
+        // Invited Visitors Management Routes
+        Route::resource('invited-visitors', \App\Http\Controllers\InvitedVisitorController::class)->names([
+            'index' => 'invited-visitors.index',
+            'create' => 'invited-visitors.create',
+            'store' => 'invited-visitors.store',
+            'show' => 'invited-visitors.show',
+            'edit' => 'invited-visitors.edit',
+            'update' => 'invited-visitors.update',
+            'destroy' => 'invited-visitors.destroy',
+        ]);
+        Route::get('invited-visitors/{invitedVisitor}/card', [\App\Http\Controllers\InvitedVisitorController::class, 'card'])->name('invited-visitors.card');
+        Route::get('invited-visitors/{invitedVisitor}/invitation-pdf', [\App\Http\Controllers\InvitedVisitorController::class, 'invitationPdf'])->name('invited-visitors.invitation-pdf');
     });
 });
 
@@ -139,4 +164,3 @@ Route::prefix('employee')->group(function () {
         Route::post('/activities/{activity}/submit', [EmployeeController::class, 'submitActivity'])->name('employee.activities.submit');
     });
 });
-    

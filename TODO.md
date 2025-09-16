@@ -1,25 +1,21 @@
-# Task Manager TODO
+# Visitor Card Implementation TODO
 
-## Current Task: Fix Laravel Route Error - COMPLETED ✅
-- [x] Identify missing route "salary-slips.index"
-- [x] Add salary-slips routes to routes/web.php
-- [x] Run salary_slips table migration
-- [x] Create salary slips view files (index, create, show, edit, pdf)
-- [x] Make company name and logo dynamic in PDF
-- [x] Add summary statistics cards to salary index page
-- [x] Test Laravel server to confirm route error is resolved
-- [x] Verify salary slips functionality works properly
+## Tasks to Complete
 
-## Summary
-✅ Successfully fixed the "Route [salary-slips.index] not defined" error
-✅ Created complete salary slips management system with:
-   - Dynamic company branding in PDFs
-   - Summary statistics dashboard
-   - Full CRUD operations
-   - PDF generation with company logo
-   - Responsive design
-
-## Next Steps
-- Ready for production use
-- All routes and views are properly configured
-- Database migration completed successfully
+- [x] Install "simple-qrcode" Laravel package for QR code generation
+- [x] Add a new route for visitor card in routes/web.php
+- [x] Add a new method in VisitorController.php for showing the visitor card
+- [x] Create a new blade view resources/views/admin/visitors/card.blade.php for the visitor card with unique ID and QR code
+- [x] Add a link/button in the visitor show.blade.php to access the visitor card
+- [x] Test the visitor card generation and QR code display
+- [x] Create migration for invited_visitors table
+- [x] Create InvitedVisitor model
+- [x] Create InvitedVisitorController with resource methods and card method
+- [x] Create blade views for invited visitors (index, create, show, card)
+- [x] Add routes for invited visitors
+- [x] Update sidebar to link "Visitor Invites" to invited-visitors.index
+- [x] Add invitation PDF generation method in InvitedVisitorController
+- [x] Create invitation PDF blade view with visitor details and QR code
+- [x] Add route for invitation PDF download
+- [x] Add "Download Invitation PDF" button in invited visitor show page
+- [x] Fix QR code display in PDF by generating PNG base64 image instead of SVG

@@ -416,6 +416,17 @@
                         <li><a class="dropdown-item" href="{{ route('salary-slips.index') }}"><i>💰</i> Salary Slips</a></li>
                     </ul>
                 </li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" id="front-desk-dropdown-toggle" onclick="toggleDropdown('front-desk')" aria-expanded="false">
+                        <i>🏢</i> Front Desk
+                    </a>
+                    <ul class="dropdown-menu" id="front-desk-dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('invited-visitors.index') }}"><i>📧</i> Visitor Invites</a></li>
+                        <li><a class="dropdown-item" href="{{ route('visitors.index') }}"><i>👤</i> Visitor</a></li>
+                        <li><a class="dropdown-item" href="#"><i>📦</i> Stocks</a></li>
+                        <li><a class="dropdown-item" href="#"><i>📋</i> Assigned Items</a></li>
+                    </ul>
+                </li>
                 <li>
                     <a href="{{ route('tasks.index') }}" class="{{ request()->routeIs('tasks.*') ? 'active' : '' }}">
                         <i>📋</i> Tasks
