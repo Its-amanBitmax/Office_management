@@ -43,10 +43,10 @@
         <p><label>Purpose:</label> {{ $invitedVisitor->purpose ?? 'N/A' }}</p>
         <p><label>Invited At:</label> {{ $invitedVisitor->invited_at ? $invitedVisitor->invited_at->format('M d, Y H:i') : 'N/A' }}</p>
     </div>
-    <div class="qr-code">
+    {{-- <div class="qr-code">
         <img src="data:image/png;base64,{{ base64_encode(QrCode::format('png')->size(150)->generate(route('invited-visitors.show', $invitedVisitor))) }}" alt="QR Code">
         <p>Scan this QR code for more details</p>
-    </div>
+    </div> --}}
     <div class="footer">
         <p>Thank you for your visit. Please carry this invitation with you.</p>
     </div>

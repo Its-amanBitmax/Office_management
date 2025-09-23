@@ -407,15 +407,17 @@
                         <i>👥</i> Employees
                     </a>
                 </li>
-                <li class="dropdown">
+               <li class="dropdown">
                     <a href="#" class="dropdown-toggle" id="hrm-dropdown-toggle" onclick="toggleDropdown('hrm')" aria-expanded="false">
                         <i>👨‍💼</i> HRM
                     </a>
                     <ul class="dropdown-menu" id="hrm-dropdown-menu">
                         <li><a class="dropdown-item" href="{{ route('attendance.index') }}"><i>⏰</i> Attendance</a></li>
                         <li><a class="dropdown-item" href="{{ route('salary-slips.index') }}"><i>💰</i> Salary Slips</a></li>
-                    </ul>
+                        <li><a class="dropdown-item" href="{{ route('employee.card.index') }}"><i>🪪</i> Employee Card</a></li>
+                   </ul>
                 </li>
+
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" id="front-desk-dropdown-toggle" onclick="toggleDropdown('front-desk')" aria-expanded="false">
                         <i>🏢</i> Front Desk

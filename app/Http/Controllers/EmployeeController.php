@@ -46,6 +46,7 @@ class EmployeeController extends Controller
             'email' => 'required|email|max:255|unique:employees,email',
             'password' => 'required|string|min:6|confirmed',
             'phone' => 'nullable|string|max:50',
+            'dob' => 'nullable|date',
             'hire_date' => 'required|date',
             'position' => 'nullable|string|max:100',
             'department' => 'nullable|string|max:100',
@@ -175,6 +176,7 @@ class EmployeeController extends Controller
                 'email' => ['required', 'email', 'max:255', Rule::unique('employees')->ignore($employee->id)],
                 'password' => 'nullable|string|min:6|confirmed',
                 'phone' => 'nullable|string|max:50',
+                'dob' => 'nullable|date',
                 'hire_date' => 'required|date',
                 'position' => 'nullable|string|max:100',
                 'department' => 'nullable|string|max:100',
@@ -996,5 +998,13 @@ class EmployeeController extends Controller
         // Optionally update activity status or other logic here
 
         return redirect()->route('employee.activities.index')->with('success', 'Activity evaluation submitted successfully.');
+    }
+
+    /**
+     * Display the employee card.
+     */
+    public function card(Employee $employee)
+    {
+        return view('admin.employees.card', compact('employee'));
     }
 }

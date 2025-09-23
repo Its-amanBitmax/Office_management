@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\AttendanceController;
-
+   use App\Http\Controllers\EmployeeCardController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -28,8 +28,6 @@ Route::prefix('admin')->group(function () {
         Route::put('/profile', [AdminController::class, 'updateProfile'])->name('admin.profile.update');
         Route::put('/password', [AdminController::class, 'updatePassword'])->name('admin.password.update');
 
-
-
         // Employee Management Routes
         Route::resource('employees', \App\Http\Controllers\EmployeeController::class)->names([
             'index' => 'employees.index',
@@ -40,6 +38,7 @@ Route::prefix('admin')->group(function () {
             'update' => 'employees.update',
             'destroy' => 'employees.destroy',
         ]);
+        Route::get('employees/{employee}/card', [\App\Http\Controllers\EmployeeController::class, 'card'])->name('employees.card');
 
         // Task Management Routes
         Route::resource('tasks', \App\Http\Controllers\TaskController::class)->names([
@@ -124,6 +123,12 @@ Route::prefix('admin')->group(function () {
         ]);
         Route::get('invited-visitors/{invitedVisitor}/card', [\App\Http\Controllers\InvitedVisitorController::class, 'card'])->name('invited-visitors.card');
         Route::get('invited-visitors/{invitedVisitor}/invitation-pdf', [\App\Http\Controllers\InvitedVisitorController::class, 'invitationPdf'])->name('invited-visitors.invitation-pdf');
+    
+
+        Route::get('/employee-card/{employee?}', [EmployeeCardController::class, 'index'])->name('employee.card.index');
+        Route::get('/employee-card/{employee}', [EmployeeCardController::class, 'show'])->name('employee.card.show');
+        Route::get('/employee-card/{employee}/pdf', [EmployeeCardController::class, 'pdf'])->name('employee.card.pdf');
+           
     });
 });
 

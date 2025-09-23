@@ -59,10 +59,10 @@
                 </td>
                 <td>
                     <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-success" onclick="markAttendance({{ $employee->id }}, 'Present', '{{ $date ?? \Carbon\Carbon::today()->format('Y-m-d') }}')" title="Present">P</button>
-                        <button type="button" class="btn btn-danger" onclick="markAttendance({{ $employee->id }}, 'Absent', '{{ $date ?? \Carbon\Carbon::today()->format('Y-m-d') }}')" title="Absent">A</button>
-                        <button type="button" class="btn btn-warning" onclick="markAttendance({{ $employee->id }}, 'Leave', '{{ $date ?? \Carbon\Carbon::today()->format('Y-m-d') }}')" title="Leave">L</button>
-                        <button type="button" class="btn btn-info" onclick="markAttendance({{ $employee->id }}, 'Half Day', '{{ $date ?? \Carbon\Carbon::today()->format('Y-m-d') }}')" title="Half Day">HD</button>
+                        <button type="button" class="btn {{ $attendance ? 'btn-secondary' : 'btn-success' }}" {{ $attendance ? 'disabled' : '' }} onclick="{{ $attendance ? '' : 'markAttendance(' . $employee->id . ', \'Present\', \'' . ($date ?? \Carbon\Carbon::today()->format('Y-m-d')) . '\')' }}" title="Present">{{ $attendance ? 'Marked' : 'P' }}</button>
+                        <button type="button" class="btn {{ $attendance ? 'btn-secondary' : 'btn-danger' }}" {{ $attendance ? 'disabled' : '' }} onclick="{{ $attendance ? '' : 'markAttendance(' . $employee->id . ', \'Absent\', \'' . ($date ?? \Carbon\Carbon::today()->format('Y-m-d')) . '\')' }}" title="Absent">{{ $attendance ? 'Marked' : 'A' }}</button>
+                        <button type="button" class="btn {{ $attendance ? 'btn-secondary' : 'btn-warning' }}" {{ $attendance ? 'disabled' : '' }} onclick="{{ $attendance ? '' : 'markAttendance(' . $employee->id . ', \'Leave\', \'' . ($date ?? \Carbon\Carbon::today()->format('Y-m-d')) . '\')' }}" title="Leave">{{ $attendance ? 'Marked' : 'L' }}</button>
+                        <button type="button" class="btn {{ $attendance ? 'btn-secondary' : 'btn-info' }}" {{ $attendance ? 'disabled' : '' }} onclick="{{ $attendance ? '' : 'markAttendance(' . $employee->id . ', \'Half Day\', \'' . ($date ?? \Carbon\Carbon::today()->format('Y-m-d')) . '\')' }}" title="Half Day">{{ $attendance ? 'Marked' : 'HD' }}</button>
                     </div>
                 </td>
                 {{-- <td>
@@ -100,6 +100,14 @@
 
 <script>
 function markAttendance(employeeId, status, date) {
+    // Disable the buttons to prevent multiple clicks
+    const buttons = document.querySelectorAll('#employee-row-' + employeeId + ' .btn-group button');
+    buttons.forEach(button => {
+        button.disabled = true;
+        button.textContent = 'Marked';
+        button.classList.add('btn-secondary');
+    });
+
     // Update the status badge immediately
     const statusElement = document.getElementById('status-' + employeeId);
     statusElement.className = 'badge ' + getStatusClass(status);
@@ -107,12 +115,15 @@ function markAttendance(employeeId, status, date) {
 
     // Update the "Marked At" time immediately
     const now = new Date();
-    const timeString = now.getHours().toString().padStart(2, '0') + ':' +
-                      now.getMinutes().toString().padStart(2, '0') + ':' +
-                      now.getSeconds().toString().padStart(2, '0');
+    const kolkataTime = new Intl.DateTimeFormat('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    }).format(now);
     const markedAtElement = document.querySelector('#employee-row-' + employeeId + ' td:nth-child(3)');
     if (markedAtElement) {
-        markedAtElement.textContent = timeString;
+        markedAtElement.textContent = kolkataTime;
     }
 
     // Prepare form data
@@ -170,12 +181,24 @@ function markAttendance(employeeId, status, date) {
             // Show success message
             showAlert('Attendance marked successfully!', 'success');
         } else {
+            // Re-enable buttons on error
+            buttons.forEach(button => {
+                button.disabled = false;
+                button.textContent = button.title;
+                button.classList.remove('btn-secondary');
+            });
             // Show error message
             showAlert('Error marking attendance: ' + (data.message || 'Unknown error'), 'danger');
         }
     })
     .catch(error => {
         console.error('Error:', error);
+        // Re-enable buttons on error
+        buttons.forEach(button => {
+            button.disabled = false;
+            button.textContent = button.title;
+            button.classList.remove('btn-secondary');
+        });
         if (error.message.includes('Authentication required')) {
             showAlert(error.message, 'warning');
         } else {

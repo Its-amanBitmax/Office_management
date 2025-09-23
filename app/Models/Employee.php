@@ -26,6 +26,7 @@ class Employee extends Authenticatable
         'hra',
         'conveyance',
         'medical',
+        'dob',
     ];
 
     protected $casts = [
@@ -34,6 +35,7 @@ class Employee extends Authenticatable
         'conveyance' => 'float',
         'medical' => 'float',
         'hire_date' => 'date',
+        'dob' => 'date',
     ];
 
     protected $hidden = ['password'];
