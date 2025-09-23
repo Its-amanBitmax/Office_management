@@ -79,4 +79,9 @@ class Employee extends Authenticatable
     {
         return $this->hasMany(Attendance::class);
     }
+
+    public function assignedItems()
+    {
+        return $this->hasMany(AssignedItem::class);
+    }
 }

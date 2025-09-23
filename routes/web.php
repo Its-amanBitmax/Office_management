@@ -123,6 +123,21 @@ Route::prefix('admin')->group(function () {
         ]);
         Route::get('invited-visitors/{invitedVisitor}/card', [\App\Http\Controllers\InvitedVisitorController::class, 'card'])->name('invited-visitors.card');
         Route::get('invited-visitors/{invitedVisitor}/invitation-pdf', [\App\Http\Controllers\InvitedVisitorController::class, 'invitationPdf'])->name('invited-visitors.invitation-pdf');
+
+        // Stock Management Routes
+        Route::resource('stock', \App\Http\Controllers\StockController::class)->names([
+            'index' => 'admin.stock.index',
+            'create' => 'admin.stock.create',
+            'store' => 'admin.stock.store',
+            'show' => 'admin.stock.show',
+            'edit' => 'admin.stock.edit',
+            'update' => 'admin.stock.update',
+            'destroy' => 'admin.stock.destroy',
+        ]);
+        Route::get('stock/assign/form', [\App\Http\Controllers\StockController::class, 'assignForm'])->name('admin.stock.assign.form');
+        Route::post('stock/assign', [\App\Http\Controllers\StockController::class, 'assign'])->name('admin.stock.assign');
+        Route::get('stock/view-assigned', [\App\Http\Controllers\StockController::class, 'viewAssignedForm'])->name('admin.stock.view.assigned');
+        Route::get('stock/employee/{employee}/assigned', [\App\Http\Controllers\StockController::class, 'employeeAssignedItems'])->name('admin.stock.employee.assigned');
     
 
         Route::get('/employee-card/{employee?}', [EmployeeCardController::class, 'index'])->name('employee.card.index');
@@ -167,5 +182,12 @@ Route::prefix('employee')->group(function () {
         Route::get('/activities', [EmployeeController::class, 'activitiesIndex'])->name('employee.activities.index');
         Route::post('/activities/{activity}/start', [EmployeeController::class, 'startActivity'])->name('employee.activities.start');
         Route::post('/activities/{activity}/submit', [EmployeeController::class, 'submitActivity'])->name('employee.activities.submit');
+
+        // Employee Assigned Items Route
+        Route::get('/assigned-items', function() {
+            $employee = auth('employee')->user();
+            $assignedItems = \App\Models\AssignedItem::where('employee_id', $employee->id)->with('stockItem')->get();
+            return view('employee.assigned-items', compact('assignedItems'));
+        })->name('employee.assigned-items');
     });
 });

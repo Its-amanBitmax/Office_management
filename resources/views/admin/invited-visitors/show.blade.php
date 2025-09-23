@@ -11,9 +11,9 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Invited Visitor Details</h5>
                     <div>
-                        <a href="{{ route('invited-visitors.card', $invitedVisitor) }}" class="btn btn-primary btn-sm" target="_blank">
+                        {{-- <a href="{{ route('invited-visitors.card', $invitedVisitor) }}" class="btn btn-primary btn-sm" target="_blank">
                             <i class="fas fa-id-card"></i> View Card
-                        </a>
+                        </a> --}}
                         <a href="{{ route('invited-visitors.invitation-pdf', $invitedVisitor) }}" class="btn btn-success btn-sm" target="_blank">
                             <i class="fas fa-file-pdf"></i> Download Invitation PDF
                         </a>

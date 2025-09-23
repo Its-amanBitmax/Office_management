@@ -425,8 +425,9 @@
                     <ul class="dropdown-menu" id="front-desk-dropdown-menu">
                         <li><a class="dropdown-item" href="{{ route('invited-visitors.index') }}"><i>📧</i> Visitor Invites</a></li>
                         <li><a class="dropdown-item" href="{{ route('visitors.index') }}"><i>👤</i> Visitor</a></li>
-                        <li><a class="dropdown-item" href="#"><i>📦</i> Stocks</a></li>
-                        <li><a class="dropdown-item" href="#"><i>📋</i> Assigned Items</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.stock.index') }}"><i>📦</i> Stock Management</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.stock.view.assigned') }}"><i>📋</i> Assign Items</a></li>
+                        {{-- <li><a class="dropdown-item" href="{{ route('admin.stock.view.assigned') }}"><i>👁️</i> View Assigned Items</a></li> --}}
                     </ul>
                 </li>
                 <li>
@@ -583,7 +584,7 @@
 
         // Initialize dropdown states on page load
         function initializeDropdowns() {
-            const dropdowns = ['hrm'];
+            const dropdowns = ['hrm','front-desk'];
 
             dropdowns.forEach(function(dropdownId) {
                 const toggle = document.getElementById(dropdownId + '-dropdown-toggle');
