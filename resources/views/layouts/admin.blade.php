@@ -882,7 +882,7 @@
     <!-- Chat Modal -->
     <div id="chatModal" class="chat-modal">
         <div class="chat-header">
-            <span>Chat Bot Assistant</span>
+            <span>🤖 BotGuru</span>
             <button onclick="closeChatBot()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">&times;</button>
         </div>
         <div id="chatBody" class="chat-body">

@@ -17,7 +17,7 @@
                 @endif
             </div>
             <h4 style="margin: 0 0 0.5rem 0; color: #333;">{{ $admin->name }}</h4>
-            <p style="margin: 0; color: #666; font-size: 0.9rem;">System Administrator</p>
+            <p style="margin: 0; color: #666; font-size: 0.9rem;">Administrator</p>
             <div style="margin-top: 1rem;">
                 <span style="background: #28a745; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">Active</span>
             </div>

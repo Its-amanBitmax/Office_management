@@ -278,8 +278,102 @@
         .chatbot-icon:hover {
             background-color: #0056b3;
         }
+
+        /* Chat Modal Styles */
+        .chat-modal {
+            display: none;
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 350px;
+            height: 450px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 1002;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-body {
+            height: 320px;
+            overflow-y: auto;
+            padding: 12px;
+            background: #f8f9fa;
+        }
+
+        .chat-message {
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 85%;
+            font-size: 14px;
+        }
+
+        .chat-message.user {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .chat-message.bot {
+            background: white;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .chat-footer {
+            padding: 10px 12px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            gap: 8px;
+            background: white;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .chat-input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+
+        .chat-send {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .chat-send:hover {
+            background: #0056b3;
+        }
     </style>
 </head>
+
+
+<!--End of Tawk.to Script-->
+
 <body>
     <header class="header">
         @php $admin = \App\Models\Admin::first(); @endphp
@@ -427,6 +521,28 @@
         </div>
     </div>
 
+    <!-- Chat Modal -->
+    <div id="chatModal" class="chat-modal">
+        <div class="chat-header">
+            <span>🤖 BotGuru</span>
+            <button onclick="closeChatBot()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">&times;</button>
+        </div>
+        <div id="chatBody" class="chat-body">
+            <div class="chat-message bot">
+                Hello! I'm your chat assistant. How can I help you today?
+            </div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chatInput" class="chat-input" placeholder="Type your message...">
+            <button onclick="sendMessage()" class="chat-send">Send</button>
+        </div>
+    </div>
+
+    <!-- Chat Bot Icon -->
+    <div class="chatbot-icon" onclick="openChatBot()">
+        <i class="fas fa-comments"></i>
+    </div>
+
     <script>
         function openProfileModal() {
             const modal = document.getElementById('profileModal');
@@ -447,9 +563,13 @@
 
         // Close modal when clicking outside
         window.onclick = function(event) {
-            const modal = document.getElementById('profileModal');
-            if (event.target == modal) {
+            const profileModal = document.getElementById('profileModal');
+            const chatModal = document.getElementById('chatModal');
+
+            if (event.target == profileModal) {
                 closeProfileModal();
+            } else if (event.target == chatModal) {
+                closeChatBot();
             }
         }
 
@@ -457,18 +577,69 @@
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeProfileModal();
+                closeChatBot();
             }
         });
 
-        // Chat Bot Function
+        // Chat Bot Functions
         function openChatBot() {
-            alert('Chat bot clicked!'); // Placeholder
+            const chatModal = document.getElementById('chatModal');
+            chatModal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
         }
-    </script>
 
-    <!-- Chat Bot Icon -->
-    <div class="chatbot-icon" onclick="openChatBot()">
-        <i class="fas fa-comments"></i>
-    </div>
+        function closeChatBot() {
+            const chatModal = document.getElementById('chatModal');
+            chatModal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (message) {
+                addMessage('user', message);
+                input.value = '';
+
+                // Simulate bot response
+                setTimeout(() => {
+                    addMessage('bot', 'Thanks for your message! This is a demo chat bot. How can I help you today?');
+                }, 1000);
+            }
+        }
+
+        function addMessage(type, message) {
+            const chatBody = document.getElementById('chatBody');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${type}`;
+            messageDiv.textContent = message;
+            chatBody.appendChild(messageDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        // Handle Enter key in chat input
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) {
+                chatInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+            }
+        });
+    </script>
+    <!--Start of Tawk.to Script-->
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/68d43430ae823e19250b7c93/1j5uenoav';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
 </body>
 </html>
