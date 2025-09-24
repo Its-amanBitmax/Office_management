@@ -29,35 +29,56 @@ Route::prefix('admin')->group(function () {
         Route::put('/password', [AdminController::class, 'updatePassword'])->name('admin.password.update');
 
         // Employee Management Routes
-        Route::resource('employees', \App\Http\Controllers\EmployeeController::class)->names([
-            'index' => 'employees.index',
-            'create' => 'employees.create',
-            'store' => 'employees.store',
-            'show' => 'employees.show',
-            'edit' => 'employees.edit',
-            'update' => 'employees.update',
-            'destroy' => 'employees.destroy',
-        ]);
-        Route::get('employees/{employee}/card', [\App\Http\Controllers\EmployeeController::class, 'card'])->name('employees.card');
+        Route::middleware('admin:employees')->group(function () {
+            Route::resource('employees', \App\Http\Controllers\EmployeeController::class)->names([
+                'index' => 'employees.index',
+                'create' => 'employees.create',
+                'store' => 'employees.store',
+                'show' => 'employees.show',
+                'edit' => 'employees.edit',
+                'update' => 'employees.update',
+                'destroy' => 'employees.destroy',
+            ]);
+            Route::get('employees/{employee}/card', [\App\Http\Controllers\EmployeeController::class, 'card'])->name('employees.card');
+        });
 
         // Task Management Routes
-        Route::resource('tasks', \App\Http\Controllers\TaskController::class)->names([
-            'index' => 'tasks.index',
-            'create' => 'tasks.create',
-            'store' => 'tasks.store',
-            'show' => 'tasks.show',
-            'edit' => 'tasks.edit',
-            'update' => 'tasks.update',
-            'destroy' => 'tasks.destroy',
-        ]);
+        Route::middleware('admin:tasks')->group(function () {
+            Route::resource('tasks', \App\Http\Controllers\TaskController::class)->names([
+                'index' => 'tasks.index',
+                'create' => 'tasks.create',
+                'store' => 'tasks.store',
+                'show' => 'tasks.show',
+                'edit' => 'tasks.edit',
+                'update' => 'tasks.update',
+                'destroy' => 'tasks.destroy',
+            ]);
+        });
 
         // Admin Reports Routes
-        Route::get('reports', [\App\Http\Controllers\AdminReportController::class, 'index'])->name('admin.reports.index');
-        Route::get('reports/{id}', [\App\Http\Controllers\AdminReportController::class, 'show'])->name('admin.reports.show');
-        Route::put('reports/{id}', [\App\Http\Controllers\AdminReportController::class, 'update'])->name('admin.reports.update');
+        Route::middleware('admin:reports')->group(function () {
+            Route::get('reports', [\App\Http\Controllers\AdminReportController::class, 'index'])->name('admin.reports.index');
+            Route::get('reports/{id}', [\App\Http\Controllers\AdminReportController::class, 'show'])->name('admin.reports.show');
+            Route::put('reports/{id}', [\App\Http\Controllers\AdminReportController::class, 'update'])->name('admin.reports.update');
+        });
 
         // Admin Performance Route
-        Route::get('performance', [AdminController::class, 'performance'])->name('admin.performance');
+        Route::middleware('admin:performance')->get('performance', [AdminController::class, 'performance'])->name('admin.performance');
+
+        // Admin Logs Route
+        Route::middleware('admin:logs')->get('logs', [AdminController::class, 'logs'])->name('admin.logs');
+
+        // Admin Chatbot Route
+        Route::middleware('admin:chatbot')->get('chatbot', [AdminController::class, 'chatbot'])->name('admin.chatbot');
+
+        // Sub-Admin Management Routes
+        Route::get('sub-admins', [AdminController::class, 'indexSubAdmins'])->name('admin.sub-admins.index');
+        Route::get('sub-admins/create', [AdminController::class, 'createSubAdmin'])->name('admin.sub-admins.create');
+        Route::post('sub-admins', [AdminController::class, 'storeSubAdmin'])->name('admin.sub-admins.store');
+        Route::get('sub-admins/{id}', [AdminController::class, 'show'])->name('admin.sub-admins.show');
+        Route::get('sub-admins/{id}/edit', [AdminController::class, 'editSubAdmin'])->name('admin.sub-admins.edit');
+        Route::put('sub-admins/{id}', [AdminController::class, 'updateSubAdmin'])->name('admin.sub-admins.update');
+        Route::delete('sub-admins/{id}', [AdminController::class, 'deleteSubAdmin'])->name('admin.sub-admins.destroy');
 
         // Activities Routes
         Route::resource('activities', \App\Http\Controllers\ActivityController::class)->names([
@@ -125,7 +146,9 @@ Route::prefix('admin')->group(function () {
         Route::get('invited-visitors/{invitedVisitor}/invitation-pdf', [\App\Http\Controllers\InvitedVisitorController::class, 'invitationPdf'])->name('invited-visitors.invitation-pdf');
 
         // Stock Management Routes
-        Route::resource('stock', \App\Http\Controllers\StockController::class)->names([
+        Route::resource('stock', \App\Http\Controllers\StockController::class)->parameters([
+            'stock' => 'stockItem'
+        ])->names([
             'index' => 'admin.stock.index',
             'create' => 'admin.stock.create',
             'store' => 'admin.stock.store',
@@ -136,10 +159,10 @@ Route::prefix('admin')->group(function () {
         ]);
         Route::get('stock/assign/form', [\App\Http\Controllers\StockController::class, 'assignForm'])->name('admin.stock.assign.form');
         Route::post('stock/assign', [\App\Http\Controllers\StockController::class, 'assign'])->name('admin.stock.assign');
-        Route::get('stock/view-assigned', [\App\Http\Controllers\StockController::class, 'viewAssignedForm'])->name('admin.stock.view.assigned');
-        Route::get('stock/employee/{employee}/assigned', [\App\Http\Controllers\StockController::class, 'employeeAssignedItems'])->name('admin.stock.employee.assigned');
-    
-
+        Route::get('/admin/stock/all-assigned', [\App\Http\Controllers\StockController::class, 'allAssigned'])->name('admin.stock.all-assigned');
+        Route::get('assigned-items/{assignedItem}/edit', [\App\Http\Controllers\StockController::class, 'editAssigned'])->name('admin.assigned-items.edit');
+        Route::put('assigned-items/{assignedItem}', [\App\Http\Controllers\StockController::class, 'updateAssigned'])->name('admin.assigned-items.update');
+        Route::delete('assigned-items/{assignedItem}', [\App\Http\Controllers\StockController::class, 'destroyAssigned'])->name('admin.assigned-items.destroy');
         Route::get('/employee-card/{employee?}', [EmployeeCardController::class, 'index'])->name('employee.card.index');
         Route::get('/employee-card/{employee}', [EmployeeCardController::class, 'show'])->name('employee.card.show');
         Route::get('/employee-card/{employee}/pdf', [EmployeeCardController::class, 'pdf'])->name('employee.card.pdf');
@@ -189,5 +212,8 @@ Route::prefix('employee')->group(function () {
             $assignedItems = \App\Models\AssignedItem::where('employee_id', $employee->id)->with('stockItem')->get();
             return view('employee.assigned-items', compact('assignedItems'));
         })->name('employee.assigned-items');
+
+        // Employee Card PDF Route
+        Route::get('/my-card/pdf', [EmployeeCardController::class, 'pdf'])->name('employee.card.pdf');
     });
 });

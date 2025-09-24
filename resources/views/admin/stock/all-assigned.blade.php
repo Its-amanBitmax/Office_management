@@ -6,7 +6,7 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h3>Assigned Items for {{ $employee->name }}</h3>
+                    <h3>All Assigned Items</h3>
                     <a href="{{ route('admin.stock.index') }}" class="btn btn-secondary float-end">Back to Stock</a>
                 </div>
                 <div class="card-body">
@@ -21,10 +21,9 @@
                                     <th>Employee Name</th>
                                     <th>Stock Item</th>
                                     <th>Quantity Assigned</th>
-                                    <th>Price per Unit</th>
-                                    <th>Total Value</th>
                                     <th>Assigned Date</th>
                                     <th>Notes</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -33,16 +32,22 @@
                                         <td>{{ $assignedItem->employee->name }}</td>
                                         <td>{{ $assignedItem->stockItem->name }}</td>
                                         <td>{{ $assignedItem->quantity_assigned }}</td>
-                                        <td>${{ number_format($assignedItem->stockItem->price, 2) }}</td>
-                                        <td>${{ number_format($assignedItem->quantity_assigned * $assignedItem->stockItem->price, 2) }}</td>
                                         <td>{{ $assignedItem->assigned_date ? $assignedItem->assigned_date->format('Y-m-d') : 'N/A' }}</td>
                                         <td>{{ $assignedItem->notes ?? 'N/A' }}</td>
+                                        <td>
+                                            <a href="{{ route('admin.assigned-items.edit', $assignedItem->id) }}" class="btn btn-primary btn-sm">Edit</a>
+                                            <form action="{{ route('admin.assigned-items.destroy', $assignedItem->id) }}" method="POST" style="display: inline;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this assigned item?')">Delete</button>
+                                            </form>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     @else
-                        <p>No items have been assigned to this employee yet.</p>
+                        <p>No items have been assigned to any employees yet.</p>
                     @endif
                 </div>
             </div>

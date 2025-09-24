@@ -21,8 +21,11 @@ class EmployeeCardController extends Controller
         return view('employee-card.index', compact('employees', 'employee'));
     }
 
-    public function pdf(Employee $employee)
+    public function pdf(Employee $employee = null)
     {
+        if (!$employee) {
+            $employee = auth('employee')->user();
+        }
         $pdf = Pdf::loadView('employee-card-pdf', compact('employee'));
         return $pdf->download('employee_'.$employee->id.'_card.pdf');
     }

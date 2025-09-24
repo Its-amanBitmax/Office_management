@@ -98,14 +98,6 @@ class StockController extends Controller
         return view('admin.stock.assign', compact('stockItems', 'employees'));
     }
 
-    /**
-     * Show the form for viewing assigned items by employee.
-     */
-    public function viewAssignedForm()
-    {
-        $employees = Employee::select('id', 'name', 'employee_code')->get();
-        return view('admin.stock.view-assigned', compact('employees'));
-    }
 
     /**
      * Assign items to employees.
@@ -141,5 +133,76 @@ class StockController extends Controller
     {
         $assignedItems = $employee->assignedItems()->with('stockItem')->get();
         return view('admin.stock.employee-assigned', compact('employee', 'assignedItems'));
+    }
+
+    /**
+     * Display all assigned items for all employees.
+     */
+    public function allAssigned()
+    {
+        $assignedItems = AssignedItem::with('employee', 'stockItem')->get();
+        return view('admin.stock.all-assigned', compact('assignedItems'));
+    }
+
+    /**
+     * Show the form for editing the specified assigned item.
+     */
+    public function editAssigned(AssignedItem $assignedItem)
+    {
+        $stockItems = StockItem::all();
+        $employees = Employee::select('id', 'name', 'employee_code')->get();
+        return view('admin.stock.edit-assigned', compact('assignedItem', 'stockItems', 'employees'));
+    }
+
+    /**
+     * Update the specified assigned item in storage.
+     */
+    public function updateAssigned(Request $request, AssignedItem $assignedItem)
+    {
+        $validated = $request->validate([
+            'stock_item_id' => 'required|exists:stock_items,id',
+            'employee_id' => 'required|exists:employees,id',
+            'quantity_assigned' => 'required|integer|min:1',
+            'assigned_date' => 'required|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        $oldQuantity = $assignedItem->quantity_assigned;
+        $oldStockItemId = $assignedItem->stock_item_id;
+
+        $assignedItem->update($validated);
+
+        // Adjust stock quantities
+        $stockItem = StockItem::findOrFail($validated['stock_item_id']);
+        if ($oldStockItemId != $validated['stock_item_id']) {
+            // Return old stock
+            $oldStockItem = StockItem::findOrFail($oldStockItemId);
+            $oldStockItem->increment('quantity', $oldQuantity);
+            // Deduct new stock
+            $stockItem->decrement('quantity', $validated['quantity_assigned']);
+        } else {
+            // Same stock item, adjust difference
+            $difference = $oldQuantity - $validated['quantity_assigned'];
+            if ($difference > 0) {
+                $stockItem->increment('quantity', $difference);
+            } elseif ($difference < 0) {
+                $stockItem->decrement('quantity', abs($difference));
+            }
+        }
+
+        return redirect()->route('admin.stock.all-assigned')->with('success', 'Assigned item updated successfully.');
+    }
+
+    /**
+     * Remove the specified assigned item from storage.
+     */
+    public function destroyAssigned(AssignedItem $assignedItem)
+    {
+        $stockItem = StockItem::findOrFail($assignedItem->stock_item_id);
+        $stockItem->increment('quantity', $assignedItem->quantity_assigned);
+
+        $assignedItem->delete();
+
+        return redirect()->route('admin.stock.all-assigned')->with('success', 'Assigned item deleted successfully.');
     }
 }

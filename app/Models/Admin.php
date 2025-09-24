@@ -28,6 +28,8 @@ class Admin extends Authenticatable
         'company_name',
         'company_logo',
         'dark_mode',
+        'role',
+        'permissions',
     ];
 
     /**
@@ -50,6 +52,65 @@ class Admin extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'permissions' => 'array',
         ];
+    }
+
+    /**
+     * Check if admin has permission for a specific module
+     */
+    public function hasPermission($module)
+    {
+        // Super admin has access to everything
+        if ($this->role === 'super_admin') {
+            return true;
+        }
+
+        // Check if permissions array contains the module
+        return in_array($module, $this->permissions ?? []);
+    }
+
+    /**
+     * Check if admin has any of the given permissions
+     */
+    public function hasAnyPermission($modules)
+    {
+        // Super admin has access to everything
+        if ($this->role === 'super_admin') {
+            return true;
+        }
+
+        // Check if any of the modules are in permissions array
+        $permissions = $this->permissions ?? [];
+        return !empty(array_intersect($modules, $permissions));
+    }
+
+    /**
+     * Get all accessible modules for the admin
+     */
+    public function getAccessibleModules()
+    {
+        if ($this->role === 'super_admin') {
+            return [
+                'Dashboard',
+                'employees',
+                'tasks',
+                'activities',
+                'Employee Card',
+                'Assigned Items',
+                'reports',
+                'attendance',
+                'salary-slips',
+                'visitors',
+                'invited-visitors',
+                'stock',
+                'performance',
+                'salary',
+                'settings',
+                'logs',
+            ];
+        }
+
+        return $this->permissions ?? [];
     }
 }

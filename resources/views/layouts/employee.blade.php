@@ -254,6 +254,30 @@
                 display: block;
             }
         }
+
+        /* Chat Bot Icon Styles */
+        .chatbot-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1001;
+            transition: background-color 0.3s ease;
+        }
+
+        .chatbot-icon:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -435,6 +459,16 @@
                 closeProfileModal();
             }
         });
+
+        // Chat Bot Function
+        function openChatBot() {
+            alert('Chat bot clicked!'); // Placeholder
+        }
     </script>
+
+    <!-- Chat Bot Icon -->
+    <div class="chatbot-icon" onclick="openChatBot()">
+        <i class="fas fa-comments"></i>
+    </div>
 </body>
 </html>

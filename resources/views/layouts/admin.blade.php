@@ -173,6 +173,12 @@
             padding: 1rem 0;
             overflow-y: auto;
             z-index: 999;
+            /* Hide scrollbar for WebKit browsers (Chrome, Safari) */
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .sidebar::-webkit-scrollbar {
+            display: none; /* Chrome, Safari */
         }
 
         .sidebar-menu {
@@ -353,6 +359,120 @@
                 display: block;
             }
         }
+
+        /* Chat Bot Icon Styles */
+        .chatbot-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1001;
+            transition: background-color 0.3s ease;
+        }
+
+        .chatbot-icon:hover {
+            background-color: #0056b3;
+        }
+
+        /* Chat Modal Styles */
+        .chat-modal {
+            display: none;
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 350px;
+            height: 450px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 1002;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-body {
+            height: 320px;
+            overflow-y: auto;
+            padding: 12px;
+            background: #f8f9fa;
+        }
+
+        .chat-message {
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 85%;
+            font-size: 14px;
+        }
+
+        .chat-message.user {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .chat-message.bot {
+            background: white;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .chat-footer {
+            padding: 10px 12px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            gap: 8px;
+            background: white;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .chat-input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+
+        .chat-send {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .chat-send:hover {
+            background: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -397,69 +517,115 @@
     <aside class="sidebar" id="sidebar">
         <nav>
             <ul class="sidebar-menu">
+                @php
+                    $admin = auth('admin')->user();
+                    $accessibleModules = $admin ? $admin->getAccessibleModules() : [];
+                @endphp
+
+                @if($admin && $admin->hasPermission('Dashboard'))
                 <li>
                     <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                         <i>📊</i> Dashboard
                     </a>
                 </li>
+                @endif
+
+                @if($admin && $admin->hasPermission('employees'))
                 <li>
                     <a href="{{ route('employees.index') }}" class="{{ request()->routeIs('employees.*') ? 'active' : '' }}">
                         <i>👥</i> Employees
                     </a>
                 </li>
-               <li class="dropdown">
+                @endif
+
+                @if($admin && $admin->hasAnyPermission(['attendance', 'salary-slips', 'Employee Card']))
+                <li class="dropdown">
                     <a href="#" class="dropdown-toggle" id="hrm-dropdown-toggle" onclick="toggleDropdown('hrm')" aria-expanded="false">
                         <i>👨‍💼</i> HRM
                     </a>
                     <ul class="dropdown-menu" id="hrm-dropdown-menu">
+                        @if($admin->hasPermission('attendance'))
                         <li><a class="dropdown-item" href="{{ route('attendance.index') }}"><i>⏰</i> Attendance</a></li>
+                        @endif
+                        @if($admin->hasPermission('salary-slips'))
                         <li><a class="dropdown-item" href="{{ route('salary-slips.index') }}"><i>💰</i> Salary Slips</a></li>
+                        @endif
+                        @if($admin->hasPermission('Employee Card'))
                         <li><a class="dropdown-item" href="{{ route('employee.card.index') }}"><i>🪪</i> Employee Card</a></li>
+                        @endif
                    </ul>
                 </li>
+                @endif
 
+                @if($admin && $admin->hasAnyPermission(['invited-visitors', 'visitors', 'stock', 'Assigned Items']))
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" id="front-desk-dropdown-toggle" onclick="toggleDropdown('front-desk')" aria-expanded="false">
                         <i>🏢</i> Front Desk
                     </a>
                     <ul class="dropdown-menu" id="front-desk-dropdown-menu">
+                        @if($admin->hasPermission('invited-visitors'))
                         <li><a class="dropdown-item" href="{{ route('invited-visitors.index') }}"><i>📧</i> Visitor Invites</a></li>
+                        @endif
+                        @if($admin->hasPermission('visitors'))
                         <li><a class="dropdown-item" href="{{ route('visitors.index') }}"><i>👤</i> Visitor</a></li>
+                        @endif
+                        @if($admin->hasPermission('stock'))
                         <li><a class="dropdown-item" href="{{ route('admin.stock.index') }}"><i>📦</i> Stock Management</a></li>
-                        <li><a class="dropdown-item" href="{{ route('admin.stock.view.assigned') }}"><i>📋</i> Assign Items</a></li>
-                        {{-- <li><a class="dropdown-item" href="{{ route('admin.stock.view.assigned') }}"><i>👁️</i> View Assigned Items</a></li> --}}
+                        @endif
+                        @if($admin->hasPermission('Assigned Items'))
+                        <li><a class="dropdown-item" href="{{ route('admin.stock.all-assigned') }}"><i>📋</i> Assign Items</a></li>
+                        @endif
                     </ul>
                 </li>
+                @endif
+
+                @if($admin && $admin->hasPermission('tasks'))
                 <li>
                     <a href="{{ route('tasks.index') }}" class="{{ request()->routeIs('tasks.*') ? 'active' : '' }}">
                         <i>📋</i> Tasks
                     </a>
                 </li>
+                @endif
+
+                @if($admin && $admin->hasPermission('activities'))
                 <li>
                     <a href="{{ route('activities.index') }}" class="{{ request()->routeIs('activities.*') ? 'active' : '' }}">
                         <i>📅</i> Activities
                     </a>
                 </li>
+                @endif
+
+                @if($admin && $admin->hasPermission('reports'))
                 <li>
                     <a href="{{ route('admin.reports.index') }}" class="{{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
                         <i>📈</i> Reports
                     </a>
                 </li>
+                @endif
+
+                @if($admin && $admin->hasPermission('performance'))
                 <li>
                     <a href="{{ route('admin.performance') }}" class="{{ request()->routeIs('admin.performance') ? 'active' : '' }}">
                         <i>📊</i> Performance
                     </a>
                 </li>
+                @endif
+
+                @if($admin && $admin->hasPermission('settings'))
                 <li>
                     <a href="{{ route('admin.profile') }}" class="{{ request()->routeIs('admin.profile') ? 'active' : '' }}">
                         <i>⚙️</i> Settings
                     </a>
                 </li>
+                @endif
+
+                @if($admin && $admin->hasPermission('logs'))
                 <li>
-                    <a href="#">
+                    <a href="{{ route('admin.logs') }}" class="{{ request()->routeIs('admin.logs') ? 'active' : '' }}">
                         <i>📝</i> Logs
                     </a>
                 </li>
+                @endif
             </ul>
         </nav>
     </aside>
@@ -631,9 +797,13 @@
 
         // Close modal when clicking outside
         window.onclick = function(event) {
-            const modal = document.getElementById('profileModal');
-            if (event.target == modal) {
+            const profileModal = document.getElementById('profileModal');
+            const chatModal = document.getElementById('chatModal');
+
+            if (event.target == profileModal) {
                 closeProfileModal();
+            } else if (event.target == chatModal) {
+                closeChatBot();
             }
         }
 
@@ -641,6 +811,7 @@
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeProfileModal();
+                closeChatBot();
             }
         });
 
@@ -648,6 +819,76 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializeDropdowns();
         });
+
+        // Chat Bot Functions
+        function openChatBot() {
+            const chatModal = document.getElementById('chatModal');
+            chatModal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeChatBot() {
+            const chatModal = document.getElementById('chatModal');
+            chatModal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (message) {
+                addMessage('user', message);
+                input.value = '';
+
+                // Simulate bot response
+                setTimeout(() => {
+                    addMessage('bot', 'Thanks for your message! This is a demo chat bot. How can I help you today?');
+                }, 1000);
+            }
+        }
+
+        function addMessage(type, message) {
+            const chatBody = document.getElementById('chatBody');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${type}`;
+            messageDiv.textContent = message;
+            chatBody.appendChild(messageDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        // Handle Enter key in chat input
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) {
+                chatInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+            }
+        });
     </script>
+
+    <!-- Chat Modal -->
+    <div id="chatModal" class="chat-modal">
+        <div class="chat-header">
+            <span>Chat Bot Assistant</span>
+            <button onclick="closeChatBot()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">&times;</button>
+        </div>
+        <div id="chatBody" class="chat-body">
+            <div class="chat-message bot">
+                Hello! I'm your chat assistant. How can I help you today?
+            </div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chatInput" class="chat-input" placeholder="Type your message...">
+            <button onclick="sendMessage()" class="chat-send">Send</button>
+        </div>
+    </div>
+
+    <!-- Chat Bot Icon -->
+    <div class="chatbot-icon" onclick="openChatBot()">
+        <i class="fas fa-comments"></i>
+    </div>
 </body>
 </html>

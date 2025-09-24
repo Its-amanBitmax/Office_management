@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use App\Models\Admin;
 
 class AdminController extends Controller
 {
@@ -34,17 +35,22 @@ class AdminController extends Controller
     {
         $admin = Auth::guard('admin')->user();
 
-        // Fetch dynamic stats
-        $totalUsers = \App\Models\Employee::count();
-        $activeTasks = \App\Models\Task::where('status', 'active')->count();
-        $incompleteTasks = \App\Models\Task::where('status', '!=', 'completed')->count();
-        $pendingReviews = \App\Models\Report::where('admin_status', 'pending')->count();
-        $totalSalaryExpenses = \App\Models\Employee::sum(DB::raw('COALESCE(basic_salary, 0) + COALESCE(hra, 0) + COALESCE(conveyance, 0) + COALESCE(medical, 0)'));
+        // Check if admin has permission to view dashboard
+        if (!$admin->hasPermission('Dashboard')) {
+            return redirect()->route('admin.login')->with('error', 'You do not have permission to access the dashboard.');
+        }
+
+        // Fetch dynamic stats (only show data for modules admin has access to)
+        $totalUsers = $admin->hasPermission('employees') ? \App\Models\Employee::count() : 0;
+        $activeTasks = $admin->hasPermission('tasks') ? \App\Models\Task::where('status', 'active')->count() : 0;
+        $incompleteTasks = $admin->hasPermission('tasks') ? \App\Models\Task::where('status', '!=', 'completed')->count() : 0;
+        $pendingReviews = $admin->hasPermission('reports') ? \App\Models\Report::where('admin_status', 'pending')->count() : 0;
+        $totalSalaryExpenses = $admin->hasPermission('employees') ? \App\Models\Employee::sum(DB::raw('COALESCE(basic_salary, 0) + COALESCE(hra, 0) + COALESCE(conveyance, 0) + COALESCE(medical, 0)')) : 0;
         $systemAlerts = 0; // Placeholder for system alerts, can be implemented later if needed
 
-        $tasks = \App\Models\Task::with(['assignedEmployee', 'teamLead'])->paginate(10);
+        $tasks = $admin->hasPermission('tasks') ? \App\Models\Task::with(['assignedEmployee', 'teamLead'])->paginate(10) : collect();
 
-        $recentEmployees = \App\Models\Employee::orderBy('created_at', 'desc')->take(5)->get();
+        $recentEmployees = $admin->hasPermission('employees') ? \App\Models\Employee::orderBy('created_at', 'desc')->take(5)->get() : collect();
 
         return view('admin.dashboard', compact('admin', 'tasks', 'totalUsers', 'activeTasks', 'incompleteTasks', 'pendingReviews', 'totalSalaryExpenses', 'systemAlerts', 'recentEmployees'));
     }
@@ -137,6 +143,151 @@ class AdminController extends Controller
         $request->session()->regenerateToken();
 
         return redirect(route('admin.login'));
+    }
+
+    // Sub-Admin Management Methods
+    public function indexSubAdmins()
+    {
+        $subAdmins = Admin::where('role', 'sub_admin')->paginate(10);
+        return view('admin.sub-admins.index', compact('subAdmins'));
+    }
+
+    public function createSubAdmin()
+    {
+        $modules = [
+            'Dashboard' => 'Dashboard',
+            'employees' => 'Employees',
+            'tasks' => 'Tasks',
+            'activities' => 'Activities',
+            'Employee Card' => 'Employee Card',
+            'Assigned Items' => 'Assigned Items',
+            'reports' => 'Reports',
+            'attendance' => 'Attendance',
+            'salary-slips' => 'Salary Slips',
+            'visitors' => 'Visitors',
+            'invited-visitors' => 'Invited Visitors',
+            'stock' => 'Stock Management',
+            'performance' => 'Performance',
+            'salary' => 'Salary',
+            'settings' => 'Settings',
+            'logs' => 'Logs',
+        ];
+
+        return view('admin.sub-admins.create', compact('modules'));
+    }
+
+    public function storeSubAdmin(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:admins',
+            'password' => 'required|string|min:8|confirmed',
+            'phone' => 'nullable|string|max:20',
+            'bio' => 'nullable|string|max:500',
+            'permissions' => 'array',
+        ]);
+
+        $permissions = $request->permissions ?? [];
+
+        Admin::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'phone' => $request->phone,
+            'bio' => $request->bio,
+            'role' => 'sub_admin',
+            'permissions' => $permissions,
+        ]);
+
+        return redirect()->route('admin.sub-admins.index')->with('success', 'Sub-admin created successfully!');
+    }
+
+    public function editSubAdmin($id)
+    {
+        $subAdmin = Admin::findOrFail($id);
+        $modules = [
+            'Dashboard' => 'Dashboard',
+            'employees' => 'Employees',
+            'tasks' => 'Tasks',
+            'activities' => 'Activities',
+            'Employee Card' => 'Employee Card',
+            'Assigned Items' => 'Assigned Items',
+            'reports' => 'Reports',
+            'attendance' => 'Attendance',
+            'salary-slips' => 'Salary Slips',
+            'visitors' => 'Visitors',
+            'invited-visitors' => 'Invited Visitors',
+            'stock' => 'Stock Management',
+            'performance' => 'Performance',
+            'salary' => 'Salary',
+            'settings' => 'Settings',
+            'logs' => 'Logs',
+        ];
+
+        return view('admin.sub-admins.edit', compact('subAdmin', 'modules'));
+    }
+
+    public function updateSubAdmin(Request $request, $id)
+    {
+        $subAdmin = \App\Models\Admin::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('admins')->ignore($subAdmin->id)],
+            'password' => 'nullable|string|min:8|confirmed',
+            'phone' => 'nullable|string|max:20',
+            'bio' => 'nullable|string|max:500',
+            'permissions' => 'array',
+        ]);
+
+        $data = [
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'bio' => $request->bio,
+            'permissions' => $request->permissions ?? [],
+        ];
+
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $subAdmin->update($data);
+
+        return redirect()->route('admin.sub-admins.index')->with('success', 'Sub-admin updated successfully!');
+    }
+
+    public function deleteSubAdmin($id)
+    {
+        $subAdmin = Admin::findOrFail($id);
+        $subAdmin->delete();
+
+        return redirect()->route('admin.sub-admins.index')->with('success', 'Sub-admin deleted successfully!');
+    }
+
+    public function show($id)
+    {
+        $subAdmin = Admin::findOrFail($id);
+        $modules = [
+            'Dashboard' => 'Dashboard',
+            'employees' => 'Employees',
+            'tasks' => 'Tasks',
+            'activities' => 'Activities',
+            'Employee Card' => 'Employee Card',
+            'Assigned Items' => 'Assigned Items',
+            'reports' => 'Reports',
+            'attendance' => 'Attendance',
+            'salary-slips' => 'Salary Slips',
+            'visitors' => 'Visitors',
+            'invited-visitors' => 'Invited Visitors',
+            'stock' => 'Stock Management',
+            'performance' => 'Performance',
+            'salary' => 'Salary',
+            'settings' => 'Settings',
+            'logs' => 'Logs',
+        ];
+
+        return view('admin.sub-admins.show', compact('subAdmin', 'modules'));
     }
 
 public function performance(Request $request)
@@ -265,5 +416,17 @@ public function performance(Request $request)
         $highRatingBonus = (isset($employeeData['rating_counts'][5]) ? $employeeData['rating_counts'][5] : 0) / max($totalRatings, 1) * 0.5;
 
         return round($baseScore + $consistencyBonus + $highRatingBonus, 1);
+    }
+
+    public function logs()
+    {
+        $admin = Auth::guard('admin')->user();
+
+        // Check if admin has permission to view logs
+        if (!$admin->hasPermission('logs')) {
+            return redirect()->route('admin.dashboard')->with('error', 'You do not have permission to access this module.');
+        }
+
+        return view('admin.logs', compact('admin'));
     }
 }

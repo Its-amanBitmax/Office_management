@@ -45,8 +45,8 @@
                         </div>
                     </div>
                     <div class="mt-3">
-                        <a href="{{ route('admin.stock.edit', ['stock' => $stockItem->id]) }}" class="btn btn-warning">Edit</a>
-                        <form action="{{ route('admin.stock.destroy', ['stock' => $stockItem->id]) }}" method="POST" style="display: inline;">
+                        <a href="{{ route('admin.stock.edit', $stockItem) }}" class="btn btn-warning">Edit</a>
+                        <form action="{{ route('admin.stock.destroy', $stockItem) }}" method="POST" style="display: inline;">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
