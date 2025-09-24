@@ -64,7 +64,9 @@
                         @endforeach
                     </tbody>
                 </table>
-                {{ $tasks->links() }}
+                @if(method_exists($tasks, 'links') && method_exists($tasks, 'hasPages') && $tasks->hasPages())
+                    {{ $tasks->links() }}
+                @endif
             </div>
         </div>
 

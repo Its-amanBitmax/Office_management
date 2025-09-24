@@ -619,6 +619,14 @@
                 </li>
                 @endif
 
+                 @if($admin && $admin->role === 'super_admin')
+                <li>
+                    <a href="{{ route('admin.sub-admins.index') }}" class="{{ request()->routeIs('admin.sub-admins.*') ? 'active' : '' }}">
+                        <i>👤</i> Sub Admins
+                    </a>
+                </li>
+                @endif
+
                 @if($admin && $admin->hasPermission('logs'))
                 <li>
                     <a href="{{ route('admin.logs') }}" class="{{ request()->routeIs('admin.logs') ? 'active' : '' }}">
@@ -626,6 +634,8 @@
                     </a>
                 </li>
                 @endif
+
+               
             </ul>
         </nav>
     </aside>

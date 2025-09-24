@@ -168,7 +168,6 @@ class AdminController extends Controller
             'invited-visitors' => 'Invited Visitors',
             'stock' => 'Stock Management',
             'performance' => 'Performance',
-            'salary' => 'Salary',
             'settings' => 'Settings',
             'logs' => 'Logs',
         ];
@@ -219,7 +218,6 @@ class AdminController extends Controller
             'invited-visitors' => 'Invited Visitors',
             'stock' => 'Stock Management',
             'performance' => 'Performance',
-            'salary' => 'Salary',
             'settings' => 'Settings',
             'logs' => 'Logs',
         ];
@@ -282,7 +280,6 @@ class AdminController extends Controller
             'invited-visitors' => 'Invited Visitors',
             'stock' => 'Stock Management',
             'performance' => 'Performance',
-            'salary' => 'Salary',
             'settings' => 'Settings',
             'logs' => 'Logs',
         ];
