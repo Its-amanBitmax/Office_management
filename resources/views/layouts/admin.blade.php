@@ -878,27 +878,19 @@
             }
         });
     </script>
-
-    <!-- Chat Modal -->
-    <div id="chatModal" class="chat-modal">
-        <div class="chat-header">
-            <span>🤖 BotGuru</span>
-            <button onclick="closeChatBot()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">&times;</button>
-        </div>
-        <div id="chatBody" class="chat-body">
-            <div class="chat-message bot">
-                Hello! I'm your chat assistant. How can I help you today?
-            </div>
-        </div>
-        <div class="chat-footer">
-            <input type="text" id="chatInput" class="chat-input" placeholder="Type your message...">
-            <button onclick="sendMessage()" class="chat-send">Send</button>
-        </div>
-    </div>
-
-    <!-- Chat Bot Icon -->
-    <div class="chatbot-icon" onclick="openChatBot()">
-        <i class="fas fa-comments"></i>
-    </div>
+<!--Start of Tawk.to Script-->
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/68d43430ae823e19250b7c93/1j5uenoav';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
+<!--End of Tawk.to Script-->
+   
 </body>
 </html>

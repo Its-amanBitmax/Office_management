@@ -539,9 +539,17 @@
     </div>
 
     <!-- Chat Bot Icon -->
-    <div class="chatbot-icon" onclick="openChatBot()">
-        <i class="fas fa-comments"></i>
-    </div>
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/68d43430ae823e19250b7c93/1j5uenoav';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
 
     <script>
         function openProfileModal() {
@@ -629,17 +637,6 @@
             }
         });
     </script>
-    <!--Start of Tawk.to Script-->
-<script type="text/javascript">
-var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-(function(){
-var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-s1.async=true;
-s1.src='https://embed.tawk.to/68d43430ae823e19250b7c93/1j5uenoav';
-s1.charset='UTF-8';
-s1.setAttribute('crossorigin','*');
-s0.parentNode.insertBefore(s1,s0);
-})();
-</script>
+    
 </body>
 </html>
