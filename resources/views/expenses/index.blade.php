@@ -15,6 +15,48 @@
         </a>
     </div>
 
+    @if(auth('admin')->user()->is_super_admin ?? false)
+    <!-- Monthly Report Export -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-file-excel text-success"></i> Monthly Expense Report</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('admin.expenses.export', ['month' => date('m'), 'year' => date('Y')]) }}" method="GET" class="d-inline">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label for="month" class="form-label">Month</label>
+                                <select name="month" id="month" class="form-select">
+                                    @for($i = 1; $i <= 12; $i++)
+                                        <option value="{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}" {{ $i == date('m') ? 'selected' : '' }}>
+                                            {{ date('F', mktime(0, 0, 0, $i, 1)) }}
+                                        </option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="year" class="form-label">Year</label>
+                                <select name="year" id="year" class="form-select">
+                                    @for($y = date('Y') - 5; $y <= date('Y'); $y++)
+                                        <option value="{{ $y }}" {{ $y == date('Y') ? 'selected' : '' }}>{{ $y }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-download"></i> Download Excel Report
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Budget Information Card -->
     <div class="row mb-4">
         <div class="col-md-12">

@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Expense;
 use App\Models\ExpenseBudget;
+use App\Models\BudgetHistory;
+use App\Exports\MonthlyExpenseExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ExpenseController extends Controller
 {
@@ -110,6 +113,7 @@ class ExpenseController extends Controller
         ]);
 
         $budget = ExpenseBudget::getCurrentBudget();
+        $oldBudgetAmount = $budget->budget_amount;
         $newBudgetAmount = $request->budget_amount;
 
         // Calculate new remaining amount
@@ -119,6 +123,16 @@ class ExpenseController extends Controller
         $budget->update([
             'budget_amount' => $newBudgetAmount,
             'remaining_amount' => $newRemainingAmount,
+        ]);
+
+        // Log history
+        BudgetHistory::create([
+            'action' => 'update',
+            'amount' => $newBudgetAmount - $oldBudgetAmount,
+            'old_budget' => $oldBudgetAmount,
+            'new_budget' => $newBudgetAmount,
+            'remaining' => $newRemainingAmount,
+            'created_by' => Auth::guard('admin')->id(),
         ]);
 
         return redirect()->route('admin.expenses.index')->with('success', 'Budget updated successfully!');
@@ -136,12 +150,33 @@ class ExpenseController extends Controller
         ]);
 
         $budget = ExpenseBudget::getCurrentBudget();
+        $oldBudgetAmount = $budget->budget_amount;
         $addAmount = $request->add_amount;
 
         $budget->budget_amount += $addAmount;
         $budget->remaining_amount += $addAmount;
         $budget->save();
 
+        // Log history
+        BudgetHistory::create([
+            'action' => 'add',
+            'amount' => $addAmount,
+            'old_budget' => $oldBudgetAmount,
+            'new_budget' => $budget->budget_amount,
+            'remaining' => $budget->remaining_amount,
+            'created_by' => Auth::guard('admin')->id(),
+        ]);
+
         return redirect()->route('admin.expenses.index')->with('success', 'Budget added successfully! Added ₹' . number_format($addAmount, 2));
+    }
+
+    public function export($month, $year)
+    {
+        // Only super admin can export reports
+        if (!auth('admin')->user()->is_super_admin ?? false) {
+            abort(403, 'Unauthorized');
+        }
+
+        return Excel::download(new MonthlyExpenseExport($month, $year), "expenses_{$month}_{$year}.xlsx");
     }
 }
