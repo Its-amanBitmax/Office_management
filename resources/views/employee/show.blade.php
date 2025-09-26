@@ -75,7 +75,16 @@
                                         {{ strtoupper(substr($employee->name, 0, 1)) }}
                                     </div>
                                 @endif
+                                
+                                  <strong class="d-block mb-1"></strong> 
+            
+           <span class="badge bg-{{ $employee->status === 'active' ? 'success' : 'secondary' }}">
+                                            {{ ucfirst($employee->status) }}
+                                        </span>
                             </div>
+                            
+                    
+                            
                             <div class="col-md-9">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
@@ -95,7 +104,7 @@
                                         {{ $employee->phone ?? 'N/A' }}
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <strong>Hire Date:</strong><br>
+                                        <strong>Joining Date:</strong><br>
                                         {{ $employee->hire_date ? \Carbon\Carbon::parse($employee->hire_date)->format('d M Y') : 'N/A' }}
                                     </div>
                                     <div class="col-md-6 mb-3">
@@ -107,10 +116,8 @@
                                         {{ $employee->department ?? 'N/A' }}
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <strong>Status:</strong><br>
-                                        <span class="badge bg-{{ $employee->status === 'active' ? 'success' : 'secondary' }}">
-                                            {{ ucfirst($employee->status) }}
-                                        </span>
+                                        <strong>DOB:</strong><br>
+                                          {{ $employee->dob ? \Carbon\Carbon::parse($employee->dob)->format('Y M d') : 'N/A' }}
                                     </div>
                                 </div>
                             </div>

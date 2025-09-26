@@ -6,15 +6,65 @@
 @section('page-description', 'System logs and activity tracking')
 
 @section('content')
-<div class="d-flex flex-column align-items-center justify-content-center py-5" style="min-height:60vh; text-align:center; background: linear-gradient(135deg, #c2bdcb, #2f45ec); color:#fff;">
-    <h1 style="font-size:2.5rem; font-weight:600;">We’re Launching Soon 🚀</h1>
-    <p style="max-width:600px; font-size:1.1rem; margin-top:1rem;">
-        Our website is currently under construction. We’re working hard to give you the best experience. Stay tuned!
-    </p>
-    <form class="newsletter mt-3 d-flex flex-column flex-sm-row justify-content-center align-items-center">
-        <input type="email" class="form-control mb-2 mb-sm-0 me-sm-2" placeholder="Enter your email" style="width:250px;">
-        <button type="submit" class="btn btn-light fw-bold text-primary">Notify Me</button>
-    </form>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Activity Logs</h4>
+                </div>
+                <div class="card-body">
+                    @if($logs->count() > 0)
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Action</th>
+                                        <th>Model</th>
+                                        <th>Description</th>
+                                        <th>IP Address</th>
+                                        <th>Date & Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($logs as $log)
+                                        <tr>
+                                            <td>
+                                                @if($log->user)
+                                                    {{ $log->user->name }} ({{ ucfirst($log->user_type) }})
+                                                @else
+                                                    Unknown
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ $log->action === 'create' ? 'success' : ($log->action === 'update' ? 'warning' : ($log->action === 'delete' ? 'danger' : 'info')) }}">
+                                                    {{ ucfirst($log->action) }}
+                                                </span>
+                                            </td>
+                                            <td>{{ $log->model ?: 'N/A' }}</td>
+                                            <td>{{ $log->description }}</td>
+                                            <td>{{ $log->ip_address ?: 'N/A' }}</td>
+                                            <td>{{ $log->created_at->format('M d, Y H:i') }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-center">
+                            {{ $logs->links() }}
+                        </div>
+                    @else
+                        <div class="text-center py-5">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No activity logs found</h5>
+                            <p class="text-muted">Activity logs will appear here as users perform actions.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 

@@ -91,21 +91,28 @@
                                     @enderror
                                 </div>
 
-                                <div class="col-md-6 mb-3">
-                                    <label for="hire_date" class="form-label">Hire Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control @error('hire_date') is-invalid @enderror" id="hire_date" name="hire_date" value="{{ old('hire_date', $employee->hire_date) }}" required>
-                                    @error('hire_date')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+                               <div class="col-md-6 mb-3">
+    <label for="hire_date" class="form-label">Joining Date</label>
+    <input type="date"
+           class="form-control @error('hire_date') is-invalid @enderror"
+           id="hire_date" name="hire_date"
+           value="{{ old('hire_date', $employee->hire_date ? \Carbon\Carbon::parse($employee->hire_date)->format('Y-m-d') : '') }}">
+    @error('hire_date')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
 
-                                <div class="col-md-6 mb-3">
-                                    <label for="dob" class="form-label">Date of Birth</label>
-                                    <input type="date" class="form-control @error('dob') is-invalid @enderror" id="dob" name="dob" value="{{ old('dob', $employee->dob) }}">
-                                    @error('dob')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+<div class="col-md-6 mb-3">
+    <label for="dob" class="form-label">Date of Birth</label>
+    <input type="date"
+           class="form-control @error('dob') is-invalid @enderror"
+           id="dob" name="dob"
+           value="{{ old('dob', $employee->dob ? \Carbon\Carbon::parse($employee->dob)->format('Y-m-d') : '') }}">
+    @error('dob')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
+
 
                                 <div class="col-md-6 mb-3">
                                     <label for="position" class="form-label">Position</label>
@@ -640,7 +647,7 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="basic_salary" class="form-label">Basic Salary</label>
-                                    <input type="number" step="0.01" class="form-control @error('basic_salary') is-invalid @enderror" id="basic_salary" name="basic_salary" value="{{ old('basic_salary', $employee->basic_salary) }}">
+                                    <input type="text" class="form-control @error('basic_salary') is-invalid @enderror" id="basic_salary" name="basic_salary" value="{{ old('basic_salary', $employee->basic_salary) }}">
                                     @error('basic_salary')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -648,7 +655,7 @@
 
                                 <div class="col-md-6 mb-3">
                                     <label for="hra" class="form-label">HRA</label>
-                                    <input type="number" step="0.01" class="form-control @error('hra') is-invalid @enderror" id="hra" name="hra" value="{{ old('hra', $employee->hra) }}">
+                                    <input type="text" class="form-control @error('hra') is-invalid @enderror" id="hra" name="hra" value="{{ old('hra', $employee->hra) }}">
                                     @error('hra')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -656,7 +663,7 @@
 
                                 <div class="col-md-6 mb-3">
                                     <label for="conveyance" class="form-label">Conveyance Allowance</label>
-                                    <input type="number" step="0.01" class="form-control @error('conveyance') is-invalid @enderror" id="conveyance" name="conveyance" value="{{ old('conveyance', $employee->conveyance) }}">
+                                    <input type="text" class="form-control @error('conveyance') is-invalid @enderror" id="conveyance" name="conveyance" value="{{ old('conveyance', $employee->conveyance) }}">
                                     @error('conveyance')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -664,7 +671,7 @@
 
                                 <div class="col-md-6 mb-3">
                                     <label for="medical" class="form-label">Medical Allowance</label>
-                                    <input type="number" step="0.01" class="form-control @error('medical') is-invalid @enderror" id="medical" name="medical" value="{{ old('medical', $employee->medical) }}">
+                                    <input type="text" class="form-control @error('medical') is-invalid @enderror" id="medical" name="medical" value="{{ old('medical', $employee->medical) }}">
                                     @error('medical')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

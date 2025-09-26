@@ -9,9 +9,12 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use App\Models\Admin;
+use App\Traits\Loggable;
 
 class AdminController extends Controller
 {
+    use Loggable;
+
     public function showLoginForm()
     {
         return view('admin.login');
@@ -23,6 +26,11 @@ class AdminController extends Controller
 
         if (Auth::guard('admin')->attempt($credentials)) {
             $request->session()->regenerate();
+
+            // Log login activity
+            $admin = Auth::guard('admin')->user();
+            $this->logActivity('login', null, null, "Admin {$admin->name} logged in");
+
             return redirect()->intended(route('admin.dashboard'));
         }
 
@@ -136,6 +144,13 @@ class AdminController extends Controller
 
     public function logout(Request $request)
     {
+        $admin = Auth::guard('admin')->user();
+
+        // Log logout activity before logging out
+        if ($admin) {
+            $this->logActivity('logout', null, null, "Admin {$admin->name} logged out");
+        }
+
         Auth::guard('admin')->logout();
 
         $request->session()->invalidate();
@@ -426,6 +441,8 @@ public function performance(Request $request)
             return redirect()->route('admin.dashboard')->with('error', 'You do not have permission to access this module.');
         }
 
-        return view('admin.logs', compact('admin'));
+        $logs = \App\Models\ActivityLog::with('user')->orderBy('created_at', 'desc')->paginate(20);
+
+        return view('admin.logs', compact('admin', 'logs'));
     }
 }

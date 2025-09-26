@@ -6,12 +6,15 @@ use App\Models\Expense;
 use App\Models\ExpenseBudget;
 use App\Models\BudgetHistory;
 use App\Exports\MonthlyExpenseExport;
+use App\Traits\Loggable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ExpenseController extends Controller
 {
+    use Loggable;
+
     public function index()
     {
         $expenses = Expense::with('admin')->orderBy('expense_date', 'desc')->paginate(10);
@@ -40,7 +43,7 @@ class ExpenseController extends Controller
             return back()->withErrors(['amount' => 'Insufficient budget. Remaining budget: $' . number_format($budget->remaining_amount, 2)])->withInput();
         }
 
-        Expense::create([
+        $expense = Expense::create([
             'title' => $request->title,
             'amount' => $request->amount,
             'category' => $request->category,
@@ -50,6 +53,9 @@ class ExpenseController extends Controller
 
         // Deduct from budget
         $budget->deductAmount($request->amount);
+
+        // Log activity
+        $this->logActivity('create', 'Expense', $expense->id, "Created expense: {$request->title} for ₹{$request->amount}");
 
         return redirect()->route('admin.expenses.index')->with('success', 'Expense added successfully!');
     }
@@ -85,6 +91,9 @@ class ExpenseController extends Controller
         // Adjust budget
         $budget->adjustAmount($oldAmount, $newAmount);
 
+        // Log activity
+        $this->logActivity('update', 'Expense', $expense->id, "Updated expense: {$request->title} from ₹{$oldAmount} to ₹{$newAmount}");
+
         return redirect()->route('admin.expenses.index')->with('success', 'Expense updated successfully!');
     }
 
@@ -97,6 +106,9 @@ class ExpenseController extends Controller
 
         // Add back to budget
         $budget->addBackAmount($amount);
+
+        // Log activity
+        $this->logActivity('delete', 'Expense', $expense->id, "Deleted expense: {$expense->title} for ₹{$amount}");
 
         return redirect()->route('admin.expenses.index')->with('success', 'Expense deleted successfully!');
     }

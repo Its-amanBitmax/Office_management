@@ -6,6 +6,7 @@ use App\Models\Activity;
 use App\Models\Employee;
 use App\Models\Report;
 use App\Models\Task;
+use App\Traits\Loggable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +15,7 @@ use Illuminate\Validation\Rule;
 
 class EmployeeController extends Controller
 {
+    use Loggable;
     /**
      * Display a listing of the employees.
      */
@@ -104,16 +106,16 @@ class EmployeeController extends Controller
             'countries' => 'nullable|array',
             'countries.*' => 'nullable|string|max:100',
             // Payroll
-            'basic_salary' => 'nullable|numeric|min:0',
-            'hra' => 'nullable|numeric|min:0',
-            'conveyance' => 'nullable|numeric|min:0',
-            'medical' => 'nullable|numeric|min:0',
+            'basic_salary' => 'nullable|string|max:255',
+            'hra' => 'nullable|string|max:255',
+            'conveyance' => 'nullable|string|max:255',
+            'medical' => 'nullable|string|max:255',
             // Documents
             'document_types' => 'nullable|array',
             'document_types.*' => 'nullable|string|max:100',
             'document_files' => 'nullable|array',
             'document_files.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048',
-        ]);
+            ]);
 
         // Handle profile image
         if ($request->hasFile('profile_image')) {
@@ -123,14 +125,10 @@ class EmployeeController extends Controller
         // Hash password
         $validated['password'] = Hash::make($validated['password']);
 
-        // Cast numeric fields
-        $validated['basic_salary'] = isset($validated['basic_salary']) ? (float)$validated['basic_salary'] : null;
-        $validated['hra'] = isset($validated['hra']) ? (float)$validated['hra'] : null;
-        $validated['conveyance'] = isset($validated['conveyance']) ? (float)$validated['conveyance'] : null;
-        $validated['medical'] = isset($validated['medical']) ? (float)$validated['medical'] : null;
-
         // Create employee
         $employee = Employee::create($validated);
+
+        $this->logActivity('create', 'Employee', $employee->id, 'Employee created successfully');
 
         // Create related records
         $this->createRelatedRecords($employee, $request);
@@ -233,11 +231,11 @@ class EmployeeController extends Controller
                 'postal_codes.*' => 'nullable|string|max:20',
                 'countries' => 'nullable|array',
                 'countries.*' => 'nullable|string|max:100',
-                // Payroll
-                'basic_salary' => 'nullable|numeric|min:0',
-                'hra' => 'nullable|numeric|min:0',
-                'conveyance' => 'nullable|numeric|min:0',
-                'medical' => 'nullable|numeric|min:0',
+            // Payroll
+            'basic_salary' => 'nullable|string|max:255',
+            'hra' => 'nullable|string|max:255',
+            'conveyance' => 'nullable|string|max:255',
+            'medical' => 'nullable|string|max:255',
                 // Documents
                 'document_types' => 'nullable|array',
                 'document_types.*' => 'nullable|string|max:100',
@@ -260,14 +258,10 @@ class EmployeeController extends Controller
                 unset($validated['password']);
             }
 
-            // Cast numeric fields
-            $validated['basic_salary'] = isset($validated['basic_salary']) ? (float)$validated['basic_salary'] : null;
-            $validated['hra'] = isset($validated['hra']) ? (float)$validated['hra'] : null;
-            $validated['conveyance'] = isset($validated['conveyance']) ? (float)$validated['conveyance'] : null;
-            $validated['medical'] = isset($validated['medical']) ? (float)$validated['medical'] : null;
-
             // Update employee
             $employee->update($validated);
+
+            $this->logActivity('update', 'Employee', $employee->id, 'Employee updated successfully');
 
             // Update related records
             $this->updateRelatedRecords($employee, $request);
@@ -510,6 +504,8 @@ class EmployeeController extends Controller
      */
     public function destroy(Employee $employee)
     {
+        $this->logActivity('delete', 'Employee', $employee->id, 'Employee deleted successfully');
+
         $employee->delete();
         return redirect()->route('employees.index')->with('success', 'Employee deleted successfully.');
     }
@@ -585,6 +581,8 @@ class EmployeeController extends Controller
         }
 
         $employee->update($validated);
+
+        $this->logActivity('update profile', 'Employee', $employee->id, 'Employee profile updated successfully');
 
         return back()->with('success', 'Profile updated successfully.');
     }
@@ -672,6 +670,8 @@ class EmployeeController extends Controller
 
         $task->update($validated);
 
+        $this->logActivity('update task', 'Task', $task->id, 'Task updated successfully');
+
         return redirect()->route('employee.tasks.show', $task)->with('success', 'Task updated successfully.');
     }
 
@@ -692,6 +692,8 @@ class EmployeeController extends Controller
         ]);
 
         $task->update($validated);
+
+        $this->logActivity('update task progress', 'Task', $task->id, 'Task progress updated successfully');
 
         return back()->with('success', 'Task progress updated successfully.');
     }
@@ -763,7 +765,9 @@ class EmployeeController extends Controller
             $reportData['attachment'] = $request->file('attachment')->store('reports', 'public');
         }
 
-        Report::create($reportData);
+        $report = Report::create($reportData);
+
+        $this->logActivity('create report', 'Report', $report->id, 'Report sent successfully');
 
         return redirect()->route('employee.reports')->with('success', 'Report sent successfully.');
     }
@@ -872,6 +876,8 @@ class EmployeeController extends Controller
             'team_lead_review' => $validated['team_lead_review'],
             'team_lead_rating' => $validated['team_lead_rating'],
         ]);
+
+        $this->logActivity('update team report', 'Report', $report->id, 'Team lead review updated successfully');
 
         return redirect()->route('employee.team-reports.show', $report->id)->with('success', 'Team lead review updated successfully.');
     }
