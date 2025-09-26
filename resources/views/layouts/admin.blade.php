@@ -553,6 +553,9 @@
                         @if($admin->hasPermission('Employee Card'))
                         <li><a class="dropdown-item" href="{{ route('employee.card.index') }}"><i>🪪</i> Employee Card</a></li>
                         @endif
+                        @if($admin->hasPermission('expenses'))
+                        <li><a class="dropdown-item" href="{{ route('admin.expenses.index') }}"><i>💸</i> Expenses</a></li>
+                        @endif
                    </ul>
                 </li>
                 @endif

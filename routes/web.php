@@ -4,7 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\AttendanceController;
-   use App\Http\Controllers\EmployeeCardController;
+use App\Http\Controllers\EmployeeCardController;
+use App\Http\Controllers\ExpenseController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -166,6 +167,21 @@ Route::prefix('admin')->group(function () {
         Route::get('/employee-card/{employee?}', [EmployeeCardController::class, 'index'])->name('employee.card.index');
         Route::get('/employee-card/{employee}', [EmployeeCardController::class, 'show'])->name('employee.card.show');
         Route::get('/employee-card/{employee}/pdf', [EmployeeCardController::class, 'pdf'])->name('employee.card.pdf');
+
+        // Expenses Management Routes
+        Route::middleware('admin:expenses')->group(function () {
+            Route::resource('expenses', \App\Http\Controllers\ExpenseController::class)->names([
+                'index' => 'admin.expenses.index',
+                'create' => 'admin.expenses.create',
+                'store' => 'admin.expenses.store',
+                'show' => 'admin.expenses.show',
+                'edit' => 'admin.expenses.edit',
+                'update' => 'admin.expenses.update',
+                'destroy' => 'admin.expenses.destroy',
+            ]);
+            Route::post('expenses/update-budget', [\App\Http\Controllers\ExpenseController::class, 'updateBudget'])->name('admin.expenses.update-budget');
+            Route::post('expenses/add-budget', [\App\Http\Controllers\ExpenseController::class, 'addBudget'])->name('admin.expenses.add-budget');
+        });
            
     });
 });

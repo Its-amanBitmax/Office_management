@@ -86,6 +86,14 @@ class Admin extends Authenticatable
     }
 
     /**
+     * Check if the admin is a super admin
+     */
+    public function getIsSuperAdminAttribute()
+    {
+        return $this->role === 'super_admin';
+    }
+
+    /**
      * Get all accessible modules for the admin
      */
     public function getAccessibleModules()
@@ -108,6 +116,7 @@ class Admin extends Authenticatable
                 'salary',
                 'settings',
                 'logs',
+                'expenses',
             ];
         }
 
