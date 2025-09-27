@@ -38,7 +38,18 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <span class="badge bg-{{ $log->action === 'create' ? 'success' : ($log->action === 'update' ? 'warning' : ($log->action === 'delete' ? 'danger' : 'info')) }}">
+                                                @php
+                                                    $class = 'info';
+                                                
+                                                    if ($log->action === 'create') {
+                                                        $class = 'success';
+                                                    } elseif ($log->action === 'update') {
+                                                        $class = 'warning';
+                                                    } elseif (in_array($log->action, ['delete','logout','deleted'])) {
+                                                        $class = 'danger';
+                                                    }
+                                                @endphp
+                                                <span class="badge bg-{{ $class }}">
                                                     {{ ucfirst($log->action) }}
                                                 </span>
                                             </td>

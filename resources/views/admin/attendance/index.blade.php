@@ -141,8 +141,8 @@ function markAttendance(employeeId, status, date) {
         method: 'POST',
         body: formData,
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
     })
     .then(response => {
@@ -180,6 +180,9 @@ function markAttendance(employeeId, status, date) {
 
             // Show success message
             showAlert('Attendance marked successfully!', 'success');
+
+            // Refresh the page immediately
+            window.location.reload();
         } else {
             // Re-enable buttons on error
             buttons.forEach(button => {

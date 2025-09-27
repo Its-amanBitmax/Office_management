@@ -7,10 +7,13 @@ use App\Models\Employee;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use DateTimeZone;
+use App\Traits\Loggable;
 
 class AttendanceController extends Controller
 {
+    use Loggable;
     /**
      * Display a listing of the resource.
      */
@@ -50,47 +53,73 @@ class AttendanceController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'employee_id' => 'required|exists:employees,id',
-            'date' => 'required|date',
-            'status' => 'required|in:Present,Absent,Leave,Half Day',
-            'remarks' => 'nullable|string|max:255',
-        ]);
-
-        // Check if attendance already exists for this employee on this date
-        $existingAttendance = Attendance::where('employee_id', $request->employee_id)
-            ->where('date', $request->date)
-            ->first();
-
-        if ($existingAttendance) {
-            // Update existing record
-            $existingAttendance->update([
-                'status' => $request->status,
-                'remarks' => $request->remarks,
+        try {
+            $request->validate([
+                'employee_id' => 'required|exists:employees,id',
+                'date' => 'required|date',
+                'status' => 'required|in:Present,Absent,Leave,Half Day',
+                'remarks' => 'nullable|string|max:255',
             ]);
+
+            // Check if attendance already exists for this employee on this date
+            $existingAttendance = Attendance::where('employee_id', $request->employee_id)
+                ->where('date', $request->date)
+                ->first();
+
+            if ($existingAttendance) {
+                // Update existing record
+                $existingAttendance->update([
+                    'status' => $request->status,
+                    'remarks' => $request->remarks,
+                ]);
+
+                // Log activity
+                $this->logActivity('updated', 'Attendance', $existingAttendance->id, 'Updated attendance for ' . $existingAttendance->employee->name . ' to ' . $existingAttendance->status . ' on ' . $existingAttendance->date);
+
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Attendance updated successfully.',
+                        'attendance' => $existingAttendance
+                    ]);
+                }
+
+                return redirect()->route('attendance.index')->with('success', 'Attendance record updated successfully.');
+            }
+
+            $attendance = Attendance::create($request->all());
+
+            // Log activity
+            $this->logActivity('created', 'Attendance', $attendance->id, 'Marked attendance for ' . $attendance->employee->name . ' as ' . $attendance->status . ' on ' . $attendance->date);
 
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Attendance updated successfully.',
-                    'attendance' => $existingAttendance
+                    'message' => 'Attendance marked successfully.',
+                    'attendance' => $attendance
                 ]);
             }
 
-            return redirect()->route('attendance.index')->with('success', 'Attendance record updated successfully.');
+            return redirect()->route('attendance.index')->with('success', 'Attendance record created successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e; // Re-throw for default HTML handling
+        } catch (\Exception $e) {
+            Log::error('Attendance store error: ' . $e->getMessage(), ['request' => $request->all()]);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An error occurred while processing the request.'
+                ], 500);
+            }
+            throw $e;
         }
-
-        $attendance = Attendance::create($request->all());
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Attendance marked successfully.',
-                'attendance' => $attendance
-            ]);
-        }
-
-        return redirect()->route('attendance.index')->with('success', 'Attendance record created successfully.');
     }
 
     /**
@@ -134,6 +163,9 @@ class AttendanceController extends Controller
 
         $attendance->save();
 
+        // Log activity
+        $this->logActivity('updated', 'Attendance', $attendance->id, 'Updated attendance for ' . $attendance->employee->name . ' to ' . $attendance->status . ' on ' . $attendance->date);
+
         return redirect()->route('attendance.index')->with('success', 'Attendance record updated successfully.');
     }
 
@@ -142,7 +174,13 @@ class AttendanceController extends Controller
      */
     public function destroy(Attendance $attendance)
     {
+        $employeeName = $attendance->employee->name;
+        $date = $attendance->date;
+
         $attendance->delete();
+
+        // Log activity
+        $this->logActivity('deleted', 'Attendance', null, 'Deleted attendance for ' . $employeeName . ' on ' . $date);
 
         return redirect()->route('attendance.index')->with('success', 'Attendance record deleted successfully.');
     }
