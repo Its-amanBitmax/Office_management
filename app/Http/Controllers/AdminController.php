@@ -432,17 +432,24 @@ public function performance(Request $request)
         return round($baseScore + $consistencyBonus + $highRatingBonus, 1);
     }
 
-    public function logs()
-    {
-        $admin = Auth::guard('admin')->user();
+public function logs()
+{
+    $admin = Auth::guard('admin')->user();
 
-        // Check if admin has permission to view logs
-        if (!$admin->hasPermission('logs')) {
-            return redirect()->route('admin.dashboard')->with('error', 'You do not have permission to access this module.');
-        }
-
-        $logs = \App\Models\ActivityLog::with('user')->orderBy('created_at', 'desc')->paginate(20);
-
-        return view('admin.logs', compact('admin', 'logs'));
+    // Check if admin has permission to view logs
+    if (!$admin->hasPermission('logs')) {
+        return redirect()->route('admin.dashboard')
+            ->with('error', 'You do not have permission to view logs');
     }
+
+    $logs = \App\Models\ActivityLog::with('user')
+        ->whereHas('user', function ($query) {
+            $query->where('role', 'sub_admin');
+        })
+        ->orderBy('created_at', 'desc')
+        ->paginate(20);
+
+    return view('admin.logs', compact('admin', 'logs'));
+}
+
 }

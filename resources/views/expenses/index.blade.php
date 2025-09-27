@@ -46,7 +46,7 @@
                             </div>
                             <div class="col-md-3">
                                 <button type="submit" class="btn btn-success">
-                                    <i class="fas fa-download"></i> Download Excel Report
+                                    <i class="fas fa-download"></i>Monthly Report
                                 </button>
                             </div>
                         </div>

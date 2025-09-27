@@ -42,7 +42,7 @@
                                                     {{ ucfirst($log->action) }}
                                                 </span>
                                             </td>
-                                            <td>{{ $log->model ?: 'N/A' }}</td>
+                                            <td>{{ $log->model ?: 'Admin' }}</td>
                                             <td>{{ $log->description }}</td>
                                             <td>{{ $log->ip_address ?: 'N/A' }}</td>
                                             <td>{{ $log->created_at->format('M d, Y H:i') }}</td>

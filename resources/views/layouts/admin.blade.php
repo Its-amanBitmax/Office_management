@@ -496,9 +496,7 @@
         <div class="user-info">
             <span class="user-name">Welcome, {{ auth('admin')->user()->name ?? 'Admin' }}👋</span>
             <div class="profile-avatar" onclick="openProfileModal()">
-                @if(auth('admin')->user() && auth('admin')->user()->company_logo)
-                    <img src="{{ asset('storage/company_logos/' . auth('admin')->user()->company_logo) }}" alt="Company Logo" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover; margin-right: 0.5rem;">
-                @elseif(auth('admin')->user() && auth('admin')->user()->profile_image)
+                @if(auth('admin')->user() && auth('admin')->user()->profile_image)
                     <img src="{{ asset('storage/profile_images/' . auth('admin')->user()->profile_image) }}" alt="Profile Image">
                 @else
                     <div class="avatar-placeholder">
