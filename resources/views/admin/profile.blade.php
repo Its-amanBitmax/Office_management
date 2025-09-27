@@ -103,10 +103,7 @@
                     <small class="form-text text-muted">Accepted formats: JPEG, PNG, JPG, GIF. Max size: 2MB</small>
                 </div>
 
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="dark_mode" name="dark_mode" value="1" {{ old('dark_mode', $admin->dark_mode) ? 'checked' : '' }}>
-                <label class="form-check-label" for="dark_mode">Enable Dark Mode</label>
-            </div>
+            
             <div class="d-flex gap-3">
                 <button type="submit" class="btn btn-primary flex-grow-1">Update Profile</button>
                 <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary flex-grow-1 text-center">Cancel</a>

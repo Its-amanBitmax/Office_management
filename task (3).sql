@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 16, 2025 at 08:13 AM
+-- Generation Time: Sep 27, 2025 at 10:07 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -42,13 +42,6 @@ CREATE TABLE `activities` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `activities`
---
-
-INSERT INTO `activities` (`id`, `title`, `description`, `status`, `schedule_at`, `scoring_scope`, `best_employee_id`, `best_employee_description`, `keep_best_employee`, `enable_best_employee`, `created_at`, `updated_at`) VALUES
-(1, 'QnA with Points', 'test', 'active', '2025-09-07 23:00:00', 'selected', 1, 'hi', 0, 1, '2025-09-07 11:53:36', '2025-09-08 00:53:02');
-
 -- --------------------------------------------------------
 
 --
@@ -63,15 +56,54 @@ CREATE TABLE `activity_employee` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
 --
--- Dumping data for table `activity_employee`
+-- Table structure for table `activity_logs`
 --
 
-INSERT INTO `activity_employee` (`id`, `activity_id`, `employee_id`, `created_at`, `updated_at`) VALUES
-(4, 1, 8, NULL, NULL),
-(5, 1, 1, NULL, NULL),
-(6, 1, 6, NULL, NULL),
-(7, 1, 7, NULL, NULL);
+CREATE TABLE `activity_logs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `user_type` enum('admin','employee') NOT NULL,
+  `action` varchar(255) NOT NULL,
+  `model` varchar(255) DEFAULT NULL,
+  `model_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `description` text NOT NULL,
+  `ip_address` varchar(255) DEFAULT NULL,
+  `user_agent` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `activity_logs`
+--
+
+INSERT INTO `activity_logs` (`id`, `user_id`, `user_type`, `action`, `model`, `model_id`, `description`, `ip_address`, `user_agent`, `created_at`, `updated_at`) VALUES
+(1, 1, 'admin', 'update', 'Employee', 1, 'Employee updated successfully', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-26 16:28:07', '2025-09-26 16:28:07'),
+(2, 1, 'admin', 'logout', NULL, NULL, 'Admin Aman logged out', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-26 16:37:03', '2025-09-26 16:37:03'),
+(3, 1, 'admin', 'login', NULL, NULL, 'Admin Aman logged in', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-26 16:37:06', '2025-09-26 16:37:06'),
+(4, 1, 'admin', 'logout', NULL, NULL, 'Admin Aman logged out', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-26 16:43:14', '2025-09-26 16:43:14'),
+(5, 1, 'admin', 'login', NULL, NULL, 'Admin Aman logged in', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-26 16:43:17', '2025-09-26 16:43:17'),
+(6, 1, 'admin', 'logout', NULL, NULL, 'Admin Aman logged out', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 04:10:59', '2025-09-27 04:10:59'),
+(7, 1, 'admin', 'login', NULL, NULL, 'Admin Aman logged in', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 04:11:02', '2025-09-27 04:11:02'),
+(8, 1, 'admin', 'logout', NULL, NULL, 'Admin Aman logged out', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 04:24:00', '2025-09-27 04:24:00'),
+(9, 1, 'admin', 'login', NULL, NULL, 'Admin Aman logged in', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 04:24:04', '2025-09-27 04:24:04'),
+(10, 2, 'admin', 'login', NULL, NULL, 'Admin Sakshi Sharma logged in', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 04:24:40', '2025-09-27 04:24:40'),
+(11, 2, 'admin', 'logout', NULL, NULL, 'Admin Sakshi Sharma logged out', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 04:27:47', '2025-09-27 04:27:47'),
+(12, 1, 'admin', 'login', NULL, NULL, 'Admin Aman logged in', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 04:30:45', '2025-09-27 04:30:45'),
+(13, 2, 'admin', 'login', NULL, NULL, 'Admin Sakshi Sharma logged in', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 04:41:49', '2025-09-27 04:41:49'),
+(14, 2, 'admin', 'create', 'Expense', 3, 'Created expense: Cleaning item for ₹1300', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 04:42:52', '2025-09-27 04:42:52'),
+(15, 2, 'admin', 'create', 'Expense', 4, 'Created expense: Cleaning item for ₹1300', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 04:42:52', '2025-09-27 04:42:52'),
+(16, 2, 'admin', 'delete', 'Expense', 4, 'Deleted expense: Cleaning item for ₹1300.00', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 04:43:07', '2025-09-27 04:43:07'),
+(17, 1, 'admin', 'logout', NULL, NULL, 'Admin Aman logged out', '127.0.0.1', 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36', '2025-09-27 06:22:29', '2025-09-27 06:22:29'),
+(18, 1, 'admin', 'login', NULL, NULL, 'Admin Aman logged in', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 06:28:47', '2025-09-27 06:28:47'),
+(19, 1, 'admin', 'logout', NULL, NULL, 'Admin Aman logged out', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 07:40:35', '2025-09-27 07:40:35'),
+(20, 1, 'admin', 'login', NULL, NULL, 'Admin Aman logged in', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 07:56:20', '2025-09-27 07:56:20'),
+(21, 1, 'admin', 'logout', NULL, NULL, 'Admin Aman logged out', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 07:58:10', '2025-09-27 07:58:10'),
+(22, 1, 'admin', 'login', NULL, NULL, 'Admin Aman logged in', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 08:02:30', '2025-09-27 08:02:30'),
+(23, 1, 'admin', 'update', 'Employee', 1, 'Employee updated successfully', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-27 08:02:56', '2025-09-27 08:02:56');
 
 -- --------------------------------------------------------
 
@@ -97,7 +129,7 @@ CREATE TABLE `addresses` (
 --
 
 INSERT INTO `addresses` (`id`, `employee_id`, `address_type`, `street_address`, `city`, `state`, `postal_code`, `country`, `created_at`, `updated_at`) VALUES
-(23, 1, 'current', 'Gali no. 2', 'Greater Noida', 'Uttar Pradesh', '201306', 'India', '2025-09-06 00:45:20', '2025-09-06 00:45:20');
+(29, 1, 'current', 'Gali no. 2', 'Greater Noida', 'Uttar Pradesh', '201306', 'India', '2025-09-27 08:02:56', '2025-09-27 08:02:56');
 
 -- --------------------------------------------------------
 
@@ -118,15 +150,35 @@ CREATE TABLE `admins` (
   `password` varchar(255) NOT NULL,
   `remember_token` varchar(100) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `role` enum('super_admin','sub_admin') NOT NULL DEFAULT 'sub_admin',
+  `permissions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`permissions`))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `admins`
 --
 
-INSERT INTO `admins` (`id`, `name`, `email`, `phone`, `bio`, `profile_image`, `company_logo`, `company_name`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'Aman', 'aman.profficial@gmail.com', '7065170513', 'hi! I am the Boss...', '1757255788.png', '1757256766.png', 'Bitmax technologies', NULL, '$2y$12$0RVXEiKrRFqYS1lSqXApouV6yPgoIYtwDKPN3rTg.lj2/GZdpuo..', NULL, NULL, '2025-09-07 09:22:46');
+INSERT INTO `admins` (`id`, `name`, `email`, `phone`, `bio`, `profile_image`, `company_logo`, `company_name`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`, `role`, `permissions`) VALUES
+(1, 'Aman', 'aman.profficial@gmail.com', '7065170513', 'hi! I am the Boss...', '1758947869.jpg', '1758947855.png', 'Bitmax technologies', NULL, '$2y$12$0RVXEiKrRFqYS1lSqXApouV6yPgoIYtwDKPN3rTg.lj2/GZdpuo..', NULL, NULL, '2025-09-27 04:37:49', 'super_admin', NULL),
+(2, 'Sakshi Sharma', 'hr@bitmaxgroup.com', '9211318269', 'Hr', NULL, NULL, NULL, NULL, '$2y$12$2r2yWIPEyueIxRulNEe5de8r31PE6PsrdJEJZzZlgzGMCSOYM3cmS', NULL, '2025-09-24 05:28:00', '2025-09-26 07:45:22', 'sub_admin', '[\"Dashboard\",\"employees\",\"Employee Card\",\"attendance\",\"salary-slips\",\"expenses\",\"settings\"]');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `assigned_items`
+--
+
+CREATE TABLE `assigned_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `stock_item_id` bigint(20) UNSIGNED NOT NULL,
+  `employee_id` bigint(20) UNSIGNED NOT NULL,
+  `quantity_assigned` int(11) NOT NULL,
+  `assigned_date` date NOT NULL,
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -208,14 +260,6 @@ CREATE TABLE `criteria` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `criteria`
---
-
-INSERT INTO `criteria` (`id`, `activity_id`, `name`, `description`, `max_points`, `created_at`, `updated_at`) VALUES
-(23, 1, 'Personality', 'Hi!', 10, '2025-09-08 00:38:47', '2025-09-08 00:38:47'),
-(24, 1, 'Boodhi', 'test', 10, '2025-09-08 00:38:47', '2025-09-08 00:38:47');
-
 -- --------------------------------------------------------
 
 --
@@ -236,8 +280,7 @@ CREATE TABLE `documents` (
 --
 
 INSERT INTO `documents` (`id`, `employee_id`, `document_type`, `file_path`, `created_at`, `updated_at`) VALUES
-(4, 1, 'Aadhar', 'documents/LSvjGw0I4pxjcEFHVo7clbxeuUcPmRekZzQYiGWP.png', '2025-09-06 00:45:20', '2025-09-06 00:45:20'),
-(5, 1, 'Pan', 'documents/bGqiznEKbfhCaPK48ZA8J2rLiq9BUNKQ5I1WotVX.png', '2025-09-06 00:45:20', '2025-09-06 00:45:20');
+(6, 1, 'aadhar', 'documents/NRZ5CukUpMJqWOcTcKjiGDtPXB2rZjz3XtdP9zVz.pdf', '2025-09-27 08:02:57', '2025-09-27 08:02:57');
 
 -- --------------------------------------------------------
 
@@ -266,22 +309,92 @@ CREATE TABLE `employees` (
   `status` varchar(50) NOT NULL DEFAULT 'active',
   `profile_image` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `dob` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `employees`
 --
 
-INSERT INTO `employees` (`id`, `employee_code`, `name`, `email`, `password`, `bank_name`, `account_number`, `ifsc_code`, `branch_name`, `basic_salary`, `hra`, `conveyance`, `medical`, `phone`, `hire_date`, `position`, `department`, `status`, `profile_image`, `created_at`, `updated_at`) VALUES
-(1, 'EMP001', 'Aman Singh', 'aman@bitmaxgroup.com', '$2y$12$F89RHZnZuwuKFRpxkjLzIu2PiwDRPehui.LWQZk0QuQaS7Lk4VipO', 'PNB', '473858464376', 'ABCDE1234F', 'Sector 62', 18000.00, 0.00, 0.00, 0.00, '7065170513', '2025-08-12', 'Laravel Developer', 'Development', 'active', 'profile_images/pDnXMknjuoxcZJYVa7AlQfPuGCZjwXmMuRtNtAoI.png', '2025-09-05 04:18:47', '2025-09-07 10:16:29'),
-(6, 'EMP002', 'Priya Patel', 'priya.patel@company.com', '$2y$12$nT76a1Au/NIcKNIEzx2qY.SpsAMj26r.RqsyJBfAl8VW6tH9WH9Gi', 'HDFC Bank', '234567890123', 'HDFC0001234', 'Sector 18, Noida', 60000.00, 18000.00, 19200.00, 6000.00, '+91-9876543211', '2023-02-20', 'HR Manager', 'Human Resources', 'active', NULL, '2025-09-07 11:18:06', '2025-09-07 11:18:06'),
-(7, 'EMP003', 'Amit Kumar', 'amit.kumar@company.com', '$2y$12$RumiR5/jpDHT../rySApH.SoCYFVwqKOYKf.71JoNUdLJhtD07mLa', 'ICICI Bank', '345678901234', 'ICIC0001234', 'Rajouri Garden, Delhi', 75000.00, 22500.00, 19200.00, 7500.00, '+91-9876543212', '2023-03-10', 'Project Manager', 'IT', 'active', NULL, '2025-09-07 11:18:06', '2025-09-07 11:18:06'),
-(8, 'EMP004', 'Sneha Gupta', 'sneha.gupta@company.com', '$2y$12$Q2nJ4j5CHI0RQzL1.l5nZe01lQEVWuSPKZJBGdP0EqcdwFqh9f3GC', 'Axis Bank', '456789012345', 'UTIB0001234', 'Karol Bagh, Delhi', 55000.00, 16500.00, 19200.00, 5500.00, '+91-9876543213', '2023-04-05', 'UI/UX Designer', 'Design', 'active', NULL, '2025-09-07 11:18:06', '2025-09-07 11:18:06'),
-(9, 'EMP005', 'Vikram Singh', 'vikram.singh@company.com', '$2y$12$D1eUchVc95LJ0bryHvb7eug8v0318jJKhK6j7yeg5HEbV7ASOv5Um', 'Punjab National Bank', '567890123456', 'PUNB0123456', 'Lajpat Nagar, Delhi', 65000.00, 19500.00, 19200.00, 6500.00, '+91-9876543214', '2023-05-12', 'Business Analyst', 'Business', 'active', NULL, '2025-09-07 11:18:06', '2025-09-07 11:18:06'),
-(10, 'EMP006', 'Kavita Jain', 'kavita.jain@company.com', '$2y$12$r3JK.jhZ.jctgvvNX2rakeZw3s58fOe0OyGeLd3WfJtYYdTsdmc.y', 'Kotak Mahindra Bank', '678901234567', 'KKBK0001234', 'Nehru Place, Delhi', 45000.00, 13500.00, 19200.00, 4500.00, '+91-9876543215', '2023-06-18', 'Marketing Executive', 'Marketing', 'active', NULL, '2025-09-07 11:18:06', '2025-09-07 11:18:06'),
-(11, 'EMP007', 'Rajesh Verma', 'rajesh.verma@company.com', '$2y$12$jJbrhoZqUquMR2jdBPAgs.yWXMQNfguNk3/5XQHNwaOc/DCqWOuiC', 'Bank of Baroda', '789012345678', 'BARB0DELHI1', 'CP, Delhi', 55000.00, 16500.00, 19200.00, 5500.00, '+91-9876543216', '2023-07-25', 'System Administrator', 'IT', 'active', NULL, '2025-09-07 11:18:06', '2025-09-07 11:18:06'),
-(12, 'EMP008', 'Meera Choudhary', 'meera.choudhary@company.com', '$2y$12$vXff0QEXCAKlmxBbfKxueuQdKzM/jFE.AzFBtRgHwg154V7ZAH6eG', 'IDBI Bank', '890123456789', 'IBKL0001234', 'Dwarka, Delhi', 40000.00, 12000.00, 19200.00, 4000.00, '+91-9876543217', '2023-08-30', 'Content Writer', 'Marketing', 'active', NULL, '2025-09-07 11:18:06', '2025-09-07 11:18:06');
+INSERT INTO `employees` (`id`, `employee_code`, `name`, `email`, `password`, `bank_name`, `account_number`, `ifsc_code`, `branch_name`, `basic_salary`, `hra`, `conveyance`, `medical`, `phone`, `hire_date`, `position`, `department`, `status`, `profile_image`, `created_at`, `updated_at`, `dob`) VALUES
+(1, 'EMP001', 'Aman Singh', 'aman@bitmaxgroup.com', '$2y$12$82AkiZ6paFEJS9Hovf3RueHCoLeN.Xd2RoEFYmTveRHysqXH7BcxG', 'PNB', '473858464376', 'ABCDE1234F', 'Sector 62', 18000.00, 0.00, 0.00, 0.00, '7065170513', '2025-05-07', 'Laravel Developer', 'Development', 'active', 'profile_images/GS45DGmtQGtTzDwqluVBEqjM3rEMiNDHQQdwNyiz.jpg', '2025-09-05 04:18:47', '2025-09-24 02:48:24', '2006-12-14'),
+(6, 'EMP002', 'Priya Patel', 'priya.patel@company.com', '$2y$12$nT76a1Au/NIcKNIEzx2qY.SpsAMj26r.RqsyJBfAl8VW6tH9WH9Gi', 'HDFC Bank', '234567890123', 'HDFC0001234', 'Sector 18, Noida', 60000.00, 18000.00, 19200.00, 6000.00, '+91-9876543211', '2023-02-20', 'HR Manager', 'Human Resources', 'active', NULL, '2025-09-07 11:18:06', '2025-09-07 11:18:06', NULL),
+(7, 'EMP003', 'Amit Kumar', 'amit.kumar@company.com', '$2y$12$RumiR5/jpDHT../rySApH.SoCYFVwqKOYKf.71JoNUdLJhtD07mLa', 'ICICI Bank', '345678901234', 'ICIC0001234', 'Rajouri Garden, Delhi', 75000.00, 22500.00, 19200.00, 7500.00, '+91-9876543212', '2023-03-10', 'Project Manager', 'IT', 'active', NULL, '2025-09-07 11:18:06', '2025-09-07 11:18:06', NULL),
+(8, 'EMP004', 'Sneha Gupta', 'sneha.gupta@company.com', '$2y$12$Q2nJ4j5CHI0RQzL1.l5nZe01lQEVWuSPKZJBGdP0EqcdwFqh9f3GC', 'Axis Bank', '456789012345', 'UTIB0001234', 'Karol Bagh, Delhi', 55000.00, 16500.00, 19200.00, 5500.00, '+91-9876543213', '2023-04-05', 'UI/UX Designer', 'Design', 'active', NULL, '2025-09-07 11:18:06', '2025-09-07 11:18:06', NULL),
+(9, 'EMP005', 'Vikram Singh', 'vikram.singh@company.com', '$2y$12$D1eUchVc95LJ0bryHvb7eug8v0318jJKhK6j7yeg5HEbV7ASOv5Um', 'Punjab National Bank', '567890123456', 'PUNB0123456', 'Lajpat Nagar, Delhi', 65000.00, 19500.00, 19200.00, 6500.00, '+91-9876543214', '2023-05-12', 'Business Analyst', 'Business', 'active', NULL, '2025-09-07 11:18:06', '2025-09-07 11:18:06', NULL),
+(10, 'EMP006', 'Kavita Jain', 'kavita.jain@company.com', '$2y$12$r3JK.jhZ.jctgvvNX2rakeZw3s58fOe0OyGeLd3WfJtYYdTsdmc.y', 'Kotak Mahindra Bank', '678901234567', 'KKBK0001234', 'Nehru Place, Delhi', 45000.00, 13500.00, 19200.00, 4500.00, '+91-9876543215', '2023-06-18', 'Marketing Executive', 'Marketing', 'active', NULL, '2025-09-07 11:18:06', '2025-09-07 11:18:06', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `expenses`
+--
+
+CREATE TABLE `expenses` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `category` varchar(255) NOT NULL,
+  `expense_date` date NOT NULL,
+  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `expenses`
+--
+
+INSERT INTO `expenses` (`id`, `title`, `amount`, `category`, `expense_date`, `created_by`, `created_at`, `updated_at`) VALUES
+(2, 'Snacks', 500.00, 'milk,sweets', '2025-09-26', 1, '2025-09-26 09:15:44', '2025-09-26 09:15:44'),
+(3, 'Cleaning item', 1300.00, 'tissues, lizol', '2025-09-27', 2, '2025-09-27 04:42:52', '2025-09-27 04:42:52');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `expense_budget`
+--
+
+CREATE TABLE `expense_budget` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `budget_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `remaining_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `expense_budget`
+--
+
+INSERT INTO `expense_budget` (`id`, `budget_amount`, `remaining_amount`, `created_at`, `updated_at`) VALUES
+(1, 6000.00, 4200.00, '2025-09-26 07:22:46', '2025-09-27 04:43:07');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `expense_budget_history`
+--
+
+CREATE TABLE `expense_budget_history` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `action` enum('add','update') NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `old_budget` decimal(10,2) NOT NULL,
+  `new_budget` decimal(10,2) NOT NULL,
+  `remaining` decimal(10,2) NOT NULL,
+  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `expense_budget_history`
+--
+
+INSERT INTO `expense_budget_history` (`id`, `action`, `amount`, `old_budget`, `new_budget`, `remaining`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 'add', 1000.00, 5000.00, 6000.00, 5500.00, 1, '2025-09-26 09:52:00', '2025-09-26 09:52:00');
 
 -- --------------------------------------------------------
 
@@ -306,7 +419,7 @@ CREATE TABLE `experiences` (
 --
 
 INSERT INTO `experiences` (`id`, `employee_id`, `company_name`, `position`, `start_date`, `end_date`, `responsibilities`, `created_at`, `updated_at`) VALUES
-(24, 1, 'BMDU', 'Laravel Developer', '2025-01-01', '2025-05-01', NULL, '2025-09-06 00:45:20', '2025-09-06 00:45:20');
+(30, 1, 'BMDU', 'Laravel Developer', NULL, NULL, NULL, '2025-09-27 08:02:56', '2025-09-27 08:02:56');
 
 -- --------------------------------------------------------
 
@@ -445,7 +558,16 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (27, '2025_09_09_103606_create_attendances_table', 23),
 (28, '2025_09_10_000000_create_salary_slips_table', 24),
 (29, '2025_09_11_000000_create_visitors_table', 25),
-(30, '2025_09_12_000000_create_invited_visitors_table', 26);
+(30, '2025_09_12_000000_create_invited_visitors_table', 26),
+(31, '2025_09_23_124911_add_dob_to_employees_table', 27),
+(32, '2025_09_23_172127_create_stock_items_table', 28),
+(33, '2025_09_23_172153_create_assigned_items_table', 29),
+(34, '2025_09_24_101925_add_role_and_permissions_to_admins_table', 30),
+(37, '2025_09_26_120445_create_expenses_table', 31),
+(38, '2025_09_26_130000_create_expense_budget_table', 32),
+(39, '2025_09_26_150704_create_expense_budget_history_table', 33),
+(40, '2025_09_26_151934_add_remaining_to_expense_budget_history_table', 34),
+(41, '2025_09_26_213835_create_activity_logs_table', 35);
 
 -- --------------------------------------------------------
 
@@ -501,24 +623,6 @@ CREATE TABLE `points` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `points`
---
-
-INSERT INTO `points` (`id`, `activity_id`, `from_employee_id`, `to_employee_id`, `criteria_id`, `points`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 6, 23, 8, '2025-09-08 00:43:01', '2025-09-08 00:43:01'),
-(2, 1, 1, 6, 24, 6, '2025-09-08 00:43:01', '2025-09-08 00:43:01'),
-(3, 1, 1, 7, 23, 6, '2025-09-08 00:43:01', '2025-09-08 00:43:01'),
-(4, 1, 1, 7, 24, 9, '2025-09-08 00:43:01', '2025-09-08 00:43:01'),
-(5, 1, 1, 8, 23, 8, '2025-09-08 00:43:01', '2025-09-08 00:43:01'),
-(6, 1, 1, 8, 24, 8, '2025-09-08 00:43:01', '2025-09-08 00:43:01'),
-(7, 1, 6, 1, 23, 10, '2025-09-08 00:53:02', '2025-09-08 00:53:02'),
-(8, 1, 6, 1, 24, 10, '2025-09-08 00:53:02', '2025-09-08 00:53:02'),
-(9, 1, 6, 7, 23, 7, '2025-09-08 00:53:02', '2025-09-08 00:53:02'),
-(10, 1, 6, 7, 24, 6, '2025-09-08 00:53:02', '2025-09-08 00:53:02'),
-(11, 1, 6, 8, 23, 7, '2025-09-08 00:53:02', '2025-09-08 00:53:02'),
-(12, 1, 6, 8, 24, 8, '2025-09-08 00:53:02', '2025-09-08 00:53:02');
-
 -- --------------------------------------------------------
 
 --
@@ -541,7 +645,7 @@ CREATE TABLE `qualifications` (
 --
 
 INSERT INTO `qualifications` (`id`, `employee_id`, `degree`, `institution`, `year_of_passing`, `grade`, `created_at`, `updated_at`) VALUES
-(25, 1, '12th', 'MBS', 2024, '60', '2025-09-06 00:45:20', '2025-09-06 00:45:20');
+(31, 1, '12th', 'MBS', 2024, '60', '2025-09-27 08:02:56', '2025-09-27 08:02:56');
 
 -- --------------------------------------------------------
 
@@ -594,14 +698,6 @@ CREATE TABLE `reports` (
   `team_lead_status` enum('sent','read','responded') DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `reports`
---
-
-INSERT INTO `reports` (`id`, `employee_id`, `task_id`, `title`, `content`, `sent_to_admin`, `sent_to_team_lead`, `team_lead_id`, `status`, `review`, `rating`, `attachment`, `created_at`, `updated_at`, `admin_review`, `admin_rating`, `admin_status`, `team_lead_review`, `team_lead_rating`, `team_lead_status`) VALUES
-(3, 1, 1, 'Work Started', 'hiii', 1, 0, NULL, 'sent', 'hiiii', 5, 'reports/NGqluciEzrYs8J5DKb6i7yuTI8eDRxll1jfHSEyh.png', '2025-09-06 03:28:33', '2025-09-07 02:34:29', '1624872647', 5, 'read', NULL, NULL, NULL),
-(6, 1, 2, 'hii', 'gdjhsg', 1, 0, NULL, 'sent', NULL, NULL, 'reports/zdmyy0weOdS0EAg6d6B3a7K7G23h5PV0xBBXDbnA.png', '2025-09-07 02:06:59', '2025-09-07 02:06:59', NULL, NULL, NULL, NULL, NULL, NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -651,7 +747,29 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('YyFgGH0o5tqs5iEvrSZMDB4d7rvjPQttrGkxrjAZ', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiYmNjRGZCYWJOWTZrN2k2RWFUeXhpY0RidDVVcGZPUlZNaUNaZFFPZiI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MjE6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMCI7fX0=', 1758003148);
+('3fJykNadeEdCOl8RBFI2e63y1hJ2NJcRRWOXfw2h', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiZXB6dGppVm1UUlBGSmFtME4zZEtXaVhadUhmdWlnd0tXVU9tZU9FYyI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6Mzc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hZG1pbi9lbXBsb3llZXMiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUyOiJsb2dpbl9hZG1pbl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7fQ==', 1758960178),
+('9DyIETVi8aNxQimCujW1MWcubHGk0RBk0u6WEPmi', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiZWlodFFnREFUd3E0M1F0eDhjMkRQSWtCb1Vud3puRUVEVE1aZmpLNSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6Mzg6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9lbXBsb3llZS9wcm9maWxlIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1NToibG9naW5fZW1wbG95ZWVfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxO30=', 1758960334),
+('CRQCMwulGihhDJ75DQ7HfD7JcsaJwMfyLP2aLovP', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoieDNpRlNSZzlOTGRFbkdFMlVsMkh3NDA0eWNiakxpV1hyaFNMeXUwUCI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MzY6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hZG1pbi9leHBlbnNlcyI7fXM6NTI6ImxvZ2luX2FkbWluXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTt9', 1758947339),
+('PmF9gwBWgA2eIwuaVvQk28cj6tE21SCbEAcZvEcC', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiamtmZVJVVWNUWGlWMzlzMEdvYVRaMWI3eThtTXR4WUNsMEJwTDhwcSI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6Mzg6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9lbXBsb3llZS9wcm9maWxlIjt9czo1NToibG9naW5fZW1wbG95ZWVfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxO30=', 1758959913),
+('qKBtOeb5EMLpuuY8mYcTdZtJb447xQMSjK7wC7d9', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoibHk2eThnb1JyamJJT2owbUtUa0R1QUEzRFJYYzRzZmNpVjczZ2hiQyI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MzM6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hZG1pbi9sb2dpbiI7fX0=', 1758947268),
+('X85LMvxfI8iIAe3cHN3AhOadcg1D1kL2UQteJu3p', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiRWM0OHkzUk5XTXJLd2xORkNiS2tpdUs0MmhWUHJIdXlLdmRYUU5NbyI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NTI6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hZG1pbi9lbXBsb3llZS1jYXJkP2VtcGxveWVlPTEiO31zOjUyOiJsb2dpbl9hZG1pbl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjI7fQ==', 1758948361);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `stock_items`
+--
+
+CREATE TABLE `stock_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 0,
+  `unit` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `price` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Price per unit'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -676,14 +794,6 @@ CREATE TABLE `tasks` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `tasks`
---
-
-INSERT INTO `tasks` (`id`, `task_name`, `description`, `assigned_to`, `assigned_team`, `team_members`, `team_created_by`, `team_lead_id`, `start_date`, `end_date`, `status`, `priority`, `progress`, `created_at`, `updated_at`) VALUES
-(1, 'Test', 'Just a testing!', 1, 'Individual', NULL, NULL, NULL, '2025-09-05', '2025-09-05', 'Completed', 'Low', 100.00, '2025-09-05 04:22:58', '2025-09-06 03:36:47'),
-(2, 'team', 'hiii', NULL, 'Team', '[\"2\"]', 'team_lead', 1, '2025-09-06', '2025-09-10', 'In Progress', 'Medium', 10.00, '2025-09-06 05:36:04', '2025-09-06 23:49:09');
 
 -- --------------------------------------------------------
 
@@ -739,6 +849,14 @@ ALTER TABLE `activity_employee`
   ADD KEY `activity_employee_employee_id_foreign` (`employee_id`);
 
 --
+-- Indexes for table `activity_logs`
+--
+ALTER TABLE `activity_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `activity_logs_user_id_user_type_index` (`user_id`,`user_type`),
+  ADD KEY `activity_logs_model_model_id_index` (`model`,`model_id`);
+
+--
 -- Indexes for table `addresses`
 --
 ALTER TABLE `addresses`
@@ -751,6 +869,14 @@ ALTER TABLE `addresses`
 ALTER TABLE `admins`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `admins_email_unique` (`email`);
+
+--
+-- Indexes for table `assigned_items`
+--
+ALTER TABLE `assigned_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `assigned_items_stock_item_id_foreign` (`stock_item_id`),
+  ADD KEY `assigned_items_employee_id_foreign` (`employee_id`);
 
 --
 -- Indexes for table `attendances`
@@ -799,6 +925,26 @@ ALTER TABLE `employees`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `employees_employee_code_unique` (`employee_code`),
   ADD UNIQUE KEY `employees_email_unique` (`email`);
+
+--
+-- Indexes for table `expenses`
+--
+ALTER TABLE `expenses`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `expenses_created_by_foreign` (`created_by`);
+
+--
+-- Indexes for table `expense_budget`
+--
+ALTER TABLE `expense_budget`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `expense_budget_history`
+--
+ALTER TABLE `expense_budget_history`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `expense_budget_history_created_by_foreign` (`created_by`);
 
 --
 -- Indexes for table `experiences`
@@ -907,6 +1053,12 @@ ALTER TABLE `sessions`
   ADD KEY `sessions_last_activity_index` (`last_activity`);
 
 --
+-- Indexes for table `stock_items`
+--
+ALTER TABLE `stock_items`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `tasks`
 --
 ALTER TABLE `tasks`
@@ -944,22 +1096,34 @@ ALTER TABLE `activity_employee`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
+-- AUTO_INCREMENT for table `activity_logs`
+--
+ALTER TABLE `activity_logs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+
+--
 -- AUTO_INCREMENT for table `addresses`
 --
 ALTER TABLE `addresses`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `admins`
 --
 ALTER TABLE `admins`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `assigned_items`
+--
+ALTER TABLE `assigned_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `attendances`
 --
 ALTER TABLE `attendances`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `bank_details`
@@ -977,7 +1141,7 @@ ALTER TABLE `criteria`
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `employees`
@@ -986,10 +1150,28 @@ ALTER TABLE `employees`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
+-- AUTO_INCREMENT for table `expenses`
+--
+ALTER TABLE `expenses`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `expense_budget`
+--
+ALTER TABLE `expense_budget`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `expense_budget_history`
+--
+ALTER TABLE `expense_budget_history`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `experiences`
 --
 ALTER TABLE `experiences`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
@@ -1007,7 +1189,7 @@ ALTER TABLE `family_details`
 -- AUTO_INCREMENT for table `invited_visitors`
 --
 ALTER TABLE `invited_visitors`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `jobs`
@@ -1019,7 +1201,7 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `payrolls`
@@ -1037,7 +1219,7 @@ ALTER TABLE `points`
 -- AUTO_INCREMENT for table `qualifications`
 --
 ALTER TABLE `qualifications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `ratings`
@@ -1056,6 +1238,12 @@ ALTER TABLE `reports`
 --
 ALTER TABLE `salary_slips`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `stock_items`
+--
+ALTER TABLE `stock_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `tasks`
@@ -1099,6 +1287,13 @@ ALTER TABLE `addresses`
   ADD CONSTRAINT `addresses_employee_id_foreign` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `assigned_items`
+--
+ALTER TABLE `assigned_items`
+  ADD CONSTRAINT `assigned_items_employee_id_foreign` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `assigned_items_stock_item_id_foreign` FOREIGN KEY (`stock_item_id`) REFERENCES `stock_items` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `attendances`
 --
 ALTER TABLE `attendances`
@@ -1121,6 +1316,18 @@ ALTER TABLE `criteria`
 --
 ALTER TABLE `documents`
   ADD CONSTRAINT `documents_employee_id_foreign` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `expenses`
+--
+ALTER TABLE `expenses`
+  ADD CONSTRAINT `expenses_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `admins` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `expense_budget_history`
+--
+ALTER TABLE `expense_budget_history`
+  ADD CONSTRAINT `expense_budget_history_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `admins` (`id`);
 
 --
 -- Constraints for table `experiences`

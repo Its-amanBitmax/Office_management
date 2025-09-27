@@ -48,12 +48,12 @@ body {
 }
 
 .left-panel .logo {
-  background: rgba(255, 255, 255, 0.945); /* Slight white background to make logo pop */
+  background: rgba(255, 255, 255, 0.945); 
   padding: 30px;
   border-radius: 50%;
   margin-bottom: 30px;
-  max-width: 180px; /* Adjust logo size */
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3); /* Soft shadow for depth */
+  max-width: 180px; 
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3); 
 }
 
 .left-panel .logo img {

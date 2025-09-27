@@ -21,7 +21,7 @@
                         <button class="nav-link" id="family-info-tab" data-bs-toggle="tab" data-bs-target="#family-info" type="button" role="tab">Family Details</button>
                     </li>
                     @endif
-                    @if($employee->bankDetails)
+                    @if($employee->bank_name || $employee->account_number || $employee->ifsc_code || $employee->branch_name)
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="bank-info-tab" data-bs-toggle="tab" data-bs-target="#bank-info" type="button" role="tab">Bank Details</button>
                     </li>
@@ -46,7 +46,7 @@
                         <button class="nav-link" id="addresses-info-tab" data-bs-toggle="tab" data-bs-target="#addresses-info" type="button" role="tab">Addresses</button>
                     </li>
                     @endif
-                    @if($employee->payroll)
+                    @if($employee->basic_salary || $employee->hra || $employee->conveyance || $employee->medical)
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="payroll-info-tab" data-bs-toggle="tab" data-bs-target="#payroll-info" type="button" role="tab">Payroll</button>
                     </li>
@@ -66,6 +66,10 @@
                                         {{ strtoupper(substr($employee->name, 0, 1)) }}
                                     </div>
                                 @endif
+                                <strong class="d-block mb-1"></strong> 
+                                 <span class="badge bg-{{ $employee->status === 'active' ? 'success' : 'secondary' }}">
+                                            {{ ucfirst($employee->status) }}
+                                        </span>
                             </div>
                             <div class="col-md-9">
                                 <div class="row">
@@ -98,11 +102,10 @@
                                         {{ $employee->department ?? 'N/A' }}
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <strong>Status:</strong><br>
-                                        <span class="badge bg-{{ $employee->status === 'active' ? 'success' : 'secondary' }}">
-                                            {{ ucfirst($employee->status) }}
-                                        </span>
+                                        <strong>DOB:</strong><br>
+                                        {{ $employee->dob ? \Carbon\Carbon::parse($employee->dob)->format('d M Y') : 'N/A' }}
                                     </div>
+                                    
                                 </div>
                             </div>
                         </div>
@@ -111,39 +114,72 @@
                     <!-- Family Details Tab -->
                     @if($employee->familyDetails->count() > 0)
                     <div class="tab-pane fade" id="family-info" role="tabpanel">
-                        <div class="row">
-                            @foreach($employee->familyDetails as $family)
-                            <div class="col-md-6 mb-3">
-                                <strong>{{ ucfirst($family->relation) }}'s Name:</strong><br>
-                                {{ $family->name ?? 'N/A' }}
-                                @if($family->contact_number)
-                                    <br><small class="text-muted">Contact: {{ $family->contact_number }}</small>
-                                @endif
-                            </div>
-                            @endforeach
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Relation</th>
+                                        <th>Name</th>
+                                        <th>Contact Number</th>
+                                        <th>Aadhar</th>
+                                        <th>PAN</th>
+                                        <th>Aadhar File</th>
+                                        <th>PAN File</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($employee->familyDetails as $family)
+                                    <tr>
+                                        <td>{{ ucfirst($family->relation ?? 'N/A') }}</td>
+                                        <td>{{ $family->name ?? 'N/A' }}</td>
+                                        <td>{{ $family->contact_number ?? 'N/A' }}</td>
+                                        <td>{{ $family->aadhar ?? 'N/A' }}</td>
+                                        <td>{{ $family->pan ?? 'N/A' }}</td>
+                                        <td>
+                                            @if($family->aadhar_file)
+                                                <a href="{{ asset('storage/' . $family->aadhar_file) }}" target="_blank" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-download"></i> Download
+                                                </a>
+                                            @else
+                                                N/A
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($family->pan_file)
+                                                <a href="{{ asset('storage/' . $family->pan_file) }}" target="_blank" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-download"></i> Download
+                                                </a>
+                                            @else
+                                                N/A
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     @endif
 
                     <!-- Bank Details Tab -->
-                    @if($employee->bankDetails)
+                    @if($employee->bank_name || $employee->account_number || $employee->ifsc_code || $employee->branch_name)
                     <div class="tab-pane fade" id="bank-info" role="tabpanel">
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <strong>Bank Name:</strong><br>
-                                {{ $employee->bankDetails->bank_name ?? 'N/A' }}
+                                {{ $employee->bank_name ?? 'N/A' }}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <strong>Account Number:</strong><br>
-                                {{ $employee->bankDetails->account_number ?? 'N/A' }}
+                                {{ $employee->account_number ?? 'N/A' }}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <strong>IFSC Code:</strong><br>
-                                {{ $employee->bankDetails->ifsc_code ?? 'N/A' }}
+                                {{ $employee->ifsc_code ?? 'N/A' }}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <strong>Branch Name:</strong><br>
-                                {{ $employee->bankDetails->branch_name ?? 'N/A' }}
+                                {{ $employee->branch_name ?? 'N/A' }}
                             </div>
                         </div>
                     </div>
@@ -277,28 +313,28 @@
                     @endif
 
                     <!-- Payroll Tab -->
-                    @if($employee->payroll)
+                    @if($employee->basic_salary || $employee->hra || $employee->conveyance || $employee->medical)
                     <div class="tab-pane fade" id="payroll-info" role="tabpanel">
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <strong>Basic Salary:</strong><br>
-                                ₹{{ number_format($employee->payroll->basic_salary ?? 0, 2) }}
+                                ₹{{ number_format($employee->basic_salary ?? 0, 2) }}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <strong>HRA:</strong><br>
-                                ₹{{ number_format($employee->payroll->hra ?? 0, 2) }}
+                                ₹{{ number_format($employee->hra ?? 0, 2) }}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <strong>Conveyance Allowance:</strong><br>
-                                ₹{{ number_format($employee->payroll->conveyance ?? 0, 2) }}
+                                ₹{{ number_format($employee->conveyance ?? 0, 2) }}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <strong>Medical Allowance:</strong><br>
-                                ₹{{ number_format($employee->payroll->medical ?? 0, 2) }}
+                                ₹{{ number_format($employee->medical ?? 0, 2) }}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <strong>Total Salary:</strong><br>
-                                ₹{{ number_format(($employee->payroll->basic_salary ?? 0) + ($employee->payroll->hra ?? 0) + ($employee->payroll->conveyance ?? 0) + ($employee->payroll->medical ?? 0), 2) }}
+                                ₹{{ number_format(($employee->basic_salary ?? 0) + ($employee->hra ?? 0) + ($employee->conveyance ?? 0) + ($employee->medical ?? 0), 2) }}
                             </div>
                         </div>
                     </div>

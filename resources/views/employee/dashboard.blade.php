@@ -7,50 +7,42 @@
 @section('content')
 <div class="row">
     <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title">Welcome back, {{ auth('employee')->user()->name ?? 'Employee' }}!</h4>
-                <p class="card-text">Here's an overview of your employee dashboard. You can view your profile, tasks, and other important information here.</p>
-            </div>
+        <div class="welcome-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 0.5rem;">Welcome back, {{ auth('employee')->user()->name ?? 'Employee' }}!👤</h3>
+            <p style="margin: 0; opacity: 0.9;">Here's an overview of your employee dashboard. You can view your profile, tasks, and other important information here.</p>
         </div>
     </div>
 </div>
 
 <div class="row mt-4">
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <i class="fas fa-id-card fa-2x text-primary mb-3"></i>
-                <h5 class="card-title">{{ auth('employee')->user()->employee_code ?? 'N/A' }}</h5>
-                <p class="card-text">Employee Code</p>
-            </div>
+    <div class="col-md-6">
+        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 4px solid #007bff; text-align: center;">
+            <i class="fas fa-id-card fa-2x text-primary mb-3"></i>
+            <h4 style="margin: 0 0 0.5rem 0; color: #333;">Employee Code</h4>
+            <p style="font-size: 1.5rem; font-weight: bold; color: #007bff; margin: 0;">{{ auth('employee')->user()->employee_code ?? 'N/A' }}</p>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <i class="fas fa-envelope fa-2x text-primary mb-3"></i>
-                <h5 class="card-title">{{ auth('employee')->user()->email ?? 'N/A' }}</h5>
-                <p class="card-text">Email Address</p>
-            </div>
+    <div class="col-md-6">
+        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 4px solid #28a745; text-align: center;">
+            <i class="fas fa-envelope fa-2x text-success mb-3"></i>
+            <h4 style="margin: 0 0 0.5rem 0; color: #333;">Email Address</h4>
+            <p style="font-size: 1.2rem; font-weight: bold; color: #28a745; margin: 0; word-break: break-all;">{{ auth('employee')->user()->email ?? 'N/A' }}</p>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <i class="fas fa-phone fa-2x text-primary mb-3"></i>
-                <h5 class="card-title">{{ auth('employee')->user()->phone ?? 'N/A' }}</h5>
-                <p class="card-text">Phone Number</p>
-            </div>
+</div>
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 4px solid #ffc107; text-align: center;">
+            <i class="fas fa-phone fa-2x text-warning mb-3"></i>
+            <h4 style="margin: 0 0 0.5rem 0; color: #333;">Phone Number</h4>
+            <p style="font-size: 1.5rem; font-weight: bold; color: #ffc107; margin: 0;">{{ auth('employee')->user()->phone ?? 'N/A' }}</p>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <i class="fas fa-building fa-2x text-primary mb-3"></i>
-                <h5 class="card-title">{{ auth('employee')->user()->department ?? 'N/A' }}</h5>
-                <p class="card-text">Department</p>
-            </div>
+    <div class="col-md-6">
+        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 4px solid #17a2b8; text-align: center;">
+            <i class="fas fa-building fa-2x text-info mb-3"></i>
+            <h4 style="margin: 0 0 0.5rem 0; color: #333;">Department</h4>
+            <p style="font-size: 1.5rem; font-weight: bold; color: #17a2b8; margin: 0;">{{ auth('employee')->user()->department ?? 'N/A' }}</p>
         </div>
     </div>
 </div>
