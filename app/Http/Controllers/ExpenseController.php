@@ -82,7 +82,7 @@ class ExpenseController extends Controller
         if ($newAmount > $oldAmount) {
             $difference = $newAmount - $oldAmount;
             if ($budget->remaining_amount < $difference) {
-                return back()->withErrors(['amount' => 'Insufficient budget. Remaining budget: $' . number_format($budget->remaining_amount, 2)])->withInput();
+                return back()->withErrors(['amount' => 'Insufficient budget. Remaining budget: ₹' . number_format($budget->remaining_amount, 2)])->withInput();
             }
         }
 

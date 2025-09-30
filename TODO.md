@@ -1,20 +1,13 @@
-# Task: Fix Quick Action Attendance Marking - No Page Refresh and JSON Error
+# Task: Fix Expenses Module Visibility for Sub-Admin Users
 
-## Steps from Approved Plan
+## Completed Steps
+- [x] Analyzed the issue: Expenses link is in HRM dropdown, but dropdown condition didn't include 'expenses' permission.
+- [x] Updated `resources/views/layouts/admin.blade.php` to include 'expenses' in the HRM dropdown visibility check.
 
-### 1. Update Frontend (resources/views/admin/attendance/index.blade.php)
-- [x] Add `window.location.reload()` with a 1-second delay in the `markAttendance()` success block to refresh the page after successful AJAX submission.
-- Enhance error handling for non-JSON responses (already partially implemented; no further changes needed here).
-
-### 2. Enhance Backend JSON Handling (app/Http/Controllers/AttendanceController.php)
-- [ ] In `store()` method, wrap validation in a try-catch for `ValidationException` when `$request->expectsJson()` to return JSON error response (422) instead of HTML.
-- [ ] Ensure all responses (success/update/create) are JSON when expectsJson() is true (already handled, but confirm).
-- [ ] Add logging for debugging non-JSON issues (e.g., Log::error on exceptions).
-
-### 3. Followup/Testing
-- [ ] Clear caches: `php artisan route:clear && php artisan view:clear`.
-- [ ] Test: Mark attendance via quick action; verify JSON response, success alert, and page refresh. Check browser console/network for errors.
-- [ ] If CSRF persists: Verify `<meta name="csrf-token">` in `resources/views/layouts/admin.blade.php`; adjust fetch headers if needed (remove redundant X-CSRF-TOKEN if FormData _token suffices).
-- [ ] Review logs: Check `storage/logs/laravel.log` for server errors post-test.
-
-Progress: 1/3 completed. Next: Edit controller for robust JSON error handling.
+## Pending Steps
+- [ ] Clear Laravel view cache: Run `php artisan view:clear` to ensure changes take effect.
+- [ ] Test the fix: Log in as the affected sub-admin user and verify:
+  - HRM dropdown appears in the sidebar.
+  - Expenses link is visible and clickable under HRM.
+  - If 'settings' permission was also assigned, confirm Settings menu is visible.
+- [ ] If issues persist (e.g., route 404), check `routes/web.php` for `admin.expenses.index` route definition.

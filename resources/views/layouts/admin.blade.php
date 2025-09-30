@@ -536,7 +536,7 @@
                 </li>
                 @endif
 
-                @if($admin && $admin->hasAnyPermission(['attendance', 'salary-slips', 'Employee Card']))
+                @if($admin && $admin->hasAnyPermission(['attendance', 'salary-slips', 'Employee Card', 'expenses']))
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" id="hrm-dropdown-toggle" onclick="toggleDropdown('hrm')" aria-expanded="false">
                         <i>👨‍💼</i> HRM
