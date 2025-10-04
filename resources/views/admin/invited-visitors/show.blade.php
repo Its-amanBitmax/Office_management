@@ -57,9 +57,31 @@
                     </div>
                 </div>
 
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">First Contact Person Name:</label>
+                            <p class="form-control-plaintext">{{ $invitedVisitor->first_contact_person_name ?? 'N/A' }}</p>
+                        </div>
+                        
                 <div class="mb-3">
                     <label class="form-label fw-bold">Purpose:</label>
                     <p class="form-control-plaintext">{{ $invitedVisitor->purpose ?? 'N/A' }}</p>
+                </div>
+
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Contact Person Phone:</label>
+                            <p class="form-control-plaintext">{{ $invitedVisitor->contact_person_phone ?? 'N/A' }}</p>
+                        </div>
+                   
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Invitation Code:</label>
+                    <p class="form-control-plaintext">{{ $invitedVisitor->invitation_code ?? 'N/A' }}</p>
+                </div>
+                 </div>
                 </div>
 
                 <div class="row">

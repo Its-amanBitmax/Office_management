@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\InvitedVisitor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use PDF;
 
 class InvitedVisitorController extends Controller
@@ -37,6 +38,8 @@ class InvitedVisitorController extends Controller
             'phone' => 'nullable|string|max:20',
             'purpose' => 'nullable|string|max:500',
             'invited_at' => 'nullable|date',
+            'first_contact_person_name' => 'nullable|string|max:255',
+            'contact_person_phone' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -45,7 +48,10 @@ class InvitedVisitorController extends Controller
                 ->withInput();
         }
 
-        InvitedVisitor::create($request->all());
+        $data = $request->all();
+        $data['invitation_code'] = Str::upper(Str::random(8));
+
+        InvitedVisitor::create($data);
 
         return redirect()->route('invited-visitors.index')
             ->with('success', 'Invited visitor created successfully.');
@@ -78,6 +84,8 @@ class InvitedVisitorController extends Controller
             'phone' => 'nullable|string|max:20',
             'purpose' => 'nullable|string|max:500',
             'invited_at' => 'nullable|date',
+            'first_contact_person_name' => 'nullable|string|max:255',
+            'contact_person_phone' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {

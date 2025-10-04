@@ -15,6 +15,9 @@ class InvitedVisitor extends Model
         'phone',
         'purpose',
         'invited_at',
+        'first_contact_person_name',
+        'contact_person_phone',
+        'invitation_code',
     ];
 
     protected $casts = [

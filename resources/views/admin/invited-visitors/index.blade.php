@@ -27,6 +27,9 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Phone</th>
+                                <th>Contact Person</th>
+                                <th>Contact Person Phone</th>
+                                <th>Invitation Code</th>
                                 <th>Purpose</th>
                                 <th>Invited At</th>
                                 <th>Actions</th>
@@ -39,6 +42,9 @@
                                     <td>{{ $invitedVisitor->name }}</td>
                                     <td>{{ $invitedVisitor->email ?? 'N/A' }}</td>
                                     <td>{{ $invitedVisitor->phone ?? 'N/A' }}</td>
+                                    <td>{{ $invitedVisitor->first_contact_person_name ?? 'N/A' }}</td>
+                                    <td>{{ $invitedVisitor->contact_person_phone ?? 'N/A' }}</td>
+                                    <td>{{ $invitedVisitor->invitation_code ?? 'N/A' }}</td>
                                     <td>{{ $invitedVisitor->purpose ?? 'N/A' }}</td>
                                     <td>{{ $invitedVisitor->invited_at ? $invitedVisitor->invited_at->format('M d, Y H:i') : 'N/A' }}</td>
                                     <td>
@@ -61,7 +67,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center">No invited visitors found.</td>
+                                    <td colspan="10" class="text-center">No invited visitors found.</td>
                                 </tr>
                             @endforelse
                         </tbody>

@@ -51,6 +51,30 @@
                         </div>
                     </div>
 
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="first_contact_person_name" class="form-label">First Contact Person Name</label>
+                            <input type="text" class="form-control @error('first_contact_person_name') is-invalid @enderror" id="first_contact_person_name" name="first_contact_person_name" value="{{ old('first_contact_person_name', $invitedVisitor->first_contact_person_name) }}">
+                            @error('first_contact_person_name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="contact_person_phone" class="form-label">Contact Person Phone</label>
+                            <input type="tel" class="form-control @error('contact_person_phone') is-invalid @enderror" id="contact_person_phone" name="contact_person_phone" value="{{ old('contact_person_phone', $invitedVisitor->contact_person_phone) }}">
+                            @error('contact_person_phone')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="invitation_code" class="form-label">Invitation Code</label>
+                        <input type="text" class="form-control" id="invitation_code" name="invitation_code" value="{{ $invitedVisitor->invitation_code }}" readonly>
+                        <small class="form-text text-muted">Auto-generated invitation code</small>
+                    </div>
+
                     <div class="mb-3">
                         <label for="purpose" class="form-label">Purpose</label>
                         <textarea class="form-control @error('purpose') is-invalid @enderror" id="purpose" name="purpose" rows="3">{{ old('purpose', $invitedVisitor->purpose) }}</textarea>
