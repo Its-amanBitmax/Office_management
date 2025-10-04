@@ -10,8 +10,9 @@
             <label for="employee_id" class="form-label">Select Employee:</label>
             <select name="employee_id" id="employee_id" class="form-select" required>
                 <option value="">-- Select Employee --</option>
+                <option value="all" {{ (isset($selectedEmployee) && $selectedEmployee == 'all') ? 'selected' : '' }}>All Employees</option>
                 @foreach($employees as $emp)
-                    <option value="{{ $emp->id }}" {{ (isset($selectedEmployee) && $selectedEmployee->id == $emp->id) ? 'selected' : '' }}>
+                    <option value="{{ $emp->id }}" {{ (isset($selectedEmployee) && is_object($selectedEmployee) && $selectedEmployee->id == $emp->id) ? 'selected' : '' }}>
                         {{ $emp->name }}
                     </option>
                 @endforeach
@@ -24,10 +25,89 @@
         <div class="col-auto align-self-end">
             <button type="submit" class="btn btn-primary">View Attendance</button>
         </div>
+        @if((isset($employee) && isset($month)) || (isset($selectedEmployee) && $selectedEmployee == 'all' && isset($month)))
+        <div class="col-auto align-self-end">
+            @if(isset($selectedEmployee) && $selectedEmployee == 'all')
+                <a href="{{ route('attendance.exportMonthly', ['employee_id' => 'all', 'month' => $month]) }}" class="btn btn-success">Export All Employees Excel</a>
+            @else
+                <a href="{{ route('attendance.exportMonthly', ['employee_id' => $employee->id, 'month' => $month]) }}" class="btn btn-success">Export Monthly Excel</a>
+            @endif
+        </div>
+        @endif
     </form>
 </div>
 
-@if(isset($monthlyData) && isset($summary))
+@if(isset($employeeSummaries))
+    <h5>All Employees Day-wise Attendance - {{ \Carbon\Carbon::createFromFormat('Y-m', $month)->format('F Y') }}</h5>
+
+    @php
+        $date = \Carbon\Carbon::createFromFormat('Y-m', $month, 'Asia/Kolkata');
+        $daysInMonth = $date->daysInMonth;
+        $allAttendances = $attendances->groupBy(['employee_id', 'date']);
+    @endphp
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th rowspan="2" class="align-middle">Employee Name</th>
+                    @for($day = 1; $day <= $daysInMonth; $day++)
+                        @php
+                            $currentDate = \Carbon\Carbon::create($date->year, $date->month, $day, 0, 0, 0, 'Asia/Kolkata');
+                        @endphp
+                        <th class="text-center">{{ $day }}<br><small>{{ $currentDate->format('D') }}</small></th>
+                    @endfor
+                    <th rowspan="2" class="align-middle">Total<br>Days</th>
+                    <th rowspan="2" class="align-middle">P</th>
+                    <th rowspan="2" class="align-middle">A</th>
+                    <th rowspan="2" class="align-middle">L</th>
+                    <th rowspan="2" class="align-middle">HD</th>
+                </tr>
+                <tr>
+                    @for($day = 1; $day <= $daysInMonth; $day++)
+                        @php
+                            $currentDate = \Carbon\Carbon::create($date->year, $date->month, $day, 0, 0, 0, 'Asia/Kolkata');
+                        @endphp
+                        <th class="text-center">{{ $currentDate->format('d') }}</th>
+                    @endfor
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($employeeSummaries as $employeeId => $summary)
+                    <tr>
+                        <td class="fw-bold">{{ $summary['employee']->name }}</td>
+                        @for($day = 1; $day <= $daysInMonth; $day++)
+                            @php
+                                $currentDate = \Carbon\Carbon::create($date->year, $date->month, $day, 0, 0, 0, 'Asia/Kolkata')->format('Y-m-d');
+                                $attendance = $allAttendances->get($employeeId, collect())->get($currentDate);
+                            @endphp
+                            <td class="text-center">
+                                @if($attendance)
+                                    @if($attendance->status == 'Present')
+                                        <span class="badge bg-success">P</span>
+                                    @elseif($attendance->status == 'Absent')
+                                        <span class="badge bg-danger">A</span>
+                                    @elseif($attendance->status == 'Leave')
+                                        <span class="badge bg-warning text-dark">L</span>
+                                    @elseif($attendance->status == 'Half Day')
+                                        <span class="badge bg-info text-dark">HD</span>
+                                    @endif
+                                @else
+                                    <span class="badge bg-secondary">NM</span>
+                                @endif
+                            </td>
+                        @endfor
+                        <td class="text-center fw-bold">{{ $summary['total_days'] }}</td>
+                        <td class="text-center"><span class="badge bg-success">{{ $summary['present'] }}</span></td>
+                        <td class="text-center"><span class="badge bg-danger">{{ $summary['absent'] }}</span></td>
+                        <td class="text-center"><span class="badge bg-warning text-dark">{{ $summary['leave'] }}</span></td>
+                        <td class="text-center"><span class="badge bg-info text-dark">{{ $summary['half_day'] }}</span></td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+@elseif(isset($monthlyData) && isset($summary))
     <h5>Attendance for {{ $employee->name }} - {{ \Carbon\Carbon::createFromFormat('Y-m', $month)->format('F Y') }}</h5>
 
     <table class="table table-bordered table-striped">

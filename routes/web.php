@@ -97,6 +97,7 @@ Route::prefix('admin')->group(function () {
         // Attendance Management Routes
         Route::get('attendance/monthly/{employee?}', [AttendanceController::class, 'monthly'])->name('attendance.monthly');
         Route::get('attendance/show-monthly', [AttendanceController::class, 'showMonthly'])->name('attendance.showMonthly');
+        Route::get('attendance/export-monthly', [AttendanceController::class, 'exportMonthly'])->name('attendance.exportMonthly');
         Route::post('attendance/bulk-update', [AttendanceController::class, 'bulkUpdate'])->name('attendance.bulk-update');
         Route::get('attendance/report/{date?}', [AttendanceController::class, 'report'])->name('attendance.report');
         Route::resource('attendance', AttendanceController::class)->names([

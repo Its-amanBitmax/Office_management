@@ -1,13 +1,17 @@
-# Task: Fix Expenses Module Visibility for Sub-Admin Users
+# Monthly Attendance Excel Export Implementation
 
-## Completed Steps
-- [x] Analyzed the issue: Expenses link is in HRM dropdown, but dropdown condition didn't include 'expenses' permission.
-- [x] Updated `resources/views/layouts/admin.blade.php` to include 'expenses' in the HRM dropdown visibility check.
+## Completed Tasks
+- [x] Created `MonthlyAttendanceExport` class in `app/Exports/` to handle Excel export for monthly attendance data
+- [x] Added `exportMonthly` method to `AttendanceController` to process export requests
+- [x] Added export button to `resources/views/admin/attendance/monthly.blade.php` that appears when employee and month are selected
+- [x] Added route `attendance/export-monthly` in `routes/web.php` for the export functionality
 
-## Pending Steps
-- [ ] Clear Laravel view cache: Run `php artisan view:clear` to ensure changes take effect.
-- [ ] Test the fix: Log in as the affected sub-admin user and verify:
-  - HRM dropdown appears in the sidebar.
-  - Expenses link is visible and clickable under HRM.
-  - If 'settings' permission was also assigned, confirm Settings menu is visible.
-- [ ] If issues persist (e.g., route 404), check `routes/web.php` for `admin.expenses.index` route definition.
+## Features Implemented
+- Export monthly attendance data for a specific employee and month to Excel format
+- Excel file includes columns: Employee Name, Date, Day, Status, Marked At, Remarks
+- File is named as "{EmployeeName}_Attendance_{Month_Year}.xlsx"
+- Button only appears after viewing attendance data (when employee and month are set)
+
+## Testing Required
+- Test the export functionality by selecting an employee and month, then clicking "Export Monthly Excel"
+- Verify the Excel file downloads correctly and contains the expected data

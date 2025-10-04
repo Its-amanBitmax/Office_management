@@ -499,10 +499,10 @@
                                           <div class="col-md-2 mb-2">
     <label class="form-label">Start Date</label>
     <input type="date"
-        class="form-control @error('start_dates.' . $index) is-invalid @enderror"
+        class="form-control @error('start_dates.0') is-invalid @enderror"
         name="start_dates[]"
-        value="{{ old('start_dates.' . $index, $experience->start_date ? \Carbon\Carbon::parse($experience->start_date)->format('Y-m-d') : '') }}">
-    @error('start_dates.' . $index)
+        value="{{ old('start_dates.0') }}">
+    @error('start_dates.0')
         <div class="invalid-feedback">{{ $message }}</div>
     @enderror
 </div>
@@ -510,10 +510,10 @@
 <div class="col-md-2 mb-2">
     <label class="form-label">End Date</label>
     <input type="date"
-        class="form-control @error('end_dates.' . $index) is-invalid @enderror"
+        class="form-control @error('end_dates.0') is-invalid @enderror"
         name="end_dates[]"
-        value="{{ old('end_dates.' . $index, $experience->end_date ? \Carbon\Carbon::parse($experience->end_date)->format('Y-m-d') : '') }}">
-    @error('end_dates.' . $index)
+        value="{{ old('end_dates.0') }}">
+    @error('end_dates.0')
         <div class="invalid-feedback">{{ $message }}</div>
     @enderror
 </div>

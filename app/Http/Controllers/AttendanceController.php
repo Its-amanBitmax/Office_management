@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use DateTimeZone;
 use App\Traits\Loggable;
+use App\Exports\MonthlyAttendanceExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AttendanceController extends Controller
 {
@@ -22,8 +24,8 @@ class AttendanceController extends Controller
         $date = $request->get('date', Carbon::today('Asia/Kolkata')->format('Y-m-d'));
         $selectedDate = Carbon::parse($date, 'Asia/Kolkata');
 
-        // Get all employees with their attendance for the selected date
-        $employees = Employee::with(['attendance' => function($query) use ($date) {
+        // Get all active employees with their attendance for the selected date
+        $employees = Employee::where('status', 'active')->with(['attendance' => function($query) use ($date) {
             $query->where('date', $date);
         }])->get();
 
@@ -247,12 +249,11 @@ class AttendanceController extends Controller
     public function showMonthly(Request $request)
     {
         $request->validate([
-            'employee_id' => 'required|exists:employees,id',
+            'employee_id' => 'required',
             'month' => 'required|date_format:Y-m',
         ]);
 
         $employees = Employee::all();
-        $employee = Employee::findOrFail($request->employee_id);
         $month = $request->month;
 
         // Parse month and year
@@ -260,41 +261,74 @@ class AttendanceController extends Controller
         $year = $date->year;
         $monthNum = $date->month;
 
-        // Get attendance data for the selected month and employee
-        $attendances = Attendance::where('employee_id', $request->employee_id)
-            ->whereYear('date', $year)
-            ->whereMonth('date', $monthNum)
-            ->orderBy('date')
-            ->get();
+        if ($request->employee_id === 'all') {
+            // Show summary for all employees
+            $selectedEmployee = 'all';
 
-        // Calculate summary
-        $summary = [
-            'total_days' => $attendances->count(),
-            'present' => $attendances->where('status', 'Present')->count(),
-            'absent' => $attendances->where('status', 'Absent')->count(),
-            'leave' => $attendances->where('status', 'Leave')->count(),
-            'half_day' => $attendances->where('status', 'Half Day')->count(),
-        ];
+            // Get attendance data for all employees for the selected month
+            $attendances = Attendance::with('employee')
+                ->whereYear('date', $year)
+                ->whereMonth('date', $monthNum)
+                ->orderBy('employee_id')
+                ->orderBy('date')
+                ->get();
 
-        // Get all days in the month for calendar view
-        $daysInMonth = $date->daysInMonth;
-        $monthlyData = [];
+            // Get all active employees and create summaries (even for those with no attendance)
+            $employeeSummaries = [];
+            foreach ($employees as $employee) {
+                $employeeAttendances = $attendances->where('employee_id', $employee->id);
+                $employeeSummaries[$employee->id] = [
+                    'employee' => $employee,
+                    'total_days' => $employeeAttendances->count(),
+                    'present' => $employeeAttendances->where('status', 'Present')->count(),
+                    'absent' => $employeeAttendances->where('status', 'Absent')->count(),
+                    'leave' => $employeeAttendances->where('status', 'Leave')->count(),
+                    'half_day' => $employeeAttendances->where('status', 'Half Day')->count(),
+                ];
+            }
 
-        for ($day = 1; $day <= $daysInMonth; $day++) {
-            $currentDate = Carbon::create($year, $monthNum, $day, 0, 0, 0, 'Asia/Kolkata');
-            $attendance = $attendances->firstWhere('date', $currentDate->format('Y-m-d'));
+            return view('admin.attendance.monthly', compact('employees', 'selectedEmployee', 'month', 'employeeSummaries', 'attendances'));
+        } else {
+            // Show individual employee data
+            $employee = Employee::findOrFail($request->employee_id);
+            $selectedEmployee = $employee;
 
-            $monthlyData[] = [
-                'date' => $currentDate->format('Y-m-d'),
-                'day' => $day,
-                'day_name' => $currentDate->format('D'),
-                'status' => $attendance ? $attendance->status : 'Not Marked',
-                'marked_at' => $attendance ? $attendance->updated_at->setTimezone('Asia/Kolkata')->format('H:i') : null,
-                'remarks' => $attendance ? $attendance->remarks : null,
+            // Get attendance data for the selected month and employee
+            $attendances = Attendance::where('employee_id', $request->employee_id)
+                ->whereYear('date', $year)
+                ->whereMonth('date', $monthNum)
+                ->orderBy('date')
+                ->get();
+
+            // Calculate summary
+            $summary = [
+                'total_days' => $attendances->count(),
+                'present' => $attendances->where('status', 'Present')->count(),
+                'absent' => $attendances->where('status', 'Absent')->count(),
+                'leave' => $attendances->where('status', 'Leave')->count(),
+                'half_day' => $attendances->where('status', 'Half Day')->count(),
             ];
-        }
 
-        return view('admin.attendance.monthly', compact('employees', 'employee', 'month', 'summary', 'monthlyData', 'attendances'));
+            // Get all days in the month for calendar view
+            $daysInMonth = $date->daysInMonth;
+            $monthlyData = [];
+
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $currentDate = Carbon::create($year, $monthNum, $day, 0, 0, 0, 'Asia/Kolkata');
+                $attendance = $attendances->firstWhere('date', $currentDate->format('Y-m-d'));
+
+                $monthlyData[] = [
+                    'date' => $currentDate->format('Y-m-d'),
+                    'day' => $day,
+                    'day_name' => $currentDate->format('D'),
+                    'status' => $attendance ? $attendance->status : 'Not Marked',
+                    'marked_at' => $attendance ? $attendance->updated_at->setTimezone('Asia/Kolkata')->format('H:i') : null,
+                    'remarks' => $attendance ? $attendance->remarks : null,
+                ];
+            }
+
+            return view('admin.attendance.monthly', compact('employees', 'employee', 'selectedEmployee', 'month', 'summary', 'monthlyData', 'attendances'));
+        }
     }
 
     /**
@@ -328,5 +362,29 @@ class AttendanceController extends Controller
         });
 
         return view('admin.attendance.report', compact('attendances', 'employeeSummary', 'month', 'year', 'date'));
+    }
+
+    /**
+     * Export monthly attendance data for selected employee and month to Excel
+     */
+    public function exportMonthly(Request $request)
+    {
+        $request->validate([
+            'employee_id' => 'required',
+            'month' => 'required|date_format:Y-m',
+        ]);
+
+        $date = Carbon::createFromFormat('Y-m', $request->month, 'Asia/Kolkata');
+        $year = $date->year;
+        $month = $date->month;
+
+        if ($request->employee_id === 'all') {
+            $fileName = 'All_Employees_Attendance_' . $date->format('F_Y') . '.xlsx';
+        } else {
+            $employee = Employee::findOrFail($request->employee_id);
+            $fileName = $employee->name . '_Attendance_' . $date->format('F_Y') . '.xlsx';
+        }
+
+        return Excel::download(new MonthlyAttendanceExport($request->employee_id, $month, $year), $fileName);
     }
 }
