@@ -38,7 +38,7 @@
                             <strong>Email:</strong> {{ $salarySlip->employee->email }}
                         </div>
                         <div class="mb-2">
-                            <strong>Employee ID:</strong> {{ $salarySlip->employee->id }}
+                            <strong>Employee Code:</strong> {{ $salarySlip->employee->employee_code }}
                         </div>
                         <div class="mb-2">
                             <strong>Joining Date:</strong> {{ $salarySlip->employee->joining_date ? $salarySlip->employee->joining_date->format('d M Y') : 'N/A' }}
@@ -107,6 +107,10 @@
                             <tr class="text-info">
                                 <td>Half Days</td>
                                 <td class="text-end">{{ $salarySlip->half_day_count }}</td>
+                            </tr>
+                            <tr class="text-primary">
+                                <td>Holidays</td>
+                                <td class="text-end">{{ $salarySlip->holiday_days ?? 0 }}</td>
                             </tr>
                         </table>
                     </div>

@@ -55,6 +55,7 @@
                                 <option value="Absent">Absent</option>
                                 <option value="Leave">Leave</option>
                                 <option value="Half Day">Half Day</option>
+                                <option value="Holiday">Holiday</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -114,6 +115,10 @@
                 <div class="mb-2">
                     <span class="badge bg-info me-2">Half Day</span>
                     <small>Employee is present for half day</small>
+                </div>
+                <div class="mb-2">
+                    <span class="badge bg-primary me-2">Holiday</span>
+                    <small>Employee is on holiday</small>
                 </div>
             </div>
         </div>

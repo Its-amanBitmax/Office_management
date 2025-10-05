@@ -36,6 +36,7 @@ class AttendanceController extends Controller
             'absent' => Attendance::where('date', $date)->where('status', 'Absent')->count(),
             'leave' => Attendance::where('date', $date)->where('status', 'Leave')->count(),
             'half_day' => Attendance::where('date', $date)->where('status', 'Half Day')->count(),
+            'holiday' => Attendance::where('date', $date)->where('status', 'Holiday')->count(),
         ];
 
         return view('admin.attendance.index', compact('employees', 'selectedDate', 'stats', 'date'));
@@ -59,7 +60,7 @@ class AttendanceController extends Controller
             $request->validate([
                 'employee_id' => 'required|exists:employees,id',
                 'date' => 'required|date',
-                'status' => 'required|in:Present,Absent,Leave,Half Day',
+                'status' => 'required|in:Present,Absent,Leave,Half Day,Holiday',
                 'remarks' => 'nullable|string|max:255',
             ]);
 
@@ -149,7 +150,7 @@ class AttendanceController extends Controller
         $request->validate([
             'employee_id' => 'required|exists:employees,id',
             'date' => 'required|date',
-            'status' => 'required|in:Present,Absent,Leave,Half Day',
+            'status' => 'required|in:Present,Absent,Leave,Half Day,Holiday',
             'remarks' => 'nullable|string|max:255',
             'marked_time' => 'required|date_format:H:i',
         ]);
@@ -196,7 +197,7 @@ class AttendanceController extends Controller
             'attendance' => 'required|array',
             'attendance.*.id' => 'nullable|exists:attendances,id',
             'attendance.*.employee_id' => 'required|exists:employees,id',
-            'attendance.*.status' => 'required|in:Present,Absent,Leave,Half Day',
+            'attendance.*.status' => 'required|in:Present,Absent,Leave,Half Day,Holiday',
             'attendance.*.remarks' => 'nullable|string|max:255',
             'date' => 'required|date',
         ]);
@@ -284,6 +285,7 @@ class AttendanceController extends Controller
                     'absent' => $employeeAttendances->where('status', 'Absent')->count(),
                     'leave' => $employeeAttendances->where('status', 'Leave')->count(),
                     'half_day' => $employeeAttendances->where('status', 'Half Day')->count(),
+                    'holiday' => $employeeAttendances->where('status', 'Holiday')->count(),
                 ];
             }
 
@@ -315,6 +317,7 @@ class AttendanceController extends Controller
                 'absent' => $attendances->where('status', 'Absent')->count(),
                 'leave' => $attendances->where('status', 'Leave')->count(),
                 'half_day' => $attendances->where('status', 'Half Day')->count(),
+                'holiday' => $attendances->where('status', 'Holiday')->count(),
             ];
 
             // Get all days in the month for calendar view
@@ -323,7 +326,10 @@ class AttendanceController extends Controller
 
             for ($day = 1; $day <= $daysInMonth; $day++) {
                 $currentDate = Carbon::create($year, $monthNum, $day, 0, 0, 0, 'Asia/Kolkata');
-                $attendance = $attendances->firstWhere('date', $currentDate->format('Y-m-d'));
+                // Use closure for accurate date comparison
+                $attendance = $attendances->first(function ($att) use ($currentDate) {
+                    return $att->date->format('Y-m-d') === $currentDate->format('Y-m-d');
+                });
 
                 $monthlyData[] = [
                     'date' => $currentDate->format('Y-m-d'),
@@ -365,6 +371,7 @@ class AttendanceController extends Controller
                 'absent' => $records->where('status', 'Absent')->count(),
                 'leave' => $records->where('status', 'Leave')->count(),
                 'half_day' => $records->where('status', 'Half Day')->count(),
+                'holiday' => $records->where('status', 'Holiday')->count(),
                 'records' => $records,
             ];
         });

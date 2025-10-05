@@ -47,15 +47,17 @@ class Attendance extends Model
     /**
      * Get attendance status options
      */
-    public static function getStatusOptions()
-    {
-        return [
-            'Present' => 'Present',
-            'Absent' => 'Absent',
-            'Leave' => 'Leave',
-            'Half Day' => 'Half Day',
-        ];
-    }
+public static function getStatusOptions()
+{
+    return [
+        'Present' => 'Present',
+        'Absent' => 'Absent',
+        'Leave' => 'Leave',
+        'Half Day' => 'Half Day',
+        'Holiday' => 'Holiday', 
+    ];
+}
+
 
     /**
      * Check if attendance exists for employee on specific date

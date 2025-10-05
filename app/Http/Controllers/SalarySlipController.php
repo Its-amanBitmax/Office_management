@@ -52,52 +52,55 @@ class SalarySlipController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'employee_id' => 'required|exists:employees,id',
-            'month' => 'required|date_format:Y-m',
-            'deductions' => 'nullable|array',
-            'deductions.*.type' => 'required|string',
-            'deductions.*.amount' => 'required|numeric|min:0',
-        ]);
+   public function store(Request $request)
+{
+    $request->validate([
+        'employee_id' => 'required|exists:employees,id',
+        'month' => 'required|date_format:Y-m',
+        'deductions' => 'nullable|array',
+        'deductions.*.type' => 'required|string',
+        'deductions.*.amount' => 'required|numeric|min:0',
+    ]);
 
-        // Check if salary slip already exists
-        $month = Carbon::createFromFormat('Y-m', $request->month);
-        if (SalarySlip::existsForEmployeeMonth($request->employee_id, $request->month, $month->year)) {
-            return redirect()->back()->withErrors(['month' => 'Salary slip already exists for this employee and month.']);
-        }
-
-        $employee = Employee::findOrFail($request->employee_id);
-
-        // Calculate attendance data
-        $attendanceData = $this->calculateAttendanceData($employee, $request->month);
-
-        // Calculate salary
-        $salaryData = $this->calculateSalary($employee, $attendanceData, $request->deductions ?? []);
-
-        // Create salary slip
-        $salarySlip = SalarySlip::create([
-            'employee_id' => $employee->id,
-            'month' => $request->month,
-            'year' => $month->year,
-            'basic_salary' => $employee->basic_salary ?? 0,
-            'hra' => $employee->hra ?? 0,
-            'conveyance' => $employee->conveyance ?? 0,
-            'medical' => $employee->medical ?? 0,
-            'total_working_days' => $attendanceData['total_days'],
-            'present_days' => $attendanceData['present'],
-            'absent_days' => $attendanceData['absent'],
-            'leave_days' => $attendanceData['leave'],
-            'half_day_count' => $attendanceData['half_day'],
-            'gross_salary' => $salaryData['gross_salary'],
-            'deductions' => $request->deductions,
-            'net_salary' => $salaryData['net_salary'],
-            'generated_at' => now(),
-        ]);
-
-        return redirect()->route('salary-slips.show', $salarySlip)->with('success', 'Salary slip generated successfully.');
+    // Check if salary slip already exists
+    $month = Carbon::createFromFormat('Y-m', $request->month);
+    if (SalarySlip::existsForEmployeeMonth($request->employee_id, $request->month, $month->year)) {
+        return redirect()->back()->withErrors(['month' => 'Salary slip already exists for this employee and month.']);
     }
+
+    $employee = Employee::findOrFail($request->employee_id);
+
+    // Calculate attendance data
+    $attendanceData = $this->calculateAttendanceData($employee, $request->month);
+
+    // Calculate salary
+    $salaryData = $this->calculateSalary($employee, $attendanceData, $request->deductions ?? []);
+
+    // Create salary slip
+    $salarySlip = SalarySlip::create([
+        'employee_id' => $employee->id,
+        'month' => $request->month,
+        'year' => $month->year,
+        'basic_salary' => $employee->basic_salary ?? 0,
+        'hra' => $employee->hra ?? 0,
+        'conveyance' => $employee->conveyance ?? 0,
+        'medical' => $employee->medical ?? 0,
+        'total_working_days' => $attendanceData['total_days'],
+        'present_days' => $attendanceData['present'],
+        'absent_days' => $attendanceData['absent'],
+        'leave_days' => $attendanceData['leave'],
+        'half_day_count' => $attendanceData['half_day'],
+        'holiday_days' => $attendanceData['holiday'], // added
+        'gross_salary' => $salaryData['gross_salary'],
+        'deductions' => $request->deductions,
+        'net_salary' => $salaryData['net_salary'],
+        'generated_at' => now(),
+    ]);
+
+    return redirect()->route('salary-slips.show', $salarySlip)
+                     ->with('success', 'Salary slip generated successfully.');
+}
+
 
     /**
      * Display the specified resource.
@@ -182,63 +185,68 @@ class SalarySlipController extends Controller
     /**
      * Calculate attendance data for the month
      */
-    private function calculateAttendanceData(Employee $employee, string $month): array
-    {
-        $date = Carbon::createFromFormat('Y-m', $month);
-        $year = $date->year;
-        $monthNum = $date->month;
+private function calculateAttendanceData(Employee $employee, string $month): array
+{
+    $date = Carbon::createFromFormat('Y-m', $month);
+    $year = $date->year;
+    $monthNum = $date->month;
 
-        $attendances = Attendance::where('employee_id', $employee->id)
-            ->whereYear('date', $year)
-            ->whereMonth('date', $monthNum)
-            ->get();
+    $attendances = Attendance::where('employee_id', $employee->id)
+        ->whereYear('date', $year)
+        ->whereMonth('date', $monthNum)
+        ->get();
 
-        return [
-            'total_days' => $attendances->count(),
-            'present' => $attendances->where('status', 'Present')->count(),
-            'absent' => $attendances->where('status', 'Absent')->count(),
-            'leave' => $attendances->where('status', 'Leave')->count(),
-            'half_day' => $attendances->where('status', 'Half Day')->count(),
-        ];
-    }
+    return [
+        'total_days' => $attendances->count(),
+        'present' => $attendances->where('status', 'Present')->count(),
+        'absent' => $attendances->where('status', 'Absent')->count(),
+        'leave' => $attendances->where('status', 'Leave')->count(),
+        'half_day' => $attendances->where('status', 'Half Day')->count(),
+        'holiday' => $attendances->where('status', 'Holiday')->count(), // naya
+    ];
+}
+
 
     /**
      * Calculate salary based on attendance and deductions
      */
-    private function calculateSalary(Employee $employee, array $attendanceData, array $deductions = []): array
-    {
-        $basicSalary = $employee->basic_salary ?? 0;
-        $hra = $employee->hra ?? 0;
-        $conveyance = $employee->conveyance ?? 0;
-        $medical = $employee->medical ?? 0;
+private function calculateSalary(Employee $employee, array $attendanceData, array $deductions = []): array
+{
+    $basicSalary = $employee->basic_salary ?? 0;
+    $hra = $employee->hra ?? 0;
+    $conveyance = $employee->conveyance ?? 0;
+    $medical = $employee->medical ?? 0;
 
-        // Calculate daily rates
-        $totalDaysInMonth = Carbon::now()->daysInMonth; // Approximate
-        $basicDaily = $basicSalary / $totalDaysInMonth;
-        $hraDaily = $hra / $totalDaysInMonth;
-        $conveyanceDaily = $conveyance / $totalDaysInMonth;
-        $medicalDaily = $medical / $totalDaysInMonth;
+    // Calculate daily rates
+    $totalDaysInMonth = Carbon::now()->daysInMonth; // Approximate
+    $basicDaily = $basicSalary / $totalDaysInMonth;
+    $hraDaily = $hra / $totalDaysInMonth;
+    $conveyanceDaily = $conveyance / $totalDaysInMonth;
+    $medicalDaily = $medical / $totalDaysInMonth;
 
-        // Calculate based on attendance
-        $presentDays = $attendanceData['present'];
-        $halfDays = $attendanceData['half_day'];
+    // Attendance breakdown
+    $presentDays = $attendanceData['present'] ?? 0;
+    $halfDays = $attendanceData['half_day'] ?? 0;
+    $holidayDays = $attendanceData['holiday'] ?? 0; // new
 
-        $effectiveDays = $presentDays + ($halfDays * 0.5);
+    // Calculate effective days (Holiday counted as full day)
+    $effectiveDays = $presentDays + $holidayDays + ($halfDays * 0.5);
 
-        $grossSalary = ($basicDaily * $effectiveDays) +
-                      ($hraDaily * $effectiveDays) +
-                      ($conveyanceDaily * $effectiveDays) +
-                      ($medicalDaily * $effectiveDays);
+    $grossSalary = ($basicDaily * $effectiveDays) +
+                  ($hraDaily * $effectiveDays) +
+                  ($conveyanceDaily * $effectiveDays) +
+                  ($medicalDaily * $effectiveDays);
 
-        // Calculate deductions
-        $totalDeductions = collect($deductions)->sum('amount');
+    // Calculate deductions
+    $totalDeductions = collect($deductions)->sum('amount');
 
-        $netSalary = $grossSalary - $totalDeductions;
+    $netSalary = $grossSalary - $totalDeductions;
 
-        return [
-            'gross_salary' => round($grossSalary, 2),
-            'net_salary' => round(max(0, $netSalary), 2),
-            'total_deductions' => $totalDeductions,
-        ];
-    }
+    return [
+        'gross_salary' => round($grossSalary, 2),
+        'net_salary' => round(max(0, $netSalary), 2),
+        'total_deductions' => $totalDeductions,
+    ];
+}
+
 }

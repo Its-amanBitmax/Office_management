@@ -49,6 +49,7 @@
                         @elseif($currentStatus == 'Absent') bg-danger
                         @elseif($currentStatus == 'Leave') bg-warning
                         @elseif($currentStatus == 'Half Day') bg-info
+                        @elseif($currentStatus == 'Holiday') bg-primary
                         @else bg-secondary
                         @endif">
                         {{ $currentStatus }}
@@ -63,6 +64,7 @@
                         <button type="button" class="btn {{ $attendance ? 'btn-secondary' : 'btn-danger' }}" {{ $attendance ? 'disabled' : '' }} onclick="{{ $attendance ? '' : 'markAttendance(' . $employee->id . ', \'Absent\', \'' . ($date ?? \Carbon\Carbon::today()->format('Y-m-d')) . '\')' }}" title="Absent">{{ $attendance ? 'Marked' : 'A' }}</button>
                         <button type="button" class="btn {{ $attendance ? 'btn-secondary' : 'btn-warning' }}" {{ $attendance ? 'disabled' : '' }} onclick="{{ $attendance ? '' : 'markAttendance(' . $employee->id . ', \'Leave\', \'' . ($date ?? \Carbon\Carbon::today()->format('Y-m-d')) . '\')' }}" title="Leave">{{ $attendance ? 'Marked' : 'L' }}</button>
                         <button type="button" class="btn {{ $attendance ? 'btn-secondary' : 'btn-info' }}" {{ $attendance ? 'disabled' : '' }} onclick="{{ $attendance ? '' : 'markAttendance(' . $employee->id . ', \'Half Day\', \'' . ($date ?? \Carbon\Carbon::today()->format('Y-m-d')) . '\')' }}" title="Half Day">{{ $attendance ? 'Marked' : 'HD' }}</button>
+                        <button type="button" class="btn {{ $attendance ? 'btn-secondary' : 'btn-primary' }}" {{ $attendance ? 'disabled' : '' }} onclick="{{ $attendance ? '' : 'markAttendance(' . $employee->id . ', \'Holiday\', \'' . ($date ?? \Carbon\Carbon::today()->format('Y-m-d')) . '\')' }}" title="Holiday">{{ $attendance ? 'Marked' : 'H' }}</button>
                     </div>
                 </td>
                 {{-- <td>
@@ -222,6 +224,7 @@ function getStatusClass(status) {
         case 'Absent': return 'bg-danger';
         case 'Leave': return 'bg-warning';
         case 'Half Day': return 'bg-info';
+        case 'Holiday': return 'bg-primary';
         default: return 'bg-secondary';
     }
 }

@@ -55,6 +55,7 @@
                                 <option value="Absent" {{ $attendance->status == 'Absent' ? 'selected' : '' }}>Absent</option>
                                 <option value="Leave" {{ $attendance->status == 'Leave' ? 'selected' : '' }}>Leave</option>
                                 <option value="Half Day" {{ $attendance->status == 'Half Day' ? 'selected' : '' }}>Half Day</option>
+                                <option value="Holiday" {{ $attendance->status == 'Holiday' ? 'selected' : '' }}>Holiday</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -105,6 +106,7 @@
                         @elseif($attendance->status == 'Absent') bg-danger
                         @elseif($attendance->status == 'Leave') bg-warning
                         @elseif($attendance->status == 'Half Day') bg-info
+                        @elseif($attendance->status == 'Holiday') bg-primary
                         @endif">
                         {{ $attendance->status }}
                     </span>

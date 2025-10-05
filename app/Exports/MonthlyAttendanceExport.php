@@ -46,7 +46,7 @@ class MonthlyAttendanceExport implements FromCollection, WithHeadings, WithTitle
                 $currentDate = Carbon::create($this->year, $this->month, $day, 0, 0, 0, 'Asia/Kolkata');
                 $headerRow1[] = $day . ' (' . $currentDate->format('D') . ')';
             }
-            $headerRow1 = array_merge($headerRow1, ['Total Days', 'Present', 'Absent', 'Leave', 'Half Day']);
+            $headerRow1 = array_merge($headerRow1, ['Total Days', 'Present', 'Absent', 'Leave', 'Half Day', 'Holiday']);
             $exportData[] = $headerRow1;
 
             // Create header row 2: Employee Name + Dates
@@ -55,7 +55,7 @@ class MonthlyAttendanceExport implements FromCollection, WithHeadings, WithTitle
                 $currentDate = Carbon::create($this->year, $this->month, $day, 0, 0, 0, 'Asia/Kolkata');
                 $headerRow2[] = $currentDate->format('d');
             }
-            $headerRow2 = array_merge($headerRow2, ['Total Days', 'Present', 'Absent', 'Leave', 'Half Day']);
+            $headerRow2 = array_merge($headerRow2, ['Total Days', 'Present', 'Absent', 'Leave', 'Half Day', 'Holiday']);
             $exportData[] = $headerRow2;
 
             // Get all employees and add data rows for each (even those without attendance)
@@ -70,6 +70,7 @@ class MonthlyAttendanceExport implements FromCollection, WithHeadings, WithTitle
                     'absent' => $records->where('status', 'Absent')->count(),
                     'leave' => $records->where('status', 'Leave')->count(),
                     'half_day' => $records->where('status', 'Half Day')->count(),
+                    'holiday' => $records->where('status', 'Holiday')->count(),
                 ];
 
                 $row = [$employee->name];
@@ -90,6 +91,8 @@ class MonthlyAttendanceExport implements FromCollection, WithHeadings, WithTitle
                             $status = 'L';
                         } elseif ($attendance->status == 'Half Day') {
                             $status = 'HD';
+                        } elseif ($attendance->status == 'Holiday') {
+                            $status = 'H';
                         } else {
                             $status = $attendance->status;
                         }
@@ -106,7 +109,8 @@ class MonthlyAttendanceExport implements FromCollection, WithHeadings, WithTitle
                     $summary['present'],
                     $summary['absent'],
                     $summary['leave'],
-                    $summary['half_day']
+                    $summary['half_day'],
+                    $summary['holiday']
                 ]);
 
                 $exportData[] = $row;
@@ -130,6 +134,7 @@ class MonthlyAttendanceExport implements FromCollection, WithHeadings, WithTitle
                 'absent' => $attendances->where('status', 'Absent')->count(),
                 'leave' => $attendances->where('status', 'Leave')->count(),
                 'half_day' => $attendances->where('status', 'Half Day')->count(),
+                'holiday' => $attendances->where('status', 'Holiday')->count(),
             ];
 
             // Get all days in the month for calendar view
@@ -167,7 +172,7 @@ class MonthlyAttendanceExport implements FromCollection, WithHeadings, WithTitle
                 'Day' => 'Present: ' . $summary['present'],
                 'Status' => 'Absent: ' . $summary['absent'],
                 'Marked At' => 'Leave: ' . $summary['leave'],
-                'Remarks' => 'Half Day: ' . $summary['half_day'],
+                'Remarks' => 'HD: ' . $summary['half_day'] . ' | H: ' . $summary['holiday'],
             ];
 
             return collect($monthlyData);

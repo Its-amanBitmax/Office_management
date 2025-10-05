@@ -23,6 +23,7 @@ class SalarySlip extends Model
         'absent_days',
         'leave_days',
         'half_day_count',
+        'holiday_days',
         'gross_salary',
         'deductions',
         'net_salary',
@@ -40,6 +41,7 @@ class SalarySlip extends Model
         'deductions' => 'array',
         'generated_at' => 'datetime',
         'year' => 'integer',
+        'holiday_days' => 'integer',
     ];
 
     /**
@@ -68,6 +70,24 @@ class SalarySlip extends Model
     public function getMonthNameAttribute()
     {
         return Carbon::createFromFormat('Y-m', $this->month . '-01')->format('F Y');
+    }
+
+    /**
+     * Get holiday days (stored or calculated from attendance)
+     */
+    public function getHolidayDaysAttribute()
+    {
+        if (isset($this->attributes['holiday_days'])) {
+            return $this->attributes['holiday_days'];
+        }
+
+        $holidays = \App\Models\Attendance::where('employee_id', $this->employee_id)
+            ->whereYear('date', $this->year)
+            ->whereMonth('date', $this->month)
+            ->where('status', 'Holiday')
+            ->count();
+
+        return $holidays;
     }
 
     /**
