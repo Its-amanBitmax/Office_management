@@ -277,41 +277,35 @@ class EmployeeController extends Controller
     /**
      * Update related records for the employee.
      */
-    private function updateRelatedRecords(Employee $employee, Request $request)
-    {
-        // Family Details
-        $existingIds = $employee->familyDetails->pluck('id')->toArray();
-        $updatedIds = [];
+/**
+ * Update related records for the employee.
+ */
+private function updateRelatedRecords(Employee $employee, Request $request)
+{
+    // ----------------- Family Details -----------------
+    $existingIds = $employee->familyDetails->pluck('id')->toArray();
+    $updatedIds = [];
 
-        if ($request->relations && is_array($request->relations)) {
-            foreach ($request->relations as $index => $relation) {
-                if (!empty($relation)) {
-                    $familyData = [
-                        'employee_id' => $employee->id,
-                        'relation' => $relation,
-                        'name' => $request->family_names[$index] ?? null,
-                        'contact_number' => $request->contact_numbers[$index] ?? null,
-                        'aadhar' => $request->aadhars[$index] ?? null,
-                        'pan' => $request->pans[$index] ?? null,
-                    ];
+    if ($request->relations && is_array($request->relations)) {
+        foreach ($request->relations as $index => $relation) {
+            if (!empty($relation)) {
+                $familyData = [
+                    'employee_id' => $employee->id,
+                    'relation' => $relation,
+                    'name' => $request->family_names[$index] ?? null,
+                    'contact_number' => $request->contact_numbers[$index] ?? null,
+                    'aadhar' => $request->aadhars[$index] ?? null,
+                    'pan' => $request->pans[$index] ?? null,
+                ];
 
-                    if (isset($existingIds[$index])) {
-                        $existingFamily = $employee->familyDetails->find($existingIds[$index]);
-                        if ($existingFamily) {
-                            $familyData['aadhar_file'] = $existingFamily->aadhar_file;
-                            $familyData['pan_file'] = $existingFamily->pan_file;
+                if (isset($existingIds[$index])) {
+                    $existingFamily = $employee->familyDetails->find($existingIds[$index]);
+                    if ($existingFamily) {
+                        // Preserve old files
+                        $familyData['aadhar_file'] = $existingFamily->aadhar_file;
+                        $familyData['pan_file'] = $existingFamily->pan_file;
 
-                            if ($request->hasFile("aadhar_files.{$index}")) {
-                                $familyData['aadhar_file'] = $request->file("aadhar_files.{$index}")->store('documents', 'public');
-                            }
-                            if ($request->hasFile("pan_files.{$index}")) {
-                                $familyData['pan_file'] = $request->file("pan_files.{$index}")->store('documents', 'public');
-                            }
-
-                            $existingFamily->update($familyData);
-                            $updatedIds[] = $existingFamily->id;
-                        }
-                    } else {
+                        // Upload new files if provided
                         if ($request->hasFile("aadhar_files.{$index}")) {
                             $familyData['aadhar_file'] = $request->file("aadhar_files.{$index}")->store('documents', 'public');
                         }
@@ -319,87 +313,106 @@ class EmployeeController extends Controller
                             $familyData['pan_file'] = $request->file("pan_files.{$index}")->store('documents', 'public');
                         }
 
-                        $newFamily = $employee->familyDetails()->create($familyData);
-                        $updatedIds[] = $newFamily->id;
+                        $existingFamily->update($familyData);
+                        $updatedIds[] = $existingFamily->id;
                     }
-                }
-            }
-        }
+                } else {
+                    // New family member
+                    if ($request->hasFile("aadhar_files.{$index}")) {
+                        $familyData['aadhar_file'] = $request->file("aadhar_files.{$index}")->store('documents', 'public');
+                    }
+                    if ($request->hasFile("pan_files.{$index}")) {
+                        $familyData['pan_file'] = $request->file("pan_files.{$index}")->store('documents', 'public');
+                    }
 
-        // Delete family details not in the updated list
-        $employee->familyDetails()->whereNotIn('id', $updatedIds)->delete();
-
-        // Bank Details (stored in employees table, no separate BankDetail model)
-        // Already handled in $employee->update()
-
-        // Qualifications
-        $employee->qualifications()->delete();
-        if ($request->degrees && is_array($request->degrees)) {
-            foreach ($request->degrees as $index => $degree) {
-                if (!empty($degree)) {
-                    $employee->qualifications()->create([
-                        'employee_id' => $employee->id,
-                        'degree' => $degree,
-                        'institution' => $request->institutions[$index] ?? null,
-                        'year_of_passing' => isset($request->year_of_passings[$index]) ? (int)$request->year_of_passings[$index] : null,
-                        'grade' => $request->grades[$index] ?? null,
-                    ]);
-                }
-            }
-        }
-
-        // Experience
-        $employee->experiences()->delete();
-        if ($request->company_names && is_array($request->company_names)) {
-            foreach ($request->company_names as $index => $company) {
-                if (!empty($company)) {
-                    $employee->experiences()->create([
-                        'employee_id' => $employee->id,
-                        'company_name' => $company,
-                        'position' => $request->positions[$index] ?? null,
-                        'start_date' => $request->start_dates[$index] ?? null,
-                        'end_date' => $request->end_dates[$index] ?? null,
-                    ]);
-                }
-            }
-        }
-
-        // Addresses
-        $employee->addresses()->delete();
-        if ($request->address_types && is_array($request->address_types)) {
-            foreach ($request->address_types as $index => $type) {
-                if (!empty($type)) {
-                    $employee->addresses()->create([
-                        'employee_id' => $employee->id,
-                        'address_type' => $type,
-                        'street_address' => $request->street_addresses[$index] ?? null,
-                        'city' => $request->cities[$index] ?? null,
-                        'state' => $request->states[$index] ?? null,
-                        'postal_code' => $request->postal_codes[$index] ?? null,
-                        'country' => $request->countries[$index] ?? null,
-                    ]);
-                }
-            }
-        }
-
-        // Payroll (stored in employees table, no separate Payroll model)
-        // Already handled in $employee->update()
-
-        // Documents
-        $employee->documents()->delete();
-        if ($request->document_types && is_array($request->document_types)) {
-            foreach ($request->document_types as $index => $type) {
-                if (!empty($type) && $request->hasFile("document_files.{$index}")) {
-                    $path = $request->file("document_files.{$index}")->store('documents', 'public');
-                    $employee->documents()->create([
-                        'employee_id' => $employee->id,
-                        'document_type' => $type,
-                        'file_path' => $path,
-                    ]);
+                    $newFamily = $employee->familyDetails()->create($familyData);
+                    $updatedIds[] = $newFamily->id;
                 }
             }
         }
     }
+
+    // Delete removed family members
+    $employee->familyDetails()->whereNotIn('id', $updatedIds)->delete();
+
+    // ----------------- Qualifications -----------------
+    $employee->qualifications()->delete();
+    if ($request->degrees && is_array($request->degrees)) {
+        foreach ($request->degrees as $index => $degree) {
+            if (!empty($degree)) {
+                $employee->qualifications()->create([
+                    'employee_id' => $employee->id,
+                    'degree' => $degree,
+                    'institution' => $request->institutions[$index] ?? null,
+                    'year_of_passing' => isset($request->year_of_passings[$index]) ? (int)$request->year_of_passings[$index] : null,
+                    'grade' => $request->grades[$index] ?? null,
+                ]);
+            }
+        }
+    }
+
+    // ----------------- Experience -----------------
+    $employee->experiences()->delete();
+    if ($request->company_names && is_array($request->company_names)) {
+        foreach ($request->company_names as $index => $company) {
+            if (!empty($company)) {
+                $employee->experiences()->create([
+                    'employee_id' => $employee->id,
+                    'company_name' => $company,
+                    'position' => $request->positions[$index] ?? null,
+                    'start_date' => $request->start_dates[$index] ?? null,
+                    'end_date' => $request->end_dates[$index] ?? null,
+                ]);
+            }
+        }
+    }
+
+    // ----------------- Addresses -----------------
+    $employee->addresses()->delete();
+    if ($request->address_types && is_array($request->address_types)) {
+        foreach ($request->address_types as $index => $type) {
+            if (!empty($type)) {
+                $employee->addresses()->create([
+                    'employee_id' => $employee->id,
+                    'address_type' => $type,
+                    'street_address' => $request->street_addresses[$index] ?? null,
+                    'city' => $request->cities[$index] ?? null,
+                    'state' => $request->states[$index] ?? null,
+                    'postal_code' => $request->postal_codes[$index] ?? null,
+                    'country' => $request->countries[$index] ?? null,
+                ]);
+            }
+        }
+    }
+
+    // ----------------- Documents -----------------
+    if ($request->document_types && is_array($request->document_types)) {
+        foreach ($request->document_types as $index => $type) {
+            $existingDocument = $employee->documents[$index] ?? null;
+
+            // Determine file path
+            if ($request->hasFile("document_files.{$index}") && $request->file("document_files.{$index}")->isValid()) {
+                $filePath = $request->file("document_files.{$index}")->store('documents', 'public');
+            } else {
+                // Preserve old file from hidden input or existing document
+                $filePath = $request->old_document_files[$index] ?? ($existingDocument->file_path ?? null);
+            }
+
+            if ($existingDocument) {
+                $existingDocument->update([
+                    'document_type' => $type,
+                    'file_path' => $filePath,
+                ]);
+            } else {
+                $employee->documents()->create([
+                    'document_type' => $type,
+                    'file_path' => $filePath,
+                ]);
+            }
+        }
+    }
+}
+
 
     /**
      * Create related records for the employee.

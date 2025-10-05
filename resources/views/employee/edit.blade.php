@@ -688,59 +688,74 @@
                         </div>
 
                         <!-- Documents Tab -->
-                        <div class="tab-pane fade" id="documents-edit" role="tabpanel">
-                            <div id="documents-container">
-                                @forelse($employee->documents as $index => $document)
-                                    <div class="document-entry mb-3">
-                                        <div class="row">
-                                            <div class="col-md-4 mb-2">
-                                                <label class="form-label">Document Type</label>
-                                                <input type="text" class="form-control @error('document_types.' . $index) is-invalid @enderror" name="document_types[]" value="{{ old('document_types.' . $index, $document->document_type) }}">
-                                                @error('document_types.' . $index)
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                            <div class="col-md-4 mb-2">
-                                                <label class="form-label">File</label>
-                                                <input type="file" class="form-control @error('document_files.' . $index) is-invalid @enderror" name="document_files[]" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
-                                                @if($document->file_path)
-                                                    <small class="form-text text-muted">Current file: <a href="{{ asset('storage/' . $document->file_path) }}" target="_blank">View</a></small>
-                                                @endif
-                                                @error('document_files.' . $index)
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                            <div class="col-md-4 mb-2 d-flex align-items-end">
-                                                <button type="button" class="btn btn-danger btn-sm remove-document">Remove</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @empty
-                                    <div class="document-entry mb-3">
-                                        <div class="row">
-                                            <div class="col-md-4 mb-2">
-                                                <label class="form-label">Document Type</label>
-                                                <input type="text" class="form-control @error('document_types.0') is-invalid @enderror" name="document_types[]" value="{{ old('document_types.0') }}">
-                                                @error('document_types.0')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                            <div class="col-md-4 mb-2">
-                                                <label class="form-label">File</label>
-                                                <input type="file" class="form-control @error('document_files.0') is-invalid @enderror" name="document_files[]" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
-                                                @error('document_files.0')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                            <div class="col-md-4 mb-2 d-flex align-items-end">
-                                                <button type="button" class="btn btn-danger btn-sm remove-document">Remove</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforelse
-                            </div>
-                            <button type="button" class="btn btn-secondary btn-sm" id="add-document">Add Document</button>
-                        </div>
+<div class="tab-pane fade" id="documents-edit" role="tabpanel">
+    <div id="documents-container">
+        @forelse($employee->documents as $index => $document)
+            <div class="document-entry mb-3">
+                <div class="row">
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label">Document Type</label>
+                        <input type="text" class="form-control @error('document_types.' . $index) is-invalid @enderror" 
+                               name="document_types[]" 
+                               value="{{ old('document_types.' . $index, $document->document_type) }}">
+                        @error('document_types.' . $index)
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label">File</label>
+                        <input type="file" class="form-control @error('document_files.' . $index) is-invalid @enderror" 
+                               name="document_files[]" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+
+                        {{-- Hidden input to preserve existing file if no new upload --}}
+                        <input type="hidden" name="old_document_files[]" value="{{ $document->file_path }}">
+
+                        @if($document->file_path)
+                            <small class="form-text text-muted">
+                                Current file: <a href="{{ asset('storage/' . $document->file_path) }}" target="_blank">View</a>
+                            </small>
+                        @endif
+
+                        @error('document_files.' . $index)
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-4 mb-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-danger btn-sm remove-document">Remove</button>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="document-entry mb-3">
+                <div class="row">
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label">Document Type</label>
+                        <input type="text" class="form-control @error('document_types.0') is-invalid @enderror" 
+                               name="document_types[]" value="{{ old('document_types.0') }}">
+                        @error('document_types.0')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label">File</label>
+                        <input type="file" class="form-control @error('document_files.0') is-invalid @enderror" 
+                               name="document_files[]" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                        @error('document_files.0')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-4 mb-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-danger btn-sm remove-document">Remove</button>
+                    </div>
+                </div>
+            </div>
+        @endforelse
+    </div>
+    <button type="button" class="btn btn-secondary btn-sm" id="add-document">Add Document</button>
+</div>
+
                     </div>
 
                     <div class="d-flex justify-content-between mt-4">
