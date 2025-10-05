@@ -287,6 +287,14 @@ class AttendanceController extends Controller
                 ];
             }
 
+            // Group attendances by employee_id and date string for correct lookup in view
+            $attendances = $attendances->groupBy([
+                'employee_id',
+                function ($item) {
+                    return \Carbon\Carbon::parse($item->date)->format('Y-m-d');
+                }
+            ]);
+
             return view('admin.attendance.monthly', compact('employees', 'selectedEmployee', 'month', 'employeeSummaries', 'attendances'));
         } else {
             // Show individual employee data

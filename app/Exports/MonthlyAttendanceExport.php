@@ -77,7 +77,9 @@ class MonthlyAttendanceExport implements FromCollection, WithHeadings, WithTitle
                 // Add daily status for each day
                 for ($day = 1; $day <= $daysInMonth; $day++) {
                     $currentDate = Carbon::create($this->year, $this->month, $day, 0, 0, 0, 'Asia/Kolkata');
-                    $attendance = $records->firstWhere('date', $currentDate->format('Y-m-d'));
+                    $attendance = $records->first(function ($item) use ($currentDate) {
+                        return $item->date->format('Y-m-d') === $currentDate->format('Y-m-d');
+                    });
 
                     if ($attendance) {
                         if ($attendance->status == 'Present') {

@@ -41,9 +41,9 @@
     <h5>All Employees Day-wise Attendance - {{ \Carbon\Carbon::createFromFormat('Y-m', $month)->format('F Y') }}</h5>
 
     @php
-        $date = \Carbon\Carbon::createFromFormat('Y-m', $month, 'Asia/Kolkata');
+        $date = \Carbon\Carbon::createFromFormat('Y-m', $month);
         $daysInMonth = $date->daysInMonth;
-        $allAttendances = $attendances->groupBy(['employee_id', 'date']);
+        $allAttendances = $attendances;
     @endphp
 
     <div class="table-responsive">
@@ -53,7 +53,7 @@
                     <th rowspan="2" class="align-middle">Employee Name</th>
                     @for($day = 1; $day <= $daysInMonth; $day++)
                         @php
-                            $currentDate = \Carbon\Carbon::create($date->year, $date->month, $day, 0, 0, 0, 'Asia/Kolkata');
+                            $currentDate = \Carbon\Carbon::create($date->year, $date->month, $day);
                         @endphp
                         <th class="text-center">{{ $day }}<br><small>{{ $currentDate->format('D') }}</small></th>
                     @endfor
@@ -66,7 +66,7 @@
                 <tr>
                     @for($day = 1; $day <= $daysInMonth; $day++)
                         @php
-                            $currentDate = \Carbon\Carbon::create($date->year, $date->month, $day, 0, 0, 0, 'Asia/Kolkata');
+                            $currentDate = \Carbon\Carbon::create($date->year, $date->month, $day);
                         @endphp
                         <th class="text-center">{{ $currentDate->format('d') }}</th>
                     @endfor
@@ -78,8 +78,9 @@
                         <td class="fw-bold">{{ $summary['employee']->name }}</td>
                         @for($day = 1; $day <= $daysInMonth; $day++)
                             @php
-                                $currentDate = \Carbon\Carbon::create($date->year, $date->month, $day, 0, 0, 0, 'Asia/Kolkata')->format('Y-m-d');
-                                $attendance = $allAttendances->get($employeeId, collect())->get($currentDate);
+                                $currentDate = \Carbon\Carbon::create($date->year, $date->month, $day)->format('Y-m-d');
+                                $attendanceCollection = $allAttendances->get($employeeId, collect())->get($currentDate);
+                                $attendance = $attendanceCollection ? $attendanceCollection->first() : null;
                             @endphp
                             <td class="text-center">
                                 @if($attendance)
