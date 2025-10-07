@@ -6,6 +6,8 @@ use App\Models\Task;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\TaskAssigned;
 
 class TaskController extends Controller
 {
@@ -78,7 +80,12 @@ class TaskController extends Controller
             $validated['assigned_to'] = null;
         }
 
-        Task::create($validated);
+        $task = Task::create($validated);
+
+        $assignees = $this->getAssignees($task);
+        foreach ($assignees as $employee) {
+            Mail::to($employee->email)->send(new TaskAssigned($task, $employee));
+        }
 
         return redirect()->route('tasks.index')->with('success', 'Task created successfully.');
     }
@@ -177,7 +184,18 @@ class TaskController extends Controller
             $validated['assigned_to'] = null;
         }
 
+        $oldAssignedTo = $task->assigned_to;
+        $oldTeamLead = $task->team_lead_id;
+        $oldTeamMembers = $task->team_members;
+
         $task->update($validated);
+
+        if ($task->assigned_to != $oldAssignedTo || $task->team_lead_id != $oldTeamLead || $task->team_members != $oldTeamMembers) {
+            $assignees = $this->getAssignees($task);
+            foreach ($assignees as $employee) {
+                Mail::to($employee->email)->send(new TaskAssigned($task, $employee));
+            }
+        }
 
         return redirect()->route('tasks.index')->with('success', 'Task updated successfully.');
     }
@@ -189,5 +207,31 @@ class TaskController extends Controller
     {
         $task->delete();
         return redirect()->route('tasks.index')->with('success', 'Task deleted successfully.');
+    }
+
+    /**
+     * Get the assignees for a task.
+     */
+    private function getAssignees(Task $task)
+    {
+        $assignees = [];
+        if ($task->assigned_to) {
+            $employee = $task->assignedEmployee;
+            if ($employee) {
+                $assignees[] = $employee;
+            }
+        } elseif ($task->assigned_team === 'Team') {
+            if ($task->team_lead_id) {
+                $lead = $task->teamLead;
+                if ($lead) {
+                    $assignees[] = $lead;
+                }
+            }
+            if ($task->team_members) {
+                $members = Employee::whereIn('id', $task->team_members)->get();
+                $assignees = array_merge($assignees, $members->toArray());
+            }
+        }
+        return array_unique($assignees, SORT_REGULAR);
     }
 }
