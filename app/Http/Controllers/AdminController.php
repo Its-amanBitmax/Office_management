@@ -452,4 +452,82 @@ public function logs()
     return view('admin.logs', compact('admin', 'logs'));
 }
 
+public function search(Request $request)
+{
+    $query = $request->get('q');
+    if (!$query) {
+        return response()->json([]);
+    }
+
+    $results = [];
+
+    try {
+        // Search Employees
+        $employees = \App\Models\Employee::where('name', 'like', "%{$query}%")
+            ->orWhere('employee_code', 'like', "%{$query}%")
+            ->limit(5)
+            ->get();
+        foreach ($employees as $emp) {
+            $results[] = [
+                'name' => $emp->name . ' (' . $emp->employee_code . ')',
+                'module' => 'Employee',
+                'url' => route('employees.show', $emp->id)
+            ];
+        }
+
+        // Search Tasks
+        $tasks = \App\Models\Task::where('task_name', 'like', "%{$query}%")
+            ->limit(5)
+            ->get();
+        foreach ($tasks as $task) {
+            $results[] = [
+                'name' => $task->task_name,
+                'module' => 'Task',
+                'url' => route('tasks.show', $task->id)
+            ];
+        }
+
+        // Search Sub Admins
+        $subAdmins = \App\Models\Admin::where('role', 'sub_admin')
+            ->where('name', 'like', "%{$query}%")
+            ->limit(5)
+            ->get();
+        foreach ($subAdmins as $admin) {
+            $results[] = [
+                'name' => $admin->name,
+                'module' => 'Sub Admin',
+                'url' => route('admin.sub-admins.show', $admin->id)
+            ];
+        }
+
+        // Search Visitors
+        $visitors = \App\Models\Visitor::where('name', 'like', "%{$query}%")
+            ->limit(5)
+            ->get();
+        foreach ($visitors as $visitor) {
+            $results[] = [
+                'name' => $visitor->name,
+                'module' => 'Visitor',
+                'url' => route('visitors.show', $visitor->id)
+            ];
+        }
+
+        // Search Invited Visitors
+        $invitedVisitors = \App\Models\InvitedVisitor::where('name', 'like', "%{$query}%")
+            ->limit(5)
+            ->get();
+        foreach ($invitedVisitors as $iv) {
+            $results[] = [
+                'name' => $iv->name,
+                'module' => 'Invited Visitor',
+                'url' => route('invited-visitors.show', $iv->id)
+            ];
+        }
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()]);
+    }
+
+    return response()->json($results);
+}
+
 }

@@ -1,8 +1,6 @@
-# Fix Undefined $employee in task-assigned.blade.php
-
-## Tasks
-- [x] Modify TaskAssigned Mailable to accept Employee parameter
-- [x] Update TaskController getAssigneeEmails to getAssignees returning Employee models
-- [x] Update TaskController store method to send individual emails
-- [x] Update TaskController update method to send individual emails
-- [x] Verify the email view uses $employee correctly (already does)
+- [ ] Update CSS styles in employee.blade.php to match admin's comprehensive styles
+- [ ] Update header structure to include menu-toggle, company name, and user info like admin
+- [ ] Update sidebar to start from top 0, add company logo in sidebar header
+- [ ] Add JavaScript for sidebar toggle, modals, and other functionalities from admin
+- [ ] Adjust main-content margins to match admin layout
+- [ ] Test the updated layout

@@ -178,15 +178,27 @@
 
         .sidebar {
             position: fixed;
-            top: 70px;
+            top: 0;
             left: 0;
             width: 250px;
-            height: calc(100vh - 70px);
+            height: 100vh;
             background: white;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
             padding: 1rem 0;
             overflow-y: auto;
-            z-index: 999;
+            z-index: 1002;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+            /* Hide scrollbar for WebKit browsers (Chrome, Safari) */
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-250px);
+        }
+
+        .sidebar::-webkit-scrollbar {
+            display: none; /* Chrome, Safari */
         }
 
         .sidebar-menu {
@@ -220,15 +232,60 @@
             text-align: center;
         }
 
-        .main-content {
+        .sidebar-header {
+            text-align: center;
+            border-bottom: 1px solid #e9ecef;
+            background: white;
+        }
+
+        .sidebar-header img {
+            height: 60px;
+            object-fit: contain;
+            padding-bottom: 0.5rem;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .header-toggle {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+            margin-top: 0.5rem;
+        }
+
+        .header-toggle:hover {
+            background-color: #f8f9fa;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        .header-left.sidebar-shown {
             margin-left: 250px;
-            margin-top: 70px;
-            padding: 2rem;
-            min-height: calc(100vh - 70px);
+        }
+
+        .company-name {
+            color: white;
+            font-weight: 600;
+            font-size: 1.8rem;
         }
 
         .menu-toggle {
-            display: none;
+            display: block;
             background: none;
             border: none;
             color: white;
@@ -236,22 +293,72 @@
             cursor: pointer;
         }
 
+        .main-content {
+            margin-left: 260px;
+            margin-top: 70px;
+            margin-bottom: 0;
+            padding: 2rem;
+            min-height: calc(100vh - 70px);
+        }
+
+        .sidebar.hidden ~ .main-content {
+            margin-left: 0;
+        }
+
+        .content-wrapper {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f8f9fa;
+        }
+
+        .page-header h2 {
+            color: #333;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .footer {
+            background: white;
+            padding: 1rem 2rem;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
         @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
             .sidebar {
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
             }
-
-            .sidebar.show {
+            .sidebar:not(.hidden) {
                 transform: translateX(0);
             }
-
             .main-content {
                 margin-left: 0;
             }
-
-            .menu-toggle {
-                display: block;
+            .header {
+                padding: 1rem;
+            }
+            .header h1 {
+                font-size: 1.2rem;
             }
         }
 
@@ -377,15 +484,11 @@
 <body>
     <header class="header">
         @php $admin = \App\Models\Admin::first(); @endphp
-        <div style="display: flex; align-items: center; gap: 1rem;">
+        <div class="header-left sidebar-shown">
             <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-            @if($admin && $admin->company_logo)
-                <img src="{{ asset('storage/company_logos/' . $admin->company_logo) }}" alt="Company Logo" style="height: 40px; border-radius: 4px; object-fit: contain;">
-            @endif
-            <h1>{{ $admin->company_name ?? 'Employee Panel' }}</h1>
+            <span class="company-name">{{ $admin->company_name ?? 'Employee Panel' }}</span>
         </div>
         <div class="user-info">
-            <span class="user-name">Welcome, {{ auth('employee')->user()->name ?? 'Employee' }}👋</span>
             <div class="profile-avatar" onclick="openProfileModal()">
                 @if(auth('employee')->user() && auth('employee')->user()->profile_image)
                     <img src="{{ asset('storage/' . auth('employee')->user()->profile_image) }}" alt="Profile Image">
@@ -397,60 +500,70 @@
             </div>
             <form method="POST" action="{{ route('employee.logout') }}" style="display: inline;">
                 @csrf
-                <button type="submit" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
+                <button type="submit" class="logout-btn"> <i class="fas fa-sign-out-alt"></i></button>
             </form>
         </div>
     </header>
 
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
-        <ul class="sidebar-menu">
-            <li>
-                <a href="{{ route('employee.dashboard') }}" class="{{ request()->routeIs('employee.dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('employee.tasks') }}" class="{{ request()->routeIs('employee.tasks*') ? 'active' : '' }}">
-                    <i class="fas fa-tasks"></i> Tasks
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('employee.activities.index') }}" class="{{ request()->routeIs('employee.activities.index') ? 'active' : '' }}">
-                    <i class="fas fa-list"></i> Activities
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('employee.reports') }}" class="{{ request()->routeIs('employee.reports*') ? 'active' : '' }}">
-                    <i class="fas fa-file-alt"></i> Reports
-                </a>
-            </li>
-            @if(auth('employee')->user() && auth('employee')->user()->teamLeadedTasks()->exists())
-            <li>
-                <a href="{{ route('employee.team.management') }}" class="{{ request()->routeIs('employee.team.management') ? 'active' : '' }}">
-                    <i class="fas fa-users"></i> Team Management
-                </a>
-            </li>
-
+        <div class="sidebar-header">
+            @if($admin && $admin->company_logo)
+                <img src="{{ asset('storage/company_logos/' . $admin->company_logo) }}" alt="Company Logo">
             @endif
-            <li>
-                <a href="{{ route('employee.profile') }}" class="{{ request()->routeIs('employee.profile') ? 'active' : '' }}">
-                    <i class="fas fa-user"></i> Profile
-                </a>
-            </li>
-            <li>
-                <a href="#" onclick="openProfileModal()">
-                    <i class="fas fa-cog"></i> Settings
-                </a>
-            </li>
-        </ul>
+        </div>
+        <nav>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{{ route('employee.dashboard') }}" class="{{ request()->routeIs('employee.dashboard') ? 'active' : '' }}">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('employee.tasks') }}" class="{{ request()->routeIs('employee.tasks*') ? 'active' : '' }}">
+                        <i class="fas fa-tasks"></i> Tasks
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('employee.activities.index') }}" class="{{ request()->routeIs('employee.activities.index') ? 'active' : '' }}">
+                        <i class="fas fa-list"></i> Activities
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('employee.reports') }}" class="{{ request()->routeIs('employee.reports*') ? 'active' : '' }}">
+                        <i class="fas fa-file-alt"></i> Reports
+                    </a>
+                </li>
+                @if(auth('employee')->user() && auth('employee')->user()->teamLeadedTasks()->exists())
+                <li>
+                    <a href="{{ route('employee.team.management') }}" class="{{ request()->routeIs('employee.team.management') ? 'active' : '' }}">
+                        <i class="fas fa-users"></i> Team Management
+                    </a>
+                </li>
+                @endif
+                <li>
+                    <a href="{{ route('employee.profile') }}" class="{{ request()->routeIs('employee.profile') ? 'active' : '' }}">
+                        <i class="fas fa-user"></i> Profile
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="openProfileModal()">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                </li>
+            </ul>
+        </nav>
     </aside>
 
     <main class="main-content">
-        @yield('content')
+        <div class="content-wrapper">
+            @yield('content')
+        </div>
     </main>
+
+    <footer class="footer">
+        <p>&copy; {{ date('Y') }} {{ config('app.name', 'Laravel') }}. All rights reserved.</p>
+    </footer>
 
     <!-- Bootstrap 5 JS Bundle CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
@@ -566,7 +679,9 @@ s0.parentNode.insertBefore(s1,s0);
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('show');
+            const toggle = document.querySelector('.header-left');
+            sidebar.classList.toggle('hidden');
+            toggle.classList.toggle('sidebar-shown');
         }
 
         // Close modal when clicking outside

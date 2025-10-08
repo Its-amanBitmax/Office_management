@@ -184,7 +184,10 @@ Route::prefix('admin')->group(function () {
             Route::post('expenses/add-budget', [\App\Http\Controllers\ExpenseController::class, 'addBudget'])->name('admin.expenses.add-budget');
             Route::get('expenses/export/{month}/{year}', [\App\Http\Controllers\ExpenseController::class, 'export'])->name('admin.expenses.export');
         });
-           
+
+        // Global Search Route
+        Route::get('/search', [AdminController::class, 'search'])->name('admin.search');
+
     });
 });
 

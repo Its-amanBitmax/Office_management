@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -35,10 +35,11 @@
             top: 0;
             left: 0;
             right: 0;
-            z-index: 1000;
+           
             display: flex;
             justify-content: space-between;
             align-items: center;
+            opacity: 0.9;
         }
 
         .header h1 {
@@ -164,17 +165,23 @@
 
         .sidebar {
             position: fixed;
-            top: 70px;
+            top: 0;
             left: 0;
             width: 250px;
-            height: calc(100vh - 70px);
+            height: 100vh;
             background: white;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
             padding: 1rem 0;
             overflow-y: auto;
             z-index: 999;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
             /* Hide scrollbar for WebKit browsers (Chrome, Safari) */
             scrollbar-width: none; /* Firefox */
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-250px);
         }
 
         .sidebar::-webkit-scrollbar {
@@ -265,11 +272,54 @@
             transform: rotate(180deg);
         }
 
+        .sidebar-header {
+           
+            text-align: center;
+            border-bottom: 1px solid #e9ecef;
+            background: white;
+        }
+
+        .sidebar-header img {
+            height: 60px;
+            object-fit: contain;
+            padding-bottom: 0.5rem;
+          
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .header-toggle {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+            margin-top: 0.5rem;
+        }
+
+        .header-toggle:hover {
+            background-color: #f8f9fa;
+        }
+
+
         .main-content {
-            margin-left: 250px;
+            margin-left: 260px;
             margin-top: 70px;
+            margin-bottom: 0;
             padding: 2rem;
             min-height: calc(100vh - 70px);
+        }
+
+        .sidebar.hidden ~ .main-content {
+            margin-left: 0;
         }
 
         .content-wrapper {
@@ -323,6 +373,10 @@
         }
 
         @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
+
             .sidebar {
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
@@ -330,6 +384,7 @@
 
             .sidebar.show {
                 transform: translateX(0);
+                
             }
 
             .main-content {
@@ -345,19 +400,130 @@
             }
         }
 
-        .menu-toggle {
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        .header-left.sidebar-shown {
+            margin-left: 250px;
+        }
+
+        .search-container {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.5rem 2.5rem 0.5rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.3s ease;
+            margin-right: 100px
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .search-results {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
             display: none;
+            border: 1px solid #e0e0e0;
+        }
+
+        .search-result-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .search-result-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .result-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .result-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .result-name {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .result-module {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .company-name {
+            color: white;
+            font-weight: 600;
+            font-size: 1.8rem;
+        }
+
+        .menu-toggle {
+            display: block;
             background: none;
             border: none;
             color: white;
             font-size: 1.2rem;
             cursor: pointer;
-        }
 
-        @media (max-width: 768px) {
-            .menu-toggle {
-                display: block;
-            }
         }
 
         /* Chat Bot Icon Styles */
@@ -486,15 +652,19 @@
 
     <!-- Header -->
     <header class="header">
-        <div style="display: flex; align-items: center; gap: 1rem;">
+        <div class="header-left sidebar-shown">
+
             <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-            @if(auth('admin')->user() && auth('admin')->user()->company_logo)
-                <img src="{{ asset('storage/company_logos/' . auth('admin')->user()->company_logo) }}" alt="Company Logo" style="height: 40px; border-radius: 4px; object-fit: contain;">
-            @endif
-            <h1>{{ auth('admin')->user()->company_name ?? 'Admin Panel' }}</h1>
+           
+           <span class="company-name">{{ auth('admin')->user()->company_name ?? 'Admin Panel' }}</span>
         </div>
         <div class="user-info">
-            <span class="user-name">Welcome, {{ auth('admin')->user()->name ?? 'Admin' }}👋</span>
+           <div class="search-container">
+                <input type="text" class="search-input" placeholder="Search employees, tasks, admins, visitors..." id="global-search">
+                <i class="fas fa-search search-icon"></i>
+                <div class="search-results" id="search-results"></div>
+            </div>
+            
             <div class="profile-avatar" onclick="openProfileModal()">
                 @if(auth('admin')->user() && auth('admin')->user()->profile_image)
                     <img src="{{ asset('storage/profile_images/' . auth('admin')->user()->profile_image) }}" alt="Profile Image">
@@ -512,7 +682,13 @@
     </header>
 
     <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar show" id="sidebar">
+        <div class="sidebar-header">
+            @if(auth('admin')->user() && auth('admin')->user()->company_logo)
+                <img src="{{ asset('storage/company_logos/' . auth('admin')->user()->company_logo) }}" alt="Company Logo">
+            @endif
+          
+        </div>
         <nav>
             <ul class="sidebar-menu">
                 @php
@@ -780,18 +956,12 @@
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('show');
+            const toggle = document.querySelector('.header-left');
+            sidebar.classList.toggle('hidden');
+            toggle.classList.toggle('sidebar-shown');
         }
 
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('sidebar');
-            const menuToggle = document.querySelector('.menu-toggle');
 
-            if (!sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
-                sidebar.classList.remove('show');
-            }
-        });
 
         // Profile Modal Functions
         function openProfileModal() {
@@ -876,6 +1046,71 @@
                         sendMessage();
                     }
                 });
+            }
+        });
+
+        // Global Search Functionality
+        let searchTimeout;
+        const searchInput = document.getElementById('global-search');
+        const searchResults = document.getElementById('search-results');
+
+        searchInput.addEventListener('keyup', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            searchTimeout = setTimeout(() => {
+                fetch(`{{ route('admin.search') }}?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        displaySearchResults(data);
+                    })
+                    .catch(error => {
+                        console.error('Search error:', error);
+                    });
+            }, 300);
+        });
+
+        function displaySearchResults(results) {
+            searchResults.innerHTML = '';
+            if (results.length === 0) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            const moduleIcons = {
+                'Employee': '👥',
+                'Task': '📋',
+                'Sub Admin': '👤',
+                'Visitor': '👤',
+                'Invited Visitor': '📧'
+            };
+            results.forEach(result => {
+                const item = document.createElement('div');
+                item.className = 'search-result-item';
+                const icon = moduleIcons[result.module] || '📄';
+                item.innerHTML = `
+                    <div class="result-content">
+                        <span class="result-icon">${icon}</span>
+                        <div class="result-text">
+                            <div class="result-name">${result.name}</div>
+                            <div class="result-module">${result.module}</div>
+                        </div>
+                    </div>
+                `;
+                item.addEventListener('click', () => {
+                    window.location.href = result.url;
+                });
+                searchResults.appendChild(item);
+            });
+            searchResults.style.display = 'block';
+        }
+
+        // Hide search results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
             }
         });
     </script>
