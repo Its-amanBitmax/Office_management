@@ -185,6 +185,17 @@ Route::prefix('admin')->group(function () {
             Route::get('expenses/export/{month}/{year}', [\App\Http\Controllers\ExpenseController::class, 'export'])->name('admin.expenses.export');
         });
 
+        // Leave Requests Management Routes
+        Route::resource('leave-requests', \App\Http\Controllers\LeaveRequestController::class)->names([
+            'index' => 'admin.leave-requests.index',
+            'create' => 'admin.leave-requests.create',
+            'store' => 'admin.leave-requests.store',
+            'show' => 'admin.leave-requests.show',
+            'edit' => 'admin.leave-requests.edit',
+            'update' => 'admin.leave-requests.update',
+            'destroy' => 'admin.leave-requests.destroy',
+        ]);
+
         // Global Search Route
         Route::get('/search', [AdminController::class, 'search'])->name('admin.search');
 
@@ -236,5 +247,14 @@ Route::prefix('employee')->group(function () {
 
         // Employee Card PDF Route
         Route::get('/my-card/pdf', [EmployeeCardController::class, 'pdf'])->name('employee.card.pdf');
+
+        // Employee Attendance Routes
+        Route::get('/attendance', [EmployeeController::class, 'attendance'])->name('employee.attendance');
+        Route::get('/attendance/show', [EmployeeController::class, 'showAttendance'])->name('employee.attendance.show');
+
+        // Employee Leave Request Routes
+        Route::get('/leave-requests', [\App\Http\Controllers\LeaveRequestController::class, 'employeeIndex'])->name('employee.leave-requests.index');
+        Route::get('/leave-requests/create', [\App\Http\Controllers\LeaveRequestController::class, 'employeeCreate'])->name('employee.leave-requests.create');
+        Route::post('/leave-requests', [\App\Http\Controllers\LeaveRequestController::class, 'employeeStore'])->name('employee.leave-requests.store');
     });
 });

@@ -12,6 +12,7 @@
     </form>
 
     <a href="{{ route('attendance.monthly') }}" class="btn btn-info">View Monthly Attendance</a>
+    <a href="{{ route('admin.leave-requests.index') }}" class="btn btn-success">Manage Leave Requests</a>
 </div>
 
 @if(session('success'))

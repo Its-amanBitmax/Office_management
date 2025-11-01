@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Activity;
+use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Report;
 use App\Models\Task;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 
 class EmployeeController extends Controller
 {
@@ -1025,5 +1027,73 @@ private function updateRelatedRecords(Employee $employee, Request $request)
     public function card(Employee $employee)
     {
         return view('admin.employees.card', compact('employee'));
+    }
+
+    /**
+     * Show attendance selection form for the authenticated employee.
+     */
+    public function attendance()
+    {
+        $employee = Auth::guard('employee')->user();
+        return view('employee.attendance', compact('employee'));
+    }
+
+    /**
+     * Show attendance data for the authenticated employee for selected month.
+     */
+    public function showAttendance(Request $request)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        $request->validate([
+            'month' => 'required|date_format:Y-m',
+        ]);
+
+        $month = $request->month;
+
+        // Parse month and year
+        $date = Carbon::createFromFormat('Y-m', $month, 'Asia/Kolkata');
+        $year = $date->year;
+        $monthNum = $date->month;
+
+        // Get attendance data for the selected month and employee
+        $attendances = Attendance::where('employee_id', $employee->id)
+            ->whereYear('date', $year)
+            ->whereMonth('date', $monthNum)
+            ->orderBy('date')
+            ->get();
+
+        // Calculate summary
+        $summary = [
+            'total_days' => $attendances->count(),
+            'present' => $attendances->where('status', 'Present')->count(),
+            'absent' => $attendances->where('status', 'Absent')->count(),
+            'leave' => $attendances->where('status', 'Leave')->count(),
+            'half_day' => $attendances->where('status', 'Half Day')->count(),
+            'holiday' => $attendances->where('status', 'Holiday')->count(),
+        ];
+
+        // Get all days in the month for calendar view
+        $daysInMonth = $date->daysInMonth;
+        $monthlyData = [];
+
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $currentDate = Carbon::create($year, $monthNum, $day, 0, 0, 0, 'Asia/Kolkata');
+            // Use closure for accurate date comparison
+            $attendance = $attendances->first(function ($att) use ($currentDate) {
+                return $att->date->format('Y-m-d') === $currentDate->format('Y-m-d');
+            });
+
+            $monthlyData[] = [
+                'date' => $currentDate->format('Y-m-d'),
+                'day' => $day,
+                'day_name' => $currentDate->format('D'),
+                'status' => $attendance ? $attendance->status : 'Not Marked',
+                'marked_at' => $attendance ? $attendance->updated_at->setTimezone('Asia/Kolkata')->format('H:i') : null,
+                'remarks' => $attendance ? $attendance->remarks : null,
+            ];
+        }
+
+        return view('employee.attendance', compact('employee', 'month', 'summary', 'monthlyData', 'attendances'));
     }
 }

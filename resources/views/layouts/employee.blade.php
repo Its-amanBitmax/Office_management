@@ -525,6 +525,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{{ route('employee.attendance') }}" class="{{ request()->routeIs('employee.attendance*') ? 'active' : '' }}">
+                        <i class="fas fa-calendar-check"></i> Attendance
+                    </a>
+                </li>
+                <li>
                     <a href="{{ route('employee.activities.index') }}" class="{{ request()->routeIs('employee.activities.index') ? 'active' : '' }}">
                         <i class="fas fa-list"></i> Activities
                     </a>

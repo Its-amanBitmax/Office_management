@@ -721,6 +721,9 @@
                         @if($admin->hasPermission('attendance'))
                         <li><a class="dropdown-item" href="{{ route('attendance.index') }}"><i>⏰</i> Attendance</a></li>
                         @endif
+                        @if($admin->hasPermission('leave-requests'))
+                        <li><a class="dropdown-item" href="{{ route('admin.leave-requests.index') }}"><i>📝</i> Leave Requests</a></li>
+                        @endif
                         @if($admin->hasPermission('salary-slips'))
                         <li><a class="dropdown-item" href="{{ route('salary-slips.index') }}"><i>💰</i> Salary Slips</a></li>
                         @endif

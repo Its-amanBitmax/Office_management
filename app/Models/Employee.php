@@ -84,4 +84,9 @@ class Employee extends Authenticatable
     {
         return $this->hasMany(AssignedItem::class);
     }
+
+    public function leaveRequests()
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
 }
