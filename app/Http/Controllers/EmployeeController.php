@@ -583,8 +583,7 @@ private function updateRelatedRecords(Employee $employee, Request $request)
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'email', 'max:255', Rule::unique('employees')->ignore($employee->id)],
-            'phone' => 'nullable|string|max:50',
+            'password' => 'nullable|string|min:6|confirmed',
             'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
@@ -593,6 +592,12 @@ private function updateRelatedRecords(Employee $employee, Request $request)
                 Storage::disk('public')->delete($employee->profile_image);
             }
             $validated['profile_image'] = $request->file('profile_image')->store('profile_images', 'public');
+        }
+
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
         }
 
         $employee->update($validated);

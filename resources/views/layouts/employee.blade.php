@@ -609,14 +609,14 @@
                     </div>
 
                     <div style="margin-bottom: 1rem;">
-                        <label for="modal-email" style="display: block; margin-bottom: 0.25rem; color: #333; font-weight: 500; font-size: 0.9rem;">Email</label>
-                        <input type="email" id="modal-email" name="email" value="{{ old('email', auth('employee')->user()->email ?? '') }}" required
+                        <label for="modal-password" style="display: block; margin-bottom: 0.25rem; color: #333; font-weight: 500; font-size: 0.9rem;">Password</label>
+                        <input type="password" id="modal-password" name="password" placeholder="Enter new password"
                                style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
                     </div>
 
                     <div style="margin-bottom: 1rem;">
-                        <label for="modal-phone" style="display: block; margin-bottom: 0.25rem; color: #333; font-weight: 500; font-size: 0.9rem;">Phone</label>
-                        <input type="tel" id="modal-phone" name="phone" value="{{ old('phone', auth('employee')->user()->phone ?? '') }}"
+                        <label for="modal-password_confirmation" style="display: block; margin-bottom: 0.25rem; color: #333; font-weight: 500; font-size: 0.9rem;">Confirm Password</label>
+                        <input type="password" id="modal-password_confirmation" name="password_confirmation" placeholder="Confirm new password"
                                style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
                     </div>
 

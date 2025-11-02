@@ -1,8 +1,11 @@
-# TODO: Add Remarks Option for Admin Leave Request Approval/Rejection
+# Update Employee Profile Modal in Dashboard
 
 ## Tasks
-- [x] Modify `resources/views/admin/leave-requests/index.blade.php` to add remarks textarea to approve/reject forms for pending requests in the Actions column.
-- [x] Modify `resources/views/admin/leave-requests/edit.blade.php` to add a remarks field to the edit form.
-- [x] Optionally, modify `resources/views/admin/leave-requests/show.blade.php` to add remarks to the approve/reject buttons if needed.
-- [x] Test the forms to ensure remarks are saved correctly.
-- [x] Verify the UI looks good and is user-friendly.
+- [x] Modify EmployeeController updateProfile method to allow only name, password, and profile_image updates
+- [x] Add "Update Profile" button in employee dashboard quick actions
+- [x] Add update profile modal in dashboard.blade.php with form for name, password, profile_image
+- [x] Ensure form submits to updateProfile route
+- [ ] Test the modal functionality
+
+## Completed
+- [x] Analyze current code and plan changes
