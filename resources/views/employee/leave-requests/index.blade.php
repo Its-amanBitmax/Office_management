@@ -29,7 +29,7 @@
                                     <th>Start Date</th>
                                     <th>End Date</th>
                                     <th>Days</th>
-                                    <th>Reason</th>
+                                    <th>Description</th>
                                     <th>Status</th>
                                     <th>Applied On</th>
                                     <th>Actions</th>
@@ -39,11 +39,11 @@
                                 @foreach($leaveRequests as $request)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td>{{ ucfirst($request->leave_type) }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($request->start_date)->format('d/m/Y') }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($request->end_date)->format('d/m/Y') }}</td>
-                                    <td>{{ $request->days }}</td>
-                                    <td>{{ Str::limit($request->reason, 30) }}</td>
+                                    <td>{{ $request->leave_type ? ucfirst($request->leave_type) : '-' }}</td>
+                                    <td>{{ $request->start_date ? \Carbon\Carbon::parse($request->start_date)->format('d/m/Y') : '-' }}</td>
+                                    <td>{{ $request->end_date ? \Carbon\Carbon::parse($request->end_date)->format('d/m/Y') : '-' }}</td>
+                                    <td>{{ $request->days ?? '-' }}</td>
+                                    <td>{{ Str::limit($request->description, 30) }}</td>
                                     <td>
                                         @if($request->status == 'pending')
                                             <span class="badge bg-warning">Pending</span>
@@ -106,10 +106,10 @@ function viewDetails(id) {
             const content = `
                 <div class="row">
                     <div class="col-md-6">
-                        <p><strong>Leave Type:</strong> ${data.leave_type.charAt(0).toUpperCase() + data.leave_type.slice(1)}</p>
-                        <p><strong>Start Date:</strong> ${new Date(data.start_date).toLocaleDateString()}</p>
-                        <p><strong>End Date:</strong> ${new Date(data.end_date).toLocaleDateString()}</p>
-                        <p><strong>Days:</strong> ${data.days}</p>
+                        <p><strong>Leave Type:</strong> ${data.leave_type ? data.leave_type.charAt(0).toUpperCase() + data.leave_type.slice(1) : '-'}</p>
+                        <p><strong>Start Date:</strong> ${data.start_date ? new Date(data.start_date).toLocaleDateString() : '-'}</p>
+                        <p><strong>End Date:</strong> ${data.end_date ? new Date(data.end_date).toLocaleDateString() : '-'}</p>
+                        <p><strong>Days:</strong> ${data.days ?? '-'}</p>
                     </div>
                     <div class="col-md-6">
                         <p><strong>Status:</strong>
@@ -118,11 +118,13 @@ function viewDetails(id) {
                               '<span class="badge bg-danger">Rejected</span>'}
                         </p>
                         <p><strong>Applied On:</strong> ${new Date(data.created_at).toLocaleDateString()}</p>
-                        ${data.admin_remarks ? `<p><strong>Admin Remarks:</strong> ${data.admin_remarks}</p>` : ''}
+                        ${data.remarks ? `<p><strong>Admin Remarks:</strong> ${data.remarks}</p>` : ''}
                     </div>
                     <div class="col-12">
-                        <p><strong>Reason:</strong></p>
-                        <p>${data.reason}</p>
+                        <p><strong>Subject:</strong> ${data.subject}</p>
+                        <p><strong>Description:</strong></p>
+                        <p>${data.description}</p>
+                        ${data.file_path ? `<p><strong>Attachment:</strong> <a href="{{ asset('storage/') }}/${data.file_path}" target="_blank">View Attachment</a></p>` : ''}
                     </div>
                 </div>
             `;

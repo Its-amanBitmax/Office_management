@@ -105,6 +105,14 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="remarks" class="form-label">Remarks</label>
+                        <textarea name="remarks" id="remarks" class="form-control" rows="3" placeholder="Add remarks for this leave request...">{{ old('remarks', $leaveRequest->remarks) }}</textarea>
+                        @error('remarks')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
                         <label for="file" class="form-label">Attachment (Optional)</label>
                         <input type="file" name="file" id="file" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
                         @if($leaveRequest->file_path)

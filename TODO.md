@@ -1,17 +1,8 @@
-# TODO: Add Leave Request Sidebar to Attendance Page
+# TODO: Add Remarks Option for Admin Leave Request Approval/Rejection
 
 ## Tasks
-- [x] Add sidebar to attendance page with "Request Leave" and "View My Requests" buttons
-- [x] Create leave request index view with table showing Subject, Description, File, Status, Remarks
-- [x] Create leave request create form with all required fields (leave_type, start_date, end_date, days, subject, description, file)
-- [x] Implement modal for viewing leave request details
-- [x] Add JavaScript for date calculation and form validation
-
-## Admin Leave Requests Management
-- [x] Update leave request create form to match database schema (subject, description fields)
-- [x] Add leave-requests permission to sub-admin creation modules
-- [x] Create admin leave requests views (index, show, create, edit)
-- [x] Update LeaveRequestController for admin CRUD operations
-- [x] Update routes for admin leave requests
-- [x] Add "Manage Leave Requests" button to admin attendance page
-- [x] Update employee leave request routes to use renamed methods
+- [x] Modify `resources/views/admin/leave-requests/index.blade.php` to add remarks textarea to approve/reject forms for pending requests in the Actions column.
+- [x] Modify `resources/views/admin/leave-requests/edit.blade.php` to add a remarks field to the edit form.
+- [x] Optionally, modify `resources/views/admin/leave-requests/show.blade.php` to add remarks to the approve/reject buttons if needed.
+- [x] Test the forms to ensure remarks are saved correctly.
+- [x] Verify the UI looks good and is user-friendly.

@@ -83,18 +83,8 @@
 
                 @if($leaveRequest->status == 'pending')
                     <div class="mt-4">
-                        <form action="{{ route('admin.leave-requests.update', $leaveRequest->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            @method('PUT')
-                            <input type="hidden" name="status" value="approved">
-                            <button type="submit" class="btn btn-success" onclick="return confirm('Approve this leave request?')">Approve Request</button>
-                        </form>
-                        <form action="{{ route('admin.leave-requests.update', $leaveRequest->id) }}" method="POST" class="d-inline ms-2">
-                            @csrf
-                            @method('PUT')
-                            <input type="hidden" name="status" value="rejected">
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('Reject this leave request?')">Reject Request</button>
-                        </form>
+                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModal">Approve Request</button>
+                        <button type="button" class="btn btn-danger ms-2" data-bs-toggle="modal" data-bs-target="#rejectModal">Reject Request</button>
                     </div>
                 @endif
             </div>
@@ -118,4 +108,62 @@
         </div>
     </div>
 </div>
+
+<!-- Approve Modal -->
+@if($leaveRequest->status == 'pending')
+    <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="approveModalLabel">Approve Leave Request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('admin.leave-requests.update', $leaveRequest->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <p>Are you sure you want to approve the leave request for <strong>{{ $leaveRequest->employee->name }}</strong>?</p>
+                        <div class="mb-3">
+                            <label for="remarks" class="form-label">Remarks (Optional)</label>
+                            <textarea class="form-control" id="remarks" name="remarks" rows="3" placeholder="Add any remarks for approval..."></textarea>
+                        </div>
+                        <input type="hidden" name="status" value="approved">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Approve</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rejectModalLabel">Reject Leave Request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('admin.leave-requests.update', $leaveRequest->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <p>Are you sure you want to reject the leave request for <strong>{{ $leaveRequest->employee->name }}</strong>?</p>
+                        <div class="mb-3">
+                            <label for="remarks" class="form-label">Remarks (Required)</label>
+                            <textarea class="form-control" id="remarks" name="remarks" rows="3" placeholder="Please provide a reason for rejection..." required></textarea>
+                        </div>
+                        <input type="hidden" name="status" value="rejected">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Reject</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endif
 @endsection

@@ -254,7 +254,9 @@ Route::prefix('employee')->group(function () {
 
         // Employee Leave Request Routes
         Route::get('/leave-requests', [\App\Http\Controllers\LeaveRequestController::class, 'employeeIndex'])->name('employee.leave-requests.index');
-        Route::get('/leave-requests/create', [\App\Http\Controllers\LeaveRequestController::class, 'employeeCreate'])->name('employee.leave-requests.create');
+        Route::get('/leave-requests/{leaveRequest}', [\App\Http\Controllers\LeaveRequestController::class, 'employeeShow'])->name('employee.leave-requests.show');
         Route::post('/leave-requests', [\App\Http\Controllers\LeaveRequestController::class, 'employeeStore'])->name('employee.leave-requests.store');
     });
+            Route::get('/leave-requests/create', [\App\Http\Controllers\LeaveRequestController::class, 'employeeCreate'])->name('employee.leave-requests.create');
+
 });

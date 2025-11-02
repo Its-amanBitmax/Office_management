@@ -37,7 +37,7 @@ class LeaveRequestController extends Controller
             'leave_type' => 'required|in:sick,casual,annual,maternity,paternity,emergency,other',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
-            'days' => 'nullable|numeric|min:0.5',
+            'days' => 'required|numeric|min:0.5',
             'subject' => 'required|string|max:255',
             'description' => 'required|string',
             'file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048',
@@ -77,6 +77,10 @@ class LeaveRequestController extends Controller
     public function employeeStore(Request $request)
     {
         $request->validate([
+            'leave_type' => 'required|in:sick,casual,annual,maternity,paternity,emergency,other',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'days' => 'required|numeric|min:0.5',
             'subject' => 'required|string|max:255',
             'description' => 'required|string',
             'file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048',
@@ -86,6 +90,10 @@ class LeaveRequestController extends Controller
 
         $data = [
             'employee_id' => $employee->id,
+            'leave_type' => $request->leave_type,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'days' => $request->days,
             'subject' => $request->subject,
             'description' => $request->description,
             'status' => 'pending',
@@ -122,6 +130,22 @@ class LeaveRequestController extends Controller
      */
     public function update(Request $request, LeaveRequest $leaveRequest)
     {
+        // Check if this is a status-only update (from approve/reject buttons)
+        if ($request->has('status') && !$request->has('employee_id')) {
+            $request->validate([
+                'status' => 'required|in:pending,approved,rejected',
+                'remarks' => 'nullable|string|max:1000',
+            ]);
+
+            $leaveRequest->update([
+                'status' => $request->status,
+                'remarks' => $request->remarks,
+            ]);
+
+            return redirect()->route('admin.leave-requests.index')->with('success', 'Leave request status updated successfully.');
+        }
+
+        // Full update validation
         $request->validate([
             'employee_id' => 'required|exists:employees,id',
             'leave_type' => 'nullable|in:sick,casual,annual,maternity,paternity,emergency,other',
@@ -158,11 +182,12 @@ class LeaveRequestController extends Controller
         }
 
         if ($request->hasFile('file')) {
-            // Delete old file if exists
-            if ($leaveRequest->file_path) {
+            $newFilePath = $request->file('file')->store('leave_requests', 'public');
+            // Delete old file if exists and new file uploaded successfully
+            if ($leaveRequest->file_path && $newFilePath) {
                 Storage::disk('public')->delete($leaveRequest->file_path);
             }
-            $data['file_path'] = $request->file('file')->store('leave_requests', 'public');
+            $data['file_path'] = $newFilePath;
         }
 
         $leaveRequest->update($data);
@@ -192,5 +217,35 @@ class LeaveRequestController extends Controller
         $employee = Auth::guard('employee')->user();
         $leaveRequests = LeaveRequest::where('employee_id', $employee->id)->orderBy('created_at', 'desc')->paginate(10);
         return view('employee.leave-requests.index', compact('leaveRequests'));
+    }
+
+    /**
+     * Show the specified leave request for the authenticated employee.
+     */
+    public function employeeShow(LeaveRequest $leaveRequest)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        // Ensure the employee owns the request
+        if ($leaveRequest->employee_id !== $employee->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Log the request
+        logger()->info("Request received: " . request()->method() . " " . request()->path());
+
+        return response()->json([
+            'id' => $leaveRequest->id,
+            'leave_type' => $leaveRequest->leave_type,
+            'start_date' => $leaveRequest->start_date,
+            'end_date' => $leaveRequest->end_date,
+            'days' => $leaveRequest->days,
+            'subject' => $leaveRequest->subject,
+            'description' => $leaveRequest->description,
+            'status' => $leaveRequest->status,
+            'remarks' => $leaveRequest->remarks,
+            'created_at' => $leaveRequest->created_at,
+            'file_path' => $leaveRequest->file_path,
+        ]);
     }
 }
