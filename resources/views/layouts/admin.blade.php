@@ -35,7 +35,7 @@
             top: 0;
             left: 0;
             right: 0;
-           
+           z-index: 1005;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -173,7 +173,7 @@
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
             padding: 1rem 0;
             overflow-y: auto;
-            z-index: 999;
+            z-index: 1006;
             transform: translateX(0);
             transition: transform 0.3s ease;
             /* Hide scrollbar for WebKit browsers (Chrome, Safari) */
@@ -784,10 +784,14 @@
                 @endif
 
                 @if($admin && $admin->hasPermission('performance'))
-                <li>
-                    <a href="{{ route('admin.performance') }}" class="{{ request()->routeIs('admin.performance') ? 'active' : '' }}">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" id="performance-dropdown-toggle" onclick="toggleDropdown('performance')" aria-expanded="false">
                         <i>📊</i> Performance
                     </a>
+                    <ul class="dropdown-menu" id="performance-dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.performance') }}"><i>📊</i> Performance Overview</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.evaluation-report') }}"><i>📈</i> Evaluation report</a></li>
+                    </ul>
                 </li>
                 @endif
 
@@ -940,7 +944,7 @@
 
         // Initialize dropdown states on page load
         function initializeDropdowns() {
-            const dropdowns = ['hrm','front-desk'];
+            const dropdowns = ['hrm','front-desk','performance'];
 
             dropdowns.forEach(function(dropdownId) {
                 const toggle = document.getElementById(dropdownId + '-dropdown-toggle');

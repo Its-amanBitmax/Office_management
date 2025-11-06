@@ -13,7 +13,7 @@ class Employee extends Authenticatable
         'email',
         'phone',
         'hire_date',
-        'position',
+        'designation',
         'department',
         'status',
         'profile_image',
@@ -27,6 +27,7 @@ class Employee extends Authenticatable
         'conveyance',
         'medical',
         'dob',
+        'reporting_manager',
     ];
 
     protected $casts = [
@@ -88,5 +89,10 @@ class Employee extends Authenticatable
     public function leaveRequests()
     {
         return $this->hasMany(LeaveRequest::class);
+    }
+
+    public function performanceReports()
+    {
+        return $this->hasMany(PerformanceReport::class);
     }
 }

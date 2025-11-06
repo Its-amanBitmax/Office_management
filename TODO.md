@@ -1,11 +1,12 @@
-# Update Employee Profile Modal in Dashboard
-
-## Tasks
-- [x] Modify EmployeeController updateProfile method to allow only name, password, and profile_image updates
-- [x] Add "Update Profile" button in employee dashboard quick actions
-- [x] Add update profile modal in dashboard.blade.php with form for name, password, profile_image
-- [x] Ensure form submits to updateProfile route
-- [ ] Test the modal functionality
-
-## Completed
-- [x] Analyze current code and plan changes
+- [x] Add PDF download button for evaluation report in show-evaluation-report.blade.php
+- [x] Create evaluation-report-pdf.blade.php with professional PDF layout
+- [x] Add downloadEvaluationReportPdf method in AdminController.php
+- [x] Add route for PDF download in routes/web.php
+- [x] Make company logo and name dynamic from admin table
+- [ ] Update the form structure in edit-evaluation-report.blade.php to match add-evaluation-report.blade.php, including adding missing sections (Quality & Efficiency Metrics with star ratings, Behavior & Soft Skills with star ratings), changing Overall Evaluation to use range sliders, and adding Attendance to KPIs.
+- [ ] Pre-fill all form fields with values from $report, $report->qualityMetrics, $report->softSkills, and $report->overallEvaluation where applicable.
+- [ ] Update the form action to PUT method for update, and change submit button text to "Update Performance Report".
+- [ ] Add the JavaScript script for slider functionality from add-evaluation-report.blade.php.
+- [ ] Replace the minimal CSS with the extensive styling from add-evaluation-report.blade.php.
+- [ ] Ensure the back button and page header remain as in the original edit form.
+- [ ] Test the updated form for pre-filling and functionality.

@@ -65,6 +65,15 @@ Route::prefix('admin')->group(function () {
 
         // Admin Performance Route
         Route::middleware('admin:performance')->get('performance', [AdminController::class, 'performance'])->name('admin.performance');
+        Route::middleware('admin:performance')->get('evaluation-report', [AdminController::class, 'evaluationReport'])->name('admin.evaluation-report');
+        Route::middleware('admin:performance')->get('evaluation-report/{id}', [AdminController::class, 'showEvaluationReport'])->name('admin.show-evaluation-report');
+        Route::middleware('admin:performance')->get('evaluation-report/{id}/download-pdf', [AdminController::class, 'downloadEvaluationReportPdf'])->name('admin.evaluation-report.download-pdf');
+        Route::middleware('admin:performance')->get('evaluation-report/{id}/data', [AdminController::class, 'getEvaluationReportData'])->name('admin.get-evaluation-report-data');
+        Route::middleware('admin:performance')->get('add-evaluation-report', [AdminController::class, 'addEvaluationReport'])->name('admin.add-evaluation-report');
+        Route::middleware('admin:performance')->post('store-evaluation-report', [AdminController::class, 'storeEvaluationReport'])->name('admin.store-evaluation-report');
+        Route::middleware('admin:performance')->get('edit-evaluation-report/{id}', [AdminController::class, 'editEvaluationReport'])->name('admin.edit-evaluation-report');
+        Route::middleware('admin:performance')->put('update-evaluation-report/{id}', [AdminController::class, 'updateEvaluationReport'])->name('admin.update-evaluation-report');
+        Route::middleware('admin:performance')->delete('delete-evaluation-report/{id}', [AdminController::class, 'deleteEvaluationReport'])->name('admin.delete-evaluation-report');
 
         // Admin Logs Route
         Route::middleware('admin:logs')->get('logs', [AdminController::class, 'logs'])->name('admin.logs');
