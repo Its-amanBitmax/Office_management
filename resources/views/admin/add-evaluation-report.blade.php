@@ -1,4 +1,4 @@
-    @extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('page-title', 'Add Evaluation Report')
 @section('page-description', 'Create a new performance evaluation report')
@@ -42,243 +42,308 @@
                         </div>
                         <div class="card-body">
                             <div class="evaluation-form">
+                                @php
+                                    // Check if a report already exists for this employee and period
+                                    $existingReport = null;
+                                    if (isset($reviewFrom) && isset($reviewTo)) {
+                                        $existingReport = \App\Models\EvaluationReport::where('employee_id', $employees->first()->id ?? null)
+                                            ->where('review_from', $reviewFrom)
+                                            ->where('review_to', $reviewTo)
+                                            ->with(['evaluationManager', 'evaluationHr', 'evaluationOverall'])
+                                            ->first();
+                                    }
+                                @endphp
                                 <form id="performanceForm" action="{{ route('admin.store-evaluation-report') }}" method="POST">
                                     @csrf
+                                    @if($existingReport)
+                                        <input type="hidden" name="report_id" value="{{ $existingReport->id }}">
+                                    @endif
 
-                                    <h3>Employee Details</h3>
-                                    <div class="grid">
-                                        <div>
-                                            <label>Select Employee</label>
-                                            <select name="employee_name" id="employeeSelect" required>
-                                                <option value="">-- Select Employee --</option>
-                                                @foreach($employees as $employee)
-                                                    <option value="{{ $employee->employee_code }} - {{ $employee->name }}">{{ $employee->name }} ({{ $employee->employee_code }})</option>
-                                                @endforeach
+                                    <!-- Employee Details Section -->
+                                    <div class="form-section employee-details">
+                                        <h3>Employee Details</h3>
+                                        <div class="grid">
+                                            <div>
+                                                <label>Select Employee</label>
+                                                <select name="employee_name" id="employeeSelect" required {{ $existingReport ? 'disabled' : '' }}>
+                                                    <option value="">-- Select Employee --</option>
+                                                    @foreach($employees as $employee)
+                                                        <option value="{{ $employee->employee_code }} - {{ $employee->name }}" {{ $existingReport && $existingReport->employee_id == $employee->id ? 'selected' : '' }}>{{ $employee->name }} ({{ $employee->employee_code }})</option>
+                                                    @endforeach
+                                                </select>
+                                                @if($existingReport)
+                                                    <input type="hidden" name="employee_name" value="{{ $existingReport->employee->employee_code }} - {{ $existingReport->employee->name }}">
+                                                @endif
+                                            </div>
+                                            <div>
+                                                <label>Review Period (From)</label>
+                                                <input type="date" name="review_from" value="{{ $reviewFrom ?? ($existingReport ? $existingReport->review_from : '') }}" required {{ $existingReport ? 'disabled' : '' }}>
+                                                @if($existingReport)
+                                                    <input type="hidden" name="review_from" value="{{ $existingReport->review_from }}">
+                                                @endif
+                                            </div>
+                                            <div>
+                                                <label>Review Period (To)</label>
+                                                <input type="date" name="review_to" value="{{ $reviewTo ?? ($existingReport ? $existingReport->review_to : '') }}" required {{ $existingReport ? 'disabled' : '' }}>
+                                                @if($existingReport)
+                                                    <input type="hidden" name="review_to" value="{{ $existingReport->review_to }}">
+                                                @endif
+                                            </div>
+                                            <div>
+                                                <label>Date of Evaluation</label>
+                                                <input type="date" name="evaluation_date" value="{{ $reviewTo ?? ($existingReport ? $existingReport->evaluation_date : now()->format('Y-m-d')) }}" required>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    @php
+                                        $admin = auth('admin')->user();
+                                        $isSuperAdmin = $admin->role === 'super_admin';
+                                        $isStep1Assigned = false;
+                                        $isStep2Assigned = false;
+
+                                        if (!$isSuperAdmin) {
+                                            $step1Assignments = \App\Models\EvaluationAssignment::where('step', 'step1')->first();
+                                            $step2Assignments = \App\Models\EvaluationAssignment::where('step', 'step2')->first();
+                                            $isStep1Assigned = $step1Assignments && in_array($admin->id, $step1Assignments->assigned_admins ?? []);
+                                            $isStep2Assigned = $step2Assignments && in_array($admin->id, $step2Assignments->assigned_admins ?? []);
+                                        }
+                                    @endphp
+
+                                    <!-- Part 1: Manager Evaluation (Technical Assessment) -->
+                                    @if($isSuperAdmin || $isStep1Assigned)
+                                    <div class="form-section manager-evaluation">
+                                        <div class="section-header">
+                                            <h3>Part 1: Manager Evaluation</h3>
+                                            <span class="section-badge manager-badge">Technical Assessment</span>
+                                        </div>
+
+                                        <div class="subsection">
+                                            <h4>1.1 Key Performance Indicators (KPIs)</h4>
+                                            <label>Project Delivery & Updates</label>
+                                            <input type="text" name="project_delivery" class="form-control" placeholder="Timely completion of assigned tasks" value="{{ $existingReport && $existingReport->evaluationManager ? $existingReport->evaluationManager->project_delivery : '' }}">
+
+                                            <label>Code Quality & Standards</label>
+                                            <input type="text" name="code_quality" class="form-control" placeholder="Clean, optimized, maintainable code" value="{{ $existingReport && $existingReport->evaluationManager ? $existingReport->evaluationManager->code_quality : '' }}">
+
+                                            <label>System/Application Performance</label>
+                                            <input type="text" name="performance" class="form-control" placeholder="Speed, optimization, responsiveness, testing" value="{{ $existingReport && $existingReport->evaluationManager ? $existingReport->evaluationManager->performance : '' }}">
+
+                                            <label>Task Completion & Accuracy</label>
+                                            <input type="text" name="task_completion" class="form-control" placeholder="Adherence to project timelines & quality" value="{{ $existingReport && $existingReport->evaluationManager ? $existingReport->evaluationManager->task_completion : '' }}">
+
+                                            <label>Innovation & Problem Solving</label>
+                                            <input type="text" name="innovation" class="form-control" placeholder="New ideas, tools, or solutions suggested" value="{{ $existingReport && $existingReport->evaluationManager ? $existingReport->evaluationManager->innovation : '' }}">
+                                        </div>
+
+                                        <div class="subsection">
+                                            <h4>1.2 Technical Skills Assessment</h4>
+                                            <div class="grid">
+                                                <div>
+                                                    <label>Code/Task Efficiency (1–5)</label>
+                                                    <div class="rating">
+                                                        <input type="radio" name="code_efficiency" id="ce5" value="5" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->code_efficiency == 5 ? 'checked' : '' }}><label for="ce5"></label>
+                                                        <input type="radio" name="code_efficiency" id="ce4" value="4" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->code_efficiency == 4 ? 'checked' : '' }}><label for="ce4"></label>
+                                                        <input type="radio" name="code_efficiency" id="ce3" value="3" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->code_efficiency == 3 ? 'checked' : '' }}><label for="ce3"></label>
+                                                        <input type="radio" name="code_efficiency" id="ce2" value="2" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->code_efficiency == 2 ? 'checked' : '' }}><label for="ce2"></label>
+                                                        <input type="radio" name="code_efficiency" id="ce1" value="1" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->code_efficiency == 1 ? 'checked' : '' }}><label for="ce1"></label>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label>UI/UX Implementation (1–5)</label>
+                                                    <div class="rating">
+                                                        <input type="radio" name="uiux" id="ui5" value="5" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->uiux == 5 ? 'checked' : '' }}><label for="ui5"></label>
+                                                        <input type="radio" name="uiux" id="ui4" value="4" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->uiux == 4 ? 'checked' : '' }}><label for="ui4"></label>
+                                                        <input type="radio" name="uiux" id="ui3" value="3" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->uiux == 3 ? 'checked' : '' }}><label for="ui3"></label>
+                                                        <input type="radio" name="uiux" id="ui2" value="2" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->uiux == 2 ? 'checked' : '' }}><label for="ui2"></label>
+                                                        <input type="radio" name="uiux" id="ui1" value="1" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->uiux == 1 ? 'checked' : '' }}><label for="ui1"></label>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label>Debugging & Testing Skills (1–5)</label>
+                                                    <div class="rating">
+                                                        <input type="radio" name="debugging" id="db5" value="5" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->debugging == 5 ? 'checked' : '' }}><label for="db5"></label>
+                                                        <input type="radio" name="debugging" id="db4" value="4" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->debugging == 4 ? 'checked' : '' }}><label for="db4"></label>
+                                                        <input type="radio" name="debugging" id="db3" value="3" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->debugging == 3 ? 'checked' : '' }}><label for="db3"></label>
+                                                        <input type="radio" name="debugging" id="db2" value="2" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->debugging == 2 ? 'checked' : '' }}><label for="db2"></label>
+                                                        <input type="radio" name="debugging" id="db1" value="1" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->debugging == 1 ? 'checked' : '' }}><label for="db1"></label>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label>Version Control Usage (1–5)</label>
+                                                    <div class="rating">
+                                                        <input type="radio" name="version_control" id="vc5" value="5" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->version_control == 5 ? 'checked' : '' }}><label for="vc5"></label>
+                                                        <input type="radio" name="version_control" id="vc4" value="4" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->version_control == 4 ? 'checked' : '' }}><label for="vc4"></label>
+                                                        <input type="radio" name="version_control" id="vc3" value="3" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->version_control == 3 ? 'checked' : '' }}><label for="vc3"></label>
+                                                        <input type="radio" name="version_control" id="vc2" value="2" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->version_control == 2 ? 'checked' : '' }}><label for="vc2"></label>
+                                                        <input type="radio" name="version_control" id="vc1" value="1" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->version_control == 1 ? 'checked' : '' }}><label for="vc1"></label>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label>Documentation Quality (1–5)</label>
+                                                    <div class="rating">
+                                                        <input type="radio" name="documentation" id="doc5" value="5" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->documentation == 5 ? 'checked' : '' }}><label for="doc5"></label>
+                                                        <input type="radio" name="documentation" id="doc4" value="4" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->documentation == 4 ? 'checked' : '' }}><label for="doc4"></label>
+                                                        <input type="radio" name="documentation" id="doc3" value="3" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->documentation == 3 ? 'checked' : '' }}><label for="doc3"></label>
+                                                        <input type="radio" name="documentation" id="doc2" value="2" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->documentation == 2 ? 'checked' : '' }}><label for="doc2"></label>
+                                                        <input type="radio" name="documentation" id="doc1" value="1" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->documentation == 1 ? 'checked' : '' }}><label for="doc1"></label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="subsection">
+                                            <h4>1.3 Manager Comments</h4>
+                                            <textarea name="manager_comments" placeholder="Manager's assessment and feedback on technical performance">{{ $existingReport && $existingReport->evaluationManager ? $existingReport->evaluationManager->manager_comments : '' }}</textarea>
+                                        </div>
+                                    </div>
+                                    @endif
+
+                                    <!-- Part 2: HR Evaluation (Behavioral Assessment) -->
+                                    @if($isSuperAdmin || $isStep2Assigned)
+                                    <div class="form-section hr-evaluation">
+                                        <div class="section-header">
+                                            <h3>Part 2: HR Evaluation</h3>
+                                            <span class="section-badge hr-badge">Behavioral Assessment</span>
+                                        </div>
+
+                                        <div class="subsection">
+                                            <h4>2.1 Behavioral & Soft Skills Assessment</h4>
+                                            <label>Collaboration & Teamwork</label>
+                                            <input type="text" name="teamwork" class="form-control" placeholder="Coordination with developers, designers, QA, etc." value="{{ $existingReport && $existingReport->evaluationHr ? $existingReport->evaluationHr->teamwork : '' }}">
+
+                                            <label>Communication & Reporting</label>
+                                            <input type="text" name="communication" class="form-control" placeholder="Updates, client communication, reporting style" value="{{ $existingReport && $existingReport->evaluationHr ? $existingReport->evaluationHr->communication : '' }}">
+
+                                            <label>Attendance & Punctuality</label>
+                                            <input type="text" name="attendance" class="form-control" placeholder="Work discipline, logins, reliability" value="{{ $existingReport && $existingReport->evaluationHr ? $existingReport->evaluationHr->attendance : '' }}">
+                                        </div>
+
+                                        <div class="subsection">
+                                            <h4>2.2 Soft Skills Ratings</h4>
+                                            <div class="grid">
+                                                <div>
+                                                    <label>Professionalism (1–5)</label>
+                                                    <div class="rating">
+                                                        <input type="radio" name="professionalism" id="pr5" value="5" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->professionalism == 5 ? 'checked' : '' }}><label for="pr5"></label>
+                                                        <input type="radio" name="professionalism" id="pr4" value="4" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->professionalism == 4 ? 'checked' : '' }}><label for="pr4"></label>
+                                                        <input type="radio" name="professionalism" id="pr3" value="3" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->professionalism == 3 ? 'checked' : '' }}><label for="pr3"></label>
+                                                        <input type="radio" name="professionalism" id="pr2" value="2" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->professionalism == 2 ? 'checked' : '' }}><label for="pr2"></label>
+                                                        <input type="radio" name="professionalism" id="pr1" value="1" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->professionalism == 1 ? 'checked' : '' }}><label for="pr1"></label>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label>Team Collaboration (1–5)</label>
+                                                    <div class="rating">
+                                                        <input type="radio" name="team_collaboration" id="tc5" value="5" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->team_collaboration == 5 ? 'checked' : '' }}><label for="tc5"></label>
+                                                        <input type="radio" name="team_collaboration" id="tc4" value="4" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->team_collaboration == 4 ? 'checked' : '' }}><label for="tc4"></label>
+                                                        <input type="radio" name="team_collaboration" id="tc3" value="3" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->team_collaboration == 3 ? 'checked' : '' }}><label for="tc3"></label>
+                                                        <input type="radio" name="team_collaboration" id="tc2" value="2" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->team_collaboration == 2 ? 'checked' : '' }}><label for="tc2"></label>
+                                                        <input type="radio" name="team_collaboration" id="tc1" value="1" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->team_collaboration == 1 ? 'checked' : '' }}><label for="tc1"></label>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label>Learning & Adaptability (1–5)</label>
+                                                    <div class="rating">
+                                                        <input type="radio" name="learning" id="la5" value="5" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->learning == 5 ? 'checked' : '' }}><label for="la5"></label>
+                                                        <input type="radio" name="learning" id="la4" value="4" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->learning == 4 ? 'checked' : '' }}><label for="la4"></label>
+                                                        <input type="radio" name="learning" id="la3" value="3" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->learning == 3 ? 'checked' : '' }}><label for="la3"></label>
+                                                        <input type="radio" name="learning" id="la2" value="2" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->learning == 2 ? 'checked' : '' }}><label for="la2"></label>
+                                                        <input type="radio" name="learning" id="la1" value="1" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->learning == 1 ? 'checked' : '' }}><label for="la1"></label>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label>Initiative & Ownership (1–5)</label>
+                                                    <div class="rating">
+                                                        <input type="radio" name="initiative" id="io5" value="5" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->initiative == 5 ? 'checked' : '' }}><label for="io5"></label>
+                                                        <input type="radio" name="initiative" id="io4" value="4" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->initiative == 4 ? 'checked' : '' }}><label for="io4"></label>
+                                                        <input type="radio" name="initiative" id="io3" value="3" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->initiative == 3 ? 'checked' : '' }}><label for="io3"></label>
+                                                        <input type="radio" name="initiative" id="io2" value="2" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->initiative == 2 ? 'checked' : '' }}><label for="io2"></label>
+                                                        <input type="radio" name="initiative" id="io1" value="1" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->initiative == 1 ? 'checked' : '' }}><label for="io1"></label>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label>Time Management (1–5)</label>
+                                                    <div class="rating">
+                                                        <input type="radio" name="time_management" id="tm5" value="5" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->time_management == 5 ? 'checked' : '' }}><label for="tm5"></label>
+                                                        <input type="radio" name="time_management" id="tm4" value="4" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->time_management == 4 ? 'checked' : '' }}><label for="tm4"></label>
+                                                        <input type="radio" name="time_management" id="tm3" value="3" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->time_management == 3 ? 'checked' : '' }}><label for="tm3"></label>
+                                                        <input type="radio" name="time_management" id="tm2" value="2" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->time_management == 2 ? 'checked' : '' }}><label for="tm2"></label>
+                                                        <input type="radio" name="time_management" id="tm1" value="1" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->time_management == 1 ? 'checked' : '' }}><label for="tm1"></label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="subsection">
+                                            <h4>2.3 HR Comments</h4>
+                                            <textarea name="hr_comments" placeholder="HR's assessment and feedback on behavioral performance">{{ $existingReport && $existingReport->evaluationHr ? $existingReport->evaluationHr->hr_comments : '' }}</textarea>
+                                        </div>
+                                    </div>
+                                    @endif
+
+                                    <!-- Part 3: Overall Evaluation (Super Admin Only) -->
+                                    @if($isSuperAdmin)
+                                    <div class="form-section overall-evaluation">
+                                        <div class="section-header">
+                                            <h3>Part 3: Overall Evaluation</h3>
+                                            <span class="section-badge overall-badge">Final Assessment</span>
+                                        </div>
+
+                                        <div class="subsection">
+                                            <h4>3.1 Performance Scoring</h4>
+                                            <div class="grid">
+                                                <div>
+                                                    <label>Technical Skills (40%)</label>
+                                                    <input type="range" name="technical_skills" min="0" max="40" value="0" class="score-slider" data-max="40">
+                                                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                                                    <span class="score-display">0 / 40 (0%)</span>
+                                                </div>
+                                                <div>
+                                                    <label>Task Delivery (25%)</label>
+                                                    <input type="range" name="task_delivery_score" min="0" max="25" value="0" class="score-slider" data-max="25">
+                                                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                                                    <span class="score-display">0 / 25 (0%)</span>
+                                                </div>
+                                                <div>
+                                                    <label>Quality of Work (15%)</label>
+                                                    <input type="range" name="quality_work" min="0" max="15" value="0" class="score-slider" data-max="15">
+                                                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                                                    <span class="score-display">0 / 15 (0%)</span>
+                                                </div>
+                                                <div>
+                                                    <label>Communication (10%)</label>
+                                                    <input type="range" name="communication_score" min="0" max="10" value="0" class="score-slider" data-max="10">
+                                                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                                                    <span class="score-display">0 / 10 (0%)</span>
+                                                </div>
+                                                <div>
+                                                    <label>Behavior & Teamwork (10%)</label>
+                                                    <input type="range" name="behavior_teamwork" min="0" max="10" value="0" class="score-slider" data-max="10">
+                                                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                                                    <span class="score-display">0 / 10 (0%)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="subsection">
+                                            <h4>3.2 Final Assessment</h4>
+                                            <label>Performance Grade</label>
+                                            <select name="performance_grade" required>
+                                                <option value="">Select Grade</option>
+                                                <option value="Excellent" {{ $existingReport && $existingReport->evaluationOverall && $existingReport->evaluationOverall->performance_grade == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                <option value="Good" {{ $existingReport && $existingReport->evaluationOverall && $existingReport->evaluationOverall->performance_grade == 'Good' ? 'selected' : '' }}>Good</option>
+                                                <option value="Satisfactory" {{ $existingReport && $existingReport->evaluationOverall && $existingReport->evaluationOverall->performance_grade == 'Satisfactory' ? 'selected' : '' }}>Satisfactory</option>
+                                                <option value="Needs Improvement" {{ $existingReport && $existingReport->evaluationOverall && $existingReport->evaluationOverall->performance_grade == 'Needs Improvement' ? 'selected' : '' }}>Needs Improvement</option>
                                             </select>
-                                        </div>
-                                        <div>
-                                            <label>Designation</label>
-                                            <input type="text" name="designation" placeholder="e.g., Web Developer, App Developer" required>
-                                        </div>
-                                        <div>
-                                            <label>Department</label>
-                                            <input type="text" name="department" value="Development Team" readonly>
-                                        </div>
-                                        <div>
-                                            <label>Reporting Manager</label>
-                                            <input type="text" name="reporting_manager" placeholder="Manager Name" required>
-                                        </div>
-                                        <div>
-                                            <label>Review Period (From)</label>
-                                            <input type="date" name="review_from" value="{{ $reviewFrom ?? '' }}" required>
-                                        </div>
-                                        <div>
-                                            <label>Review Period (To)</label>
-                                            <input type="date" name="review_to" value="{{ $reviewTo ?? '' }}" required>
-                                        </div>
-                                        <div>
-                                            <label>Date of Evaluation</label>
-                                            <input type="date" name="evaluation_date" value="{{ $reviewTo ?? now()->format('Y-m-d') }}" required>
+
+                                            <label>Final Feedback</label>
+                                            <textarea name="final_feedback" placeholder="Overall assessment, strengths, areas for improvement, and recommendations"></textarea>
                                         </div>
                                     </div>
+                                    @endif
 
-                                    <div class="section mt-4 pt-3 border-top">
-                                        <h3>1. Key Performance Indicators (KPIs)</h3>
-
-                                        <label>Project Delivery & Updates</label>
-                                        <input type="text" name="project_delivery" class="form-control" placeholder="Timely completion of assigned tasks">
-
-                                        <label>Code Quality & Standards</label>
-                                        <input type="text" name="code_quality" class="form-control" placeholder="Clean, optimized, maintainable code">
-
-                                        <label>System/Application Performance</label>
-                                        <input type="text" name="performance" class="form-control" placeholder="Speed, optimization, responsiveness, testing">
-
-                                        <label>Task Completion & Accuracy</label>
-                                        <input type="text" name="task_completion" class="form-control" placeholder="Adherence to project timelines & quality">
-
-                                        <label>Innovation & Problem Solving</label>
-                                        <input type="text" name="innovation" class="form-control" placeholder="New ideas, tools, or solutions suggested">
-
-                                        <label>Collaboration & Teamwork</label>
-                                        <input type="text" name="teamwork" class="form-control" placeholder="Coordination with developers, designers, QA, etc.">
-
-                                        <label>Communication & Reporting</label>
-                                        <input type="text" name="communication" class="form-control" placeholder="Updates, client communication, reporting style">
-
-                                        <label>Attendance & Punctuality</label>
-                                        <input type="text" name="attendance" class="form-control" placeholder="Work discipline, logins, reliability">
-                                    </div>
-
-                                    <!-- Section 2: Star Ratings -->
-                                    <div class="section">
-                                        <h3>2. Quality & Efficiency Metrics</h3>
-                                        <div class="grid">
-                                            <div>
-                                                <label>Code/Task Efficiency (1–5)</label>
-                                                <div class="rating">
-                                                    <input type="radio" name="code_efficiency" id="ce5" value="5"><label for="ce5"></label>
-                                                    <input type="radio" name="code_efficiency" id="ce4" value="4"><label for="ce4"></label>
-                                                    <input type="radio" name="code_efficiency" id="ce3" value="3"><label for="ce3"></label>
-                                                    <input type="radio" name="code_efficiency" id="ce2" value="2"><label for="ce2"></label>
-                                                    <input type="radio" name="code_efficiency" id="ce1" value="1"><label for="ce1"></label>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label>UI/UX Implementation (1–5)</label>
-                                                <div class="rating">
-                                                    <input type="radio" name="uiux" id="ui5" value="5"><label for="ui5"></label>
-                                                    <input type="radio" name="uiux" id="ui4" value="4"><label for="ui4"></label>
-                                                    <input type="radio" name="uiux" id="ui3" value="3"><label for="ui3"></label>
-                                                    <input type="radio" name="uiux" id="ui2" value="2"><label for="ui2"></label>
-                                                    <input type="radio" name="uiux" id="ui1" value="1"><label for="ui1"></label>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label>Debugging & Testing Skills (1–5)</label>
-                                                <div class="rating">
-                                                    <input type="radio" name="debugging" id="db5" value="5"><label for="db5"></label>
-                                                    <input type="radio" name="debugging" id="db4" value="4"><label for="db4"></label>
-                                                    <input type="radio" name="debugging" id="db3" value="3"><label for="db3"></label>
-                                                    <input type="radio" name="debugging" id="db2" value="2"><label for="db2"></label>
-                                                    <input type="radio" name="debugging" id="db1" value="1"><label for="db1"></label>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label>Version Control Usage (1–5)</label>
-                                                <div class="rating">
-                                                    <input type="radio" name="version_control" id="vc5" value="5"><label for="vc5"></label>
-                                                    <input type="radio" name="version_control" id="vc4" value="4"><label for="vc4"></label>
-                                                    <input type="radio" name="version_control" id="vc3" value="3"><label for="vc3"></label>
-                                                    <input type="radio" name="version_control" id="vc2" value="2"><label for="vc2"></label>
-                                                    <input type="radio" name="version_control" id="vc1" value="1"><label for="vc1"></label>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label>Documentation Quality (1–5)</label>
-                                                <div class="rating">
-                                                    <input type="radio" name="documentation" id="doc5" value="5"><label for="doc5"></label>
-                                                    <input type="radio" name="documentation" id="doc4" value="4"><label for="doc4"></label>
-                                                    <input type="radio" name="documentation" id="doc3" value="3"><label for="doc3"></label>
-                                                    <input type="radio" name="documentation" id="doc2" value="2"><label for="doc2"></label>
-                                                    <input type="radio" name="documentation" id="doc1" value="1"><label for="doc1"></label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Section 3: Star Ratings -->
-                                    <div class="section">
-                                        <h3>3. Behavior & Soft Skills</h3>
-                                        <div class="grid">
-                                            <div>
-                                                <label>Professionalism (1–5)</label>
-                                                <div class="rating">
-                                                    <input type="radio" name="professionalism" id="pr5" value="5"><label for="pr5"></label>
-                                                    <input type="radio" name="professionalism" id="pr4" value="4"><label for="pr4"></label>
-                                                    <input type="radio" name="professionalism" id="pr3" value="3"><label for="pr3"></label>
-                                                    <input type="radio" name="professionalism" id="pr2" value="2"><label for="pr2"></label>
-                                                    <input type="radio" name="professionalism" id="pr1" value="1"><label for="pr1"></label>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label>Team Collaboration (1–5)</label>
-                                                <div class="rating">
-                                                    <input type="radio" name="team_collaboration" id="tc5" value="5"><label for="tc5"></label>
-                                                    <input type="radio" name="team_collaboration" id="tc4" value="4"><label for="tc4"></label>
-                                                    <input type="radio" name="team_collaboration" id="tc3" value="3"><label for="tc3"></label>
-                                                    <input type="radio" name="team_collaboration" id="tc2" value="2"><label for="tc2"></label>
-                                                    <input type="radio" name="team_collaboration" id="tc1" value="1"><label for="tc1"></label>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label>Learning & Adaptability (1–5)</label>
-                                                <div class="rating">
-                                                    <input type="radio" name="learning" id="la5" value="5"><label for="la5"></label>
-                                                    <input type="radio" name="learning" id="la4" value="4"><label for="la4"></label>
-                                                    <input type="radio" name="learning" id="la3" value="3"><label for="la3"></label>
-                                                    <input type="radio" name="learning" id="la2" value="2"><label for="la2"></label>
-                                                    <input type="radio" name="learning" id="la1" value="1"><label for="la1"></label>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label>Initiative & Ownership (1–5)</label>
-                                                <div class="rating">
-                                                    <input type="radio" name="initiative" id="io5" value="5"><label for="io5"></label>
-                                                    <input type="radio" name="initiative" id="io4" value="4"><label for="io4"></label>
-                                                    <input type="radio" name="initiative" id="io3" value="3"><label for="io3"></label>
-                                                    <input type="radio" name="initiative" id="io2" value="2"><label for="io2"></label>
-                                                    <input type="radio" name="initiative" id="io1" value="1"><label for="io1"></label>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label>Time Management (1–5)</label>
-                                                <div class="rating">
-                                                    <input type="radio" name="time_management" id="tm5" value="5"><label for="tm5"></label>
-                                                    <input type="radio" name="time_management" id="tm4" value="4"><label for="tm4"></label>
-                                                    <input type="radio" name="time_management" id="tm3" value="3"><label for="tm3"></label>
-                                                    <input type="radio" name="time_management" id="tm2" value="2"><label for="tm2"></label>
-                                                    <input type="radio" name="time_management" id="tm1" value="1"><label for="tm1"></label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="section">
-                                        <h3>4. Overall Evaluation</h3>
-                                        <div class="grid">
-                                            <div>
-                                                <label>Technical Skills (40%)</label>
-                                                <input type="range" name="technical_skills" min="0" max="40" value="0" class="score-slider" data-max="40">
-                                                <div class="progress-bar"><div class="progress-fill"></div></div>
-                                                <span class="score-display">0 / 40 (0%)</span>
-                                            </div>
-                                            <div>
-                                                <label>Task Delivery (25%)</label>
-                                                <input type="range" name="task_delivery" min="0" max="25" value="0" class="score-slider" data-max="25">
-                                                <div class="progress-bar"><div class="progress-fill"></div></div>
-                                                <span class="score-display">0 / 25 (0%)</span>
-                                            </div>
-                                            <div>
-                                                <label>Quality of Work (15%)</label>
-                                                <input type="range" name="quality_work" min="0" max="15" value="0" class="score-slider" data-max="15">
-                                                <div class="progress-bar"><div class="progress-fill"></div></div>
-                                                <span class="score-display">0 / 15 (0%)</span>
-                                            </div>
-                                            <div>
-                                                <label>Communication (10%)</label>
-                                                <input type="range" name="communication_score" min="0" max="10" value="0" class="score-slider" data-max="10">
-                                                <div class="progress-bar"><div class="progress-fill"></div></div>
-                                                <span class="score-display">0 / 10 (0%)</span>
-                                            </div>
-                                            <div>
-                                                <label>Behavior & Teamwork (10%)</label>
-                                                <input type="range" name="teamwork_score" min="0" max="10" value="0" class="score-slider" data-max="10">
-                                                <div class="progress-bar"><div class="progress-fill"></div></div>
-                                                <span class="score-display">0 / 10 (0%)</span>
-                                            </div>
-                                            <div>
-                                                <label>Overall Rating (out of 100)</label>
-                                                <input type="range" name="overall_rating" min="0" max="100" value="0" class="score-slider" data-max="100">
-                                                <div class="progress-bar"><div class="progress-fill"></div></div>
-                                                <span class="score-display">0 / 100 (0%)</span>
-                                            </div>
-                                        </div>
-                                        <label>Performance Grade</label>
-                                        <select name="performance_grade">
-                                            <option>Excellent</option>
-                                            <option>Good</option>
-                                            <option>Satisfactory</option>
-                                            <option>Needs Improvement</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="section">
-                                        <h3>Manager's Feedback</h3>
-                                        <textarea name="manager_final_feedback" placeholder="Summary of strengths, areas for improvement, and training recommendations"></textarea>
-                                    </div>
-
-                                    <button type="submit">Submit Performance Report</button>
+                                    <button type="submit">Submit Evaluation Report</button>
                                 </form>
                             </div>
                         </div>
@@ -334,6 +399,13 @@ document.addEventListener('DOMContentLoaded', function() {
     border-left: 5px solid #818cf8;
     padding-left: 12px;
     font-size: 21px;
+    font-weight: 600;
+}
+
+.evaluation-form h4 {
+    color: #6366f1;
+    margin-top: 20px;
+    font-size: 16px;
     font-weight: 600;
 }
 
@@ -398,10 +470,48 @@ document.addEventListener('DOMContentLoaded', function() {
     box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
 }
 
-.evaluation-form .section {
-    margin-top: 25px;
-    padding-top: 15px;
-    border-top: 2px dashed #e0e7ff;
+.evaluation-form .form-section {
+    margin-bottom: 40px;
+    padding: 25px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 15px;
+    border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.evaluation-form .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e0e7ff;
+}
+
+.evaluation-form .section-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.evaluation-form .manager-badge {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.evaluation-form .hr-badge {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.evaluation-form .overall-badge {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+}
+
+.evaluation-form .subsection {
+    margin-bottom: 25px;
 }
 
 .evaluation-form .grid {
@@ -472,6 +582,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     .evaluation-form .grid {
         grid-template-columns: 1fr;
+    }
+    .evaluation-form .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
     }
 }
 </style>

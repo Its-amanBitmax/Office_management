@@ -93,6 +93,6 @@ class Employee extends Authenticatable
 
     public function performanceReports()
     {
-        return $this->hasMany(PerformanceReport::class);
+        return $this->hasMany(EvaluationReport::class);
     }
 }

@@ -80,309 +80,322 @@
                                                     {{ \Carbon\Carbon::parse($report->evaluation_date)->format('M d, Y') }}
                                                 </div>
                                                 <div class="col-6">
-                                                    <strong>Reporting Manager:</strong><br>
-                                                    {{ $report->manager_feedback ? 'Available' : 'N/A' }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Overall Performance Summary -->
-                            @if($report->overallEvaluation)
-                            <div class="row mb-4">
-                                <div class="col-12">
-                                    <div class="card border-success">
-                                        <div class="card-header bg-success text-white">
-                                            <h6 class="card-title mb-0">
-                                                <i class="fas fa-chart-line"></i> Overall Performance Summary
-                                            </h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="row text-center">
-                                                <div class="col-md-3">
-                                                    <div class="p-3 bg-light rounded">
-                                                        <h3 class="text-success">{{ $report->overallEvaluation->overall_rating }}/100</h3>
-                                                        <p class="mb-0">Overall Rating</p>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <div class="p-3 bg-light rounded">
-                                                        <h3 class="text-primary">{{ $report->overallEvaluation->technical_skills_score }}/40</h3>
-                                                        <p class="mb-0">Technical Skills</p>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <div class="p-3 bg-light rounded">
-                                                        <h3 class="text-info">{{ $report->overallEvaluation->task_delivery_score }}/25</h3>
-                                                        <p class="mb-0">Task Delivery</p>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <div class="p-3 bg-light rounded">
-                                                        <h3 class="text-warning">{{ $report->overallEvaluation->communication_score + $report->overallEvaluation->teamwork_score }}/20</h3>
-                                                        <p class="mb-0">Soft Skills</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <hr>
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <strong>Performance Grade:</strong>
-                                                    <span class="badge badge-lg
-                                                        @if($report->overallEvaluation->performance_grade == 'Excellent') badge-success
-                                                        @elseif($report->overallEvaluation->performance_grade == 'Good') badge-primary
-                                                        @elseif($report->overallEvaluation->performance_grade == 'Satisfactory') badge-warning
-                                                        @else badge-danger
-                                                        @endif">
-                                                        {{ $report->overallEvaluation->performance_grade }}
+                                                    <strong>Status:</strong><br>
+                                                    <span class="badge badge-{{ $report->status === 'completed' ? 'success' : 'warning' }}">
+                                                        {{ ucfirst($report->status) }}
                                                     </span>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <strong>Quality of Work:</strong> {{ $report->overallEvaluation->quality_of_work_score }}/15
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            @endif
+
+                            <!-- Evaluation Sections -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <!-- Nav tabs -->
+                                    <ul class="nav nav-tabs" id="evaluationTabs" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="manager-tab" data-bs-toggle="tab" data-bs-target="#manager" type="button" role="tab" aria-controls="manager" aria-selected="true">
+                                                <i class="fas fa-user-tie"></i> Manager Evaluation
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="hr-tab" data-bs-toggle="tab" data-bs-target="#hr" type="button" role="tab" aria-controls="hr" aria-selected="false">
+                                                <i class="fas fa-user-check"></i> HR Evaluation
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="overall-tab" data-bs-toggle="tab" data-bs-target="#overall" type="button" role="tab" aria-controls="overall" aria-selected="false">
+                                                <i class="fas fa-chart-line"></i> Overall Evaluation
+                                            </button>
+                                        </li>
+                                    </ul>
+
+                                    <!-- Tab content -->
+                                    <div class="tab-content" id="evaluationTabsContent">
+                                        <!-- Manager Evaluation Tab -->
+                                        <div class="tab-pane fade show active" id="manager" role="tabpanel" aria-labelledby="manager-tab">
+                                            @if($report->evaluationManager)
+                                            <div class="card border-primary mt-3">
+                                                <div class="card-header bg-primary text-white">
+                                                    <h6 class="card-title mb-0">
+                                                        <i class="fas fa-user-tie"></i> Manager's Evaluation
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <!-- Technical KPIs -->
+                                                    <div class="row mb-4">
+                                                        <div class="col-12">
+                                                            <h6 class="text-primary mb-3">Technical KPIs</h6>
+                                                            <div class="row">
+                                                                <div class="col-md-6 mb-3">
+                                                                    <strong>Project Delivery:</strong><br>
+                                                                    <span class="text-muted">{{ $report->evaluationManager->project_delivery ?: 'Not specified' }}</span>
+                                                                </div>
+                                                                <div class="col-md-6 mb-3">
+                                                                    <strong>Code Quality:</strong><br>
+                                                                    <span class="text-muted">{{ $report->evaluationManager->code_quality ?: 'Not specified' }}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col-md-6 mb-3">
+                                                                    <strong>Performance:</strong><br>
+                                                                    <span class="text-muted">{{ $report->evaluationManager->performance ?: 'Not specified' }}</span>
+                                                                </div>
+                                                                <div class="col-md-6 mb-3">
+                                                                    <strong>Task Completion:</strong><br>
+                                                                    <span class="text-muted">{{ $report->evaluationManager->task_completion ?: 'Not specified' }}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col-md-6 mb-3">
+                                                                    <strong>Innovation:</strong><br>
+                                                                    <span class="text-muted">{{ $report->evaluationManager->innovation ?: 'Not specified' }}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Quality Metrics Ratings -->
+                                                    <div class="row mb-4">
+                                                        <div class="col-12">
+                                                            <h6 class="text-primary mb-3">Quality Metrics</h6>
+                                                            <div class="row text-center">
+                                                                <div class="col-md-3 mb-3">
+                                                                    <div class="p-3 bg-light rounded">
+                                                                        <h4 class="text-primary">{{ $report->evaluationManager->code_efficiency }}/5</h4>
+                                                                        <p class="mb-0">Code Efficiency</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-3 mb-3">
+                                                                    <div class="p-3 bg-light rounded">
+                                                                        <h4 class="text-info">{{ $report->evaluationManager->uiux }}/5</h4>
+                                                                        <p class="mb-0">UI/UX</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-3 mb-3">
+                                                                    <div class="p-3 bg-light rounded">
+                                                                        <h4 class="text-success">{{ $report->evaluationManager->debugging }}/5</h4>
+                                                                        <p class="mb-0">Debugging</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-3 mb-3">
+                                                                    <div class="p-3 bg-light rounded">
+                                                                        <h4 class="text-warning">{{ $report->evaluationManager->version_control }}/5</h4>
+                                                                        <p class="mb-0">Version Control</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row text-center mt-3">
+                                                                <div class="col-md-6">
+                                                                    <div class="p-3 bg-light rounded">
+                                                                        <h4 class="text-secondary">{{ $report->evaluationManager->documentation }}/5</h4>
+                                                                        <p class="mb-0">Documentation</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="p-3 bg-light rounded">
+                                                                        <h4 class="text-danger">{{ $report->evaluationManager->manager_total }}/60</h4>
+                                                                        <p class="mb-0">Total Score</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Manager Comments -->
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <strong>Manager Comments:</strong><br>
+                                                            <span class="text-muted">{{ $report->evaluationManager->manager_comments ?: 'No comments' }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @else
+                                            <div class="card border-secondary mt-3">
+                                                <div class="card-body text-center">
+                                                    <p class="text-muted">Manager evaluation not yet completed.</p>
+                                                </div>
+                                            </div>
+                                            @endif
+                                        </div>
+
+                                        <!-- HR Evaluation Tab -->
+                                        <div class="tab-pane fade" id="hr" role="tabpanel" aria-labelledby="hr-tab">
+                                            @if($report->evaluationHr)
+                                            <div class="card border-info mt-3">
+                                                <div class="card-header bg-info text-white">
+                                                    <h6 class="card-title mb-0">
+                                                        <i class="fas fa-user-check"></i> HR's Evaluation
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <!-- Soft Skills Feedback -->
+                                                    <div class="row mb-4">
+                                                        <div class="col-12">
+                                                            <h6 class="text-info mb-3">Soft Skills Assessment</h6>
+                                                            <div class="row">
+                                                                <div class="col-md-6 mb-3">
+                                                                    <strong>Teamwork:</strong><br>
+                                                                    <span class="text-muted">{{ $report->evaluationHr->teamwork ?: 'Not specified' }}</span>
+                                                                </div>
+                                                                <div class="col-md-6 mb-3">
+                                                                    <strong>Communication:</strong><br>
+                                                                    <span class="text-muted">{{ $report->evaluationHr->communication ?: 'Not specified' }}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col-md-6 mb-3">
+                                                                    <strong>Attendance:</strong><br>
+                                                                    <span class="text-muted">{{ $report->evaluationHr->attendance ?: 'Not specified' }}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Behavioral Metrics Ratings -->
+                                                    <div class="row mb-4">
+                                                        <div class="col-12">
+                                                            <h6 class="text-info mb-3">Behavioral Metrics</h6>
+                                                            <div class="row text-center">
+                                                                <div class="col-md-3 mb-3">
+                                                                    <div class="p-3 bg-light rounded">
+                                                                        <h4 class="text-primary">{{ $report->evaluationHr->professionalism }}/5</h4>
+                                                                        <p class="mb-0">Professionalism</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-3 mb-3">
+                                                                    <div class="p-3 bg-light rounded">
+                                                                        <h4 class="text-success">{{ $report->evaluationHr->team_collaboration }}/5</h4>
+                                                                        <p class="mb-0">Team Collaboration</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-3 mb-3">
+                                                                    <div class="p-3 bg-light rounded">
+                                                                        <h4 class="text-warning">{{ $report->evaluationHr->learning }}/5</h4>
+                                                                        <p class="mb-0">Learning</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-3 mb-3">
+                                                                    <div class="p-3 bg-light rounded">
+                                                                        <h4 class="text-info">{{ $report->evaluationHr->initiative }}/5</h4>
+                                                                        <p class="mb-0">Initiative</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row text-center mt-3">
+                                                                <div class="col-md-6">
+                                                                    <div class="p-3 bg-light rounded">
+                                                                        <h4 class="text-secondary">{{ $report->evaluationHr->time_management }}/5</h4>
+                                                                        <p class="mb-0">Time Management</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="p-3 bg-light rounded">
+                                                                        <h4 class="text-danger">{{ $report->evaluationHr->hr_total }}/30</h4>
+                                                                        <p class="mb-0">Total Score</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- HR Comments -->
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <strong>HR Comments:</strong><br>
+                                                            <span class="text-muted">{{ $report->evaluationHr->hr_comments ?: 'No comments' }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @else
+                                            <div class="card border-secondary mt-3">
+                                                <div class="card-body text-center">
+                                                    <p class="text-muted">HR evaluation not yet completed.</p>
+                                                </div>
+                                            </div>
+                                            @endif
+                                        </div>
+
+                                        <!-- Overall Evaluation Tab -->
+                                        <div class="tab-pane fade" id="overall" role="tabpanel" aria-labelledby="overall-tab">
+                                            @if($report->evaluationOverall)
+                                            <div class="card border-success mt-3">
+                                                <div class="card-header bg-success text-white">
+                                                    <h6 class="card-title mb-0">
+                                                        <i class="fas fa-chart-line"></i> Overall Performance Summary
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="row text-center mb-4">
+                                                        <div class="col-md-3">
+                                                            <div class="p-3 bg-light rounded">
+                                                                <h3 class="text-success">{{ $report->evaluationOverall->overall_rating }}/100</h3>
+                                                                <p class="mb-0">Overall Rating</p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="p-3 bg-light rounded">
+                                                                <h3 class="text-primary">{{ $report->evaluationOverall->technical_skills }}/40</h3>
+                                                                <p class="mb-0">Technical Skills</p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="p-3 bg-light rounded">
+                                                                <h3 class="text-info">{{ $report->evaluationOverall->task_delivery }}/25</h3>
+                                                                <p class="mb-0">Task Delivery</p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="p-3 bg-light rounded">
+                                                                <h3 class="text-warning">{{ $report->evaluationOverall->communication + $report->evaluationOverall->behavior_teamwork }}/20</h3>
+                                                                <p class="mb-0">Soft Skills</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <hr>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <strong>Performance Grade:</strong>
+                                                            <span class="badge badge-lg
+                                                                @if($report->evaluationOverall->performance_grade == 'Excellent') badge-success
+                                                                @elseif($report->evaluationOverall->performance_grade == 'Good') badge-primary
+                                                                @elseif($report->evaluationOverall->performance_grade == 'Satisfactory') badge-warning
+                                                                @else badge-danger
+                                                                @endif">
+                                                                {{ $report->evaluationOverall->performance_grade }}
+                                                            </span>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <strong>Quality of Work:</strong> {{ $report->evaluationOverall->quality_work }}/15
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mt-3">
+                                                        <div class="col-12">
+                                                            <strong>Final Feedback:</strong><br>
+                                                            <span class="text-muted">{{ $report->evaluationOverall->final_feedback ?: 'No feedback' }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @else
+                                            <div class="card border-secondary mt-3">
+                                                <div class="card-body text-center">
+                                                    <p class="text-muted">Overall evaluation not yet completed.</p>
+                                                </div>
+                                            </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
                             <!-- Detailed Sections -->
-                            <div class="row">
-                                <!-- Key Performance Indicators -->
-                                <div class="col-md-6 mb-4">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h6 class="card-title mb-0">
-                                                <i class="fas fa-bullseye"></i> Key Performance Indicators
-                                            </h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="mb-3">
-                                                <strong>Project Delivery:</strong><br>
-                                                <span class="text-muted">{{ $report->project_delivery ?: 'Not specified' }}</span>
-                                            </div>
-                                            <div class="mb-3">
-                                                <strong>Code Quality:</strong><br>
-                                                <span class="text-muted">{{ $report->code_quality ?: 'Not specified' }}</span>
-                                            </div>
-                                            <div class="mb-3">
-                                                <strong>System Performance:</strong><br>
-                                                <span class="text-muted">{{ $report->system_performance ?: 'Not specified' }}</span>
-                                            </div>
-                                            <div class="mb-3">
-                                                <strong>Task Completion:</strong><br>
-                                                <span class="text-muted">{{ $report->task_completion ?: 'Not specified' }}</span>
-                                            </div>
-                                            <div class="mb-3">
-                                                <strong>Innovation:</strong><br>
-                                                <span class="text-muted">{{ $report->innovation ?: 'Not specified' }}</span>
-                                            </div>
-                                            <div class="mb-3">
-                                                <strong>Teamwork:</strong><br>
-                                                <span class="text-muted">{{ $report->teamwork ?: 'Not specified' }}</span>
-                                            </div>
-                                            <div class="mb-3">
-                                                <strong>Communication:</strong><br>
-                                                <span class="text-muted">{{ $report->communication ?: 'Not specified' }}</span>
-                                            </div>
-                                            <div class="mb-3">
-                                                <strong>Attendance:</strong><br>
-                                                <span class="text-muted">{{ $report->attendance ?: 'Not specified' }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Quality & Efficiency Metrics -->
-                                <div class="col-md-6 mb-4">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h6 class="card-title mb-0">
-                                                <i class="fas fa-cogs"></i> Quality & Efficiency Metrics
-                                            </h6>
-                                        </div>
-                                        <div class="card-body">
-                                            @if($report->qualityMetrics)
-                                                <div class="row">
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <strong>Code Efficiency:</strong>
-                                                            <div class="progress mt-1">
-                                                                <div class="progress-bar bg-primary" role="progressbar"
-                                                                     style="width: {{ ($report->qualityMetrics->code_efficiency / 5) * 100 }}%"
-                                                                     aria-valuenow="{{ $report->qualityMetrics->code_efficiency }}"
-                                                                     aria-valuemin="0" aria-valuemax="5">
-                                                                    {{ $report->qualityMetrics->code_efficiency }}/5
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <strong>UI/UX:</strong>
-                                                            <div class="progress mt-1">
-                                                                <div class="progress-bar bg-success" role="progressbar"
-                                                                     style="width: {{ ($report->qualityMetrics->uiux / 5) * 100 }}%"
-                                                                     aria-valuenow="{{ $report->qualityMetrics->uiux }}"
-                                                                     aria-valuemin="0" aria-valuemax="5">
-                                                                    {{ $report->qualityMetrics->uiux }}/5
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <strong>Debugging:</strong>
-                                                            <div class="progress mt-1">
-                                                                <div class="progress-bar bg-warning" role="progressbar"
-                                                                     style="width: {{ ($report->qualityMetrics->debugging / 5) * 100 }}%"
-                                                                     aria-valuenow="{{ $report->qualityMetrics->debugging }}"
-                                                                     aria-valuemin="0" aria-valuemax="5">
-                                                                    {{ $report->qualityMetrics->debugging }}/5
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <strong>Version Control:</strong>
-                                                            <div class="progress mt-1">
-                                                                <div class="progress-bar bg-info" role="progressbar"
-                                                                     style="width: {{ ($report->qualityMetrics->version_control / 5) * 100 }}%"
-                                                                     aria-valuenow="{{ $report->qualityMetrics->version_control }}"
-                                                                     aria-valuemin="0" aria-valuemax="5">
-                                                                    {{ $report->qualityMetrics->version_control }}/5
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <strong>Documentation:</strong>
-                                                            <div class="progress mt-1">
-                                                                <div class="progress-bar bg-secondary" role="progressbar"
-                                                                     style="width: {{ ($report->qualityMetrics->documentation / 5) * 100 }}%"
-                                                                     aria-valuenow="{{ $report->qualityMetrics->documentation }}"
-                                                                     aria-valuemin="0" aria-valuemax="5">
-                                                                    {{ $report->qualityMetrics->documentation }}/5
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            @else
-                                                <p class="text-muted">No quality metrics data available.</p>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Soft Skills -->
-                            <div class="row mb-4">
-                                <div class="col-12">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h6 class="card-title mb-0">
-                                                <i class="fas fa-users"></i> Soft Skills & Behavior
-                                            </h6>
-                                        </div>
-                                        <div class="card-body">
-                                            @if($report->softSkills)
-                                                <div class="row">
-                                                    <div class="col-md-4 mb-3">
-                                                        <strong>Professionalism:</strong>
-                                                        <div class="progress mt-1">
-                                                            <div class="progress-bar bg-primary" role="progressbar"
-                                                                 style="width: {{ ($report->softSkills->professionalism / 5) * 100 }}%"
-                                                                 aria-valuenow="{{ $report->softSkills->professionalism }}"
-                                                                 aria-valuemin="0" aria-valuemax="5">
-                                                                {{ $report->softSkills->professionalism }}/5
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <strong>Team Collaboration:</strong>
-                                                        <div class="progress mt-1">
-                                                            <div class="progress-bar bg-success" role="progressbar"
-                                                                 style="width: {{ ($report->softSkills->team_collaboration / 5) * 100 }}%"
-                                                                 aria-valuenow="{{ $report->softSkills->team_collaboration }}"
-                                                                 aria-valuemin="0" aria-valuemax="5">
-                                                                {{ $report->softSkills->team_collaboration }}/5
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <strong>Learning & Adaptability:</strong>
-                                                        <div class="progress mt-1">
-                                                            <div class="progress-bar bg-warning" role="progressbar"
-                                                                 style="width: {{ ($report->softSkills->learning_adaptability / 5) * 100 }}%"
-                                                                 aria-valuenow="{{ $report->softSkills->learning_adaptability }}"
-                                                                 aria-valuemin="0" aria-valuemax="5">
-                                                                {{ $report->softSkills->learning_adaptability }}/5
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-md-4 mb-3">
-                                                        <strong>Initiative & Ownership:</strong>
-                                                        <div class="progress mt-1">
-                                                            <div class="progress-bar bg-info" role="progressbar"
-                                                                 style="width: {{ ($report->softSkills->initiative_ownership / 5) * 100 }}%"
-                                                                 aria-valuenow="{{ $report->softSkills->initiative_ownership }}"
-                                                                 aria-valuemin="0" aria-valuemax="5">
-                                                                {{ $report->softSkills->initiative_ownership }}/5
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <strong>Time Management:</strong>
-                                                        <div class="progress mt-1">
-                                                            <div class="progress-bar bg-secondary" role="progressbar"
-                                                                 style="width: {{ ($report->softSkills->time_management / 5) * 100 }}%"
-                                                                 aria-valuenow="{{ $report->softSkills->time_management }}"
-                                                                 aria-valuemin="0" aria-valuemax="5">
-                                                                {{ $report->softSkills->time_management }}/5
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            @else
-                                                <p class="text-muted">No soft skills data available.</p>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Manager's Feedback -->
-                            @if($report->manager_feedback)
-                            <div class="row mb-4">
-                                <div class="col-12">
-                                    <div class="card border-primary">
-                                        <div class="card-header bg-primary text-white">
-                                            <h6 class="card-title mb-0">
-                                                <i class="fas fa-comments"></i> Manager's Final Feedback
-                                            </h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <blockquote class="blockquote">
-                                                <p class="mb-0">{{ $report->manager_feedback }}</p>
-                                            </blockquote>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            @endif
-
+                         
                             <!-- Action Buttons -->
                             <div class="row">
                                 <div class="col-12 text-center">

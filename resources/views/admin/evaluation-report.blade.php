@@ -10,11 +10,16 @@
             <div class="row">
                 <div class="col-12">
                     <div class="card">
-                        <div class="card-header">
+                        <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="card-title">Evaluation Report Slots</h5>
+                            @if(Auth::guard('admin')->user()->role === 'super_admin')
+                                <button type="button" class="btn btn-primary btn-sm" onclick="openAssignmentsModal()">
+                                    <i class="fas fa-users-cog"></i> Manage Assignments
+                                </button>
+                            @endif
                         </div>
                         <div class="card-body">
-                            <!-- Month Selector -->
+                            <!-- Month Selector and Employee Selector -->
                             <form method="GET" action="{{ route('admin.evaluation-report') }}" class="mb-4">
                                 <div class="row">
                                     <div class="col-md-4">
@@ -70,9 +75,13 @@
                                                 @endif
                                             </div>
                                             <div class="card-footer">
-                                                <a href="{{ route('admin.add-evaluation-report', ['review_from' => $week['start_date'], 'review_to' => $week['end_date']]) }}" class="btn btn-primary btn-sm">
-                                                    <i class="fas fa-plus"></i> Add Report
-                                                </a>
+                                                @if(Auth::guard('admin')->user()->role === 'super_admin' || (Auth::guard('admin')->user()->role === 'sub_admin' && Auth::guard('admin')->user()->hasPermission('evaluation-report')))
+                                                    <a href="{{ route('admin.add-evaluation-report', ['review_from' => $week['start_date'], 'review_to' => $week['end_date']]) }}" class="btn btn-primary btn-sm">
+                                                        <i class="fas fa-plus"></i> Add Report
+                                                    </a>
+                                                @else
+                                                    <span class="text-muted small">No permission to add reports</span>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -117,9 +126,13 @@
                                             @endif
                                         </div>
                                         <div class="card-footer">
-                                            <a href="{{ route('admin.add-evaluation-report', ['review_from' => $monthCard['start_date'], 'review_to' => $monthCard['end_date']]) }}" class="btn btn-primary btn-sm">
-                                                <i class="fas fa-plus"></i> Add Report
-                                            </a>
+                                            @if(Auth::guard('admin')->user()->role === 'super_admin' || (Auth::guard('admin')->user()->role === 'sub_admin' && Auth::guard('admin')->user()->hasPermission('evaluation-report')))
+                                                <a href="{{ route('admin.add-evaluation-report', ['review_from' => $monthCard['start_date'], 'review_to' => $monthCard['end_date']]) }}" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-plus"></i> Add Report
+                                                </a>
+                                            @else
+                                                <span class="text-muted small">No permission to add reports</span>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -132,7 +145,71 @@
     </div>
 </div>
 
+<!-- Manage Assignments Modal -->
+<div id="manageAssignmentsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Manage Evaluation Assignments</h3>
+            <button class="modal-close" onclick="closeAssignmentsModal()">&times;</button>
+        </div>
+        <form action="{{ route('admin.update-evaluation-assignments') }}" method="POST">
+            @csrf
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Step 1: Manager Evaluation</h6>
+                        <p class="text-muted small">Select sub-admins who can perform manager evaluations</p>
+                        <select name="step1_admins[]" class="form-control" multiple style="height: 200px;">
+                            @foreach($subAdmins as $admin)
+                                <option value="{{ $admin->id }}" {{ $step1Assignments && in_array($admin->id, $step1Assignments->assigned_admins ?? []) ? 'selected' : '' }}>
+                                    {{ $admin->name }} ({{ $admin->email }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Step 2: HR Evaluation</h6>
+                        <p class="text-muted small">Select sub-admins who can perform HR evaluations</p>
+                        <select name="step2_admins[]" class="form-control" multiple style="height: 200px;">
+                            @foreach($subAdmins as $admin)
+                                <option value="{{ $admin->id }}" {{ $step2Assignments && in_array($admin->id, $step2Assignments->assigned_admins ?? []) ? 'selected' : '' }}>
+                                    {{ $admin->name }} ({{ $admin->email }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-info">
+                        <i class="fas fa-info-circle"></i> Hold Ctrl (or Cmd on Mac) to select multiple admins. Changes will be saved immediately upon submission.
+                    </small>
+                </div>
+            </div>
+            <div style="padding: 1rem; border-top: 1px solid #ddd; display: flex; gap: 0.5rem; background: white;">
+                <button type="button" onclick="closeAssignmentsModal()" style="background: #6c757d; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem; flex: 1;">
+                    Cancel
+                </button>
+                <button type="submit" style="background: #28a745; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem; flex: 1;">
+                    Update Assignments
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
+function openAssignmentsModal() {
+    const modal = document.getElementById('manageAssignmentsModal');
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeAssignmentsModal() {
+    const modal = document.getElementById('manageAssignmentsModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
 function showAddReportForm() {
     document.getElementById('evaluationFormCard').style.display = 'block';
     document.getElementById('reportsListCard').style.display = 'none';

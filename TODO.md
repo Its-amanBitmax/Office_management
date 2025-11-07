@@ -1,12 +1,48 @@
-- [x] Add PDF download button for evaluation report in show-evaluation-report.blade.php
-- [x] Create evaluation-report-pdf.blade.php with professional PDF layout
-- [x] Add downloadEvaluationReportPdf method in AdminController.php
-- [x] Add route for PDF download in routes/web.php
-- [x] Make company logo and name dynamic from admin table
-- [ ] Update the form structure in edit-evaluation-report.blade.php to match add-evaluation-report.blade.php, including adding missing sections (Quality & Efficiency Metrics with star ratings, Behavior & Soft Skills with star ratings), changing Overall Evaluation to use range sliders, and adding Attendance to KPIs.
-- [ ] Pre-fill all form fields with values from $report, $report->qualityMetrics, $report->softSkills, and $report->overallEvaluation where applicable.
-- [ ] Update the form action to PUT method for update, and change submit button text to "Update Performance Report".
-- [ ] Add the JavaScript script for slider functionality from add-evaluation-report.blade.php.
-- [ ] Replace the minimal CSS with the extensive styling from add-evaluation-report.blade.php.
-- [ ] Ensure the back button and page header remain as in the original edit form.
-- [ ] Test the updated form for pre-filling and functionality.
+# Step-by-Step Evaluation Submission Implementation
+
+## Overview
+Implement a multi-step evaluation form with progress tracking, draft saving, and step-by-step navigation.
+
+## Steps to Complete
+
+### 1. Update Controller Methods
+- [ ] Add `saveEvaluationDraft` method to handle partial submissions
+- [ ] Modify `storeEvaluationReport` to handle final submission
+- [ ] Add validation for each step individually
+- [ ] Update routes to include draft saving endpoint
+
+### 2. Restructure Form View
+- [ ] Convert single form into 4-step wizard (Employee Details, Manager Eval, HR Eval, Overall Eval)
+- [ ] Add progress bar with step indicators
+- [ ] Implement step navigation (Next/Previous buttons)
+- [ ] Add step validation before proceeding
+- [ ] Show only accessible steps based on permissions
+
+### 3. Add JavaScript Functionality
+- [ ] Step navigation logic with validation
+- [ ] Progress bar updates
+- [ ] Draft auto-save on step changes
+- [ ] Form data persistence between steps
+- [ ] Client-side validation per step
+
+### 4. Update Database/Model Logic
+- [ ] Add draft status tracking to EvaluationReport model
+- [ ] Ensure partial data saving works correctly
+- [ ] Handle step completion flags
+
+### 5. Testing and Validation
+- [ ] Test step navigation and validation
+- [ ] Verify draft saving functionality
+- [ ] Test permission-based step access
+- [ ] Ensure final submission works correctly
+
+## Files to Modify
+- `app/Http/Controllers/AdminController.php`
+- `resources/views/admin/add-evaluation-report.blade.php`
+- `routes/web.php` (if needed)
+- `app/Models/EvaluationReport.php` (if needed)
+
+## Current Status
+- Analysis complete
+- Plan approved by user
+- Ready to start implementation

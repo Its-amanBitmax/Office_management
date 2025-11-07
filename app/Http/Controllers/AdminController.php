@@ -10,10 +10,11 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Admin;
-use App\Models\PerformanceReport;
-use App\Models\QualityMetric;
-use App\Models\SoftSkill;
-use App\Models\OverallEvaluation;
+use App\Models\EvaluationReport;
+use App\Models\EvaluationManager;
+use App\Models\EvaluationHr;
+use App\Models\EvaluationOverall;
+use App\Models\EvaluationAssignment;
 use App\Traits\Loggable;
 
 class AdminController extends Controller
@@ -354,7 +355,7 @@ class AdminController extends Controller
 
         if ($view === 'by-report') {
             // Data based on evaluation reports
-            $reportsQuery = \App\Models\PerformanceReport::with(['employee', 'overallEvaluation']);
+            $reportsQuery = \App\Models\EvaluationReport::with(['employee', 'evaluationOverall']);
 
             // Apply date filter if not 'all'
             if ($period !== 'all') {
@@ -376,10 +377,10 @@ class AdminController extends Controller
             $totalRatingSum = 0;
 
             foreach ($reports as $report) {
-                if (!$report->overallEvaluation) continue;
+                if (!$report->evaluationOverall) continue;
 
                 $empId = $report->employee_id;
-                $overallRating = $report->overallEvaluation->overall_rating;
+                $overallRating = $report->evaluationOverall->overall_rating;
 
                 if (!isset($employeePerformance[$empId])) {
                     $employeePerformance[$empId] = [
@@ -536,7 +537,7 @@ class AdminController extends Controller
 
         if ($view === 'by-report') {
             // Data based on evaluation reports
-            $reportsQuery = \App\Models\PerformanceReport::with(['employee', 'overallEvaluation']);
+            $reportsQuery = \App\Models\EvaluationReport::with(['employee', 'evaluationOverall']);
 
             if ($period !== 'all') {
                 $reportsQuery->whereBetween('evaluation_date', [$startDate->toDateString(), $endDate->toDateString()]);
@@ -555,10 +556,10 @@ class AdminController extends Controller
             $totalRatingSum = 0;
 
             foreach ($reports as $report) {
-                if (!$report->overallEvaluation) continue;
+                if (!$report->evaluationOverall) continue;
 
                 $empId = $report->employee_id;
-                $overallRating = $report->overallEvaluation->overall_rating;
+                $overallRating = $report->evaluationOverall->overall_rating;
 
                 if (!isset($employeePerformance[$empId])) {
                     $employeePerformance[$empId] = [
@@ -701,6 +702,9 @@ class AdminController extends Controller
         $monthStart = \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth)->startOfMonth();
         $monthEnd = $monthStart->copy()->endOfMonth();
 
+        // Get selected employee filter
+        $employeeId = $request->get('employee_id');
+
         // Generate weeks for the month
         $weeks = [];
         $current = $monthStart->copy()->startOfWeek(\Carbon\Carbon::MONDAY); // Start from Monday
@@ -732,24 +736,48 @@ class AdminController extends Controller
             'end_date' => $monthEnd->format('Y-m-d'),
         ];
 
-        // Fetch existing reports for each period
+        // Fetch existing reports for each period based on admin role
         $existingReports = [];
 
         // For each week
         foreach ($weeks as $week) {
             $key = $week['start_date'] . '-' . $week['end_date'];
-            $existingReports[$key] = PerformanceReport::with('employee')
+            $query = EvaluationReport::with('employee')
                 ->where('review_from', $week['start_date'])
-                ->where('review_to', $week['end_date'])
-                ->get();
+                ->where('review_to', $week['end_date']);
+
+            // Filter reports based on admin role - allow sub-admins with permission to see all reports
+            if ($admin->role === 'super_admin') {
+                // Super admin can see all reports
+            } elseif ($admin->role === 'sub_admin') {
+                // Sub-admins with evaluation-report permission can see all reports
+                // No assignment-based filtering to allow visibility across sub-admins
+            }
+
+            if ($employeeId) {
+                $query->where('employee_id', $employeeId);
+            }
+            $existingReports[$key] = $query->get();
         }
 
         // For the month
         $monthKey = $monthCard['start_date'] . '-' . $monthCard['end_date'];
-        $existingReports[$monthKey] = PerformanceReport::with('employee')
+        $query = EvaluationReport::with('employee')
             ->where('review_from', $monthCard['start_date'])
-            ->where('review_to', $monthCard['end_date'])
-            ->get();
+            ->where('review_to', $monthCard['end_date']);
+
+        // Apply same role-based filtering for monthly reports
+        if ($admin->role === 'super_admin') {
+            // Super admin can see all reports
+        } elseif ($admin->role === 'sub_admin') {
+            // Sub-admins with evaluation-report permission can see all reports
+            // No assignment-based filtering to allow visibility across sub-admins
+        }
+
+        if ($employeeId) {
+            $query->where('employee_id', $employeeId);
+        }
+        $existingReports[$monthKey] = $query->get();
 
         // Generate month options for selector (last 12 months)
         $monthOptions = [];
@@ -758,7 +786,17 @@ class AdminController extends Controller
             $monthOptions[$date->format('Y-m')] = $date->format('F Y');
         }
 
-        return view('admin.evaluation-report', compact('weeks', 'monthCard', 'selectedMonth', 'monthOptions', 'existingReports'));
+        // Get all employees for manager and employee selection
+        $employees = \App\Models\Employee::select('id', 'name', 'employee_code')->orderBy('name')->get();
+
+        // Get sub-admins for assignments
+        $subAdmins = Admin::where('role', 'sub_admin')->get();
+
+        // Get current assignments
+        $step1Assignments = EvaluationAssignment::where('step', 'step1')->first();
+        $step2Assignments = EvaluationAssignment::where('step', 'step2')->first();
+
+        return view('admin.evaluation-report', compact('weeks', 'monthCard', 'selectedMonth', 'monthOptions', 'existingReports', 'employees', 'employeeId', 'subAdmins', 'step1Assignments', 'step2Assignments'));
     }
 
     public function addEvaluationReport(Request $request)
@@ -766,7 +804,7 @@ class AdminController extends Controller
         $admin = Auth::guard('admin')->user();
 
         // Check if admin has permission to add evaluation reports
-        if (!$admin->hasPermission('performance')) {
+        if (!$admin->hasPermission('performance') || ($admin->role === 'sub_admin' && !$admin->hasPermission('evaluation-report'))) {
             return redirect()->route('admin.dashboard')->with('error', 'You do not have permission to add evaluation reports.');
         }
 
@@ -788,44 +826,45 @@ class AdminController extends Controller
         $admin = Auth::guard('admin')->user();
 
         // Check if admin has permission to add evaluation reports
-        if (!$admin->hasPermission('performance')) {
+        if (!$admin->hasPermission('performance') || ($admin->role === 'sub_admin' && !$admin->hasPermission('evaluation-report'))) {
             return redirect()->route('admin.dashboard')->with('error', 'You do not have permission to add evaluation reports.');
         }
 
         $request->validate([
             'employee_name' => 'required|string',
-            'designation' => 'required|string',
-            'department' => 'required|string',
-            'reporting_manager' => 'required|string',
             'review_from' => 'required|date',
             'review_to' => 'required|date',
             'evaluation_date' => 'required|date',
+            // Manager evaluation fields
             'project_delivery' => 'nullable|string',
             'code_quality' => 'nullable|string',
             'performance' => 'nullable|string',
             'task_completion' => 'nullable|string',
             'innovation' => 'nullable|string',
-            'teamwork' => 'nullable|string',
-            'communication' => 'nullable|string',
-            'attendance' => 'nullable|string',
             'code_efficiency' => 'nullable|integer|min:1|max:5',
             'uiux' => 'nullable|integer|min:1|max:5',
             'debugging' => 'nullable|integer|min:1|max:5',
             'version_control' => 'nullable|integer|min:1|max:5',
             'documentation' => 'nullable|integer|min:1|max:5',
+            'manager_comments' => 'nullable|string',
+            // HR evaluation fields
+            'teamwork' => 'nullable|string',
+            'communication' => 'nullable|string',
+            'attendance' => 'nullable|string',
             'professionalism' => 'nullable|integer|min:1|max:5',
             'team_collaboration' => 'nullable|integer|min:1|max:5',
             'learning' => 'nullable|integer|min:1|max:5',
             'initiative' => 'nullable|integer|min:1|max:5',
             'time_management' => 'nullable|integer|min:1|max:5',
+            'hr_comments' => 'nullable|string',
+            // Overall evaluation fields
             'technical_skills' => 'nullable|numeric|min:0|max:40',
-            'task_delivery' => 'nullable|numeric|min:0|max:25',
+            'task_delivery_score' => 'nullable|numeric|min:0|max:25',
             'quality_work' => 'nullable|numeric|min:0|max:15',
             'communication_score' => 'nullable|numeric|min:0|max:10',
-            'teamwork_score' => 'nullable|numeric|min:0|max:10',
-            'overall_rating' => 'nullable|numeric|min:0|max:100',
-            'performance_grade' => 'required|string',
-            'manager_final_feedback' => 'nullable|string',
+            'behavior_teamwork' => 'nullable|numeric|min:0|max:10',
+            'performance_grade' => 'nullable|string',
+            'final_feedback' => 'nullable|string',
         ]);
 
         // Extract employee ID from the employee_name field (format: "E101 - Aman Singh")
@@ -838,79 +877,130 @@ class AdminController extends Controller
             return redirect()->back()->with('error', 'Employee not found with code: ' . $employeeCode);
         }
 
-        // Create the main performance report
+        // Create the main evaluation report
         try {
-            $performanceReport = PerformanceReport::create([
+            $evaluationReport = EvaluationReport::create([
                 'employee_id' => $employee->id,
-                'designation' => $request->designation,
-                'reporting_manager' => $request->reporting_manager,
                 'review_from' => $request->review_from,
                 'review_to' => $request->review_to,
                 'evaluation_date' => $request->evaluation_date,
-                'project_delivery' => $request->project_delivery,
-                'code_quality' => $request->code_quality,
-                'system_performance' => $request->performance,
-                'task_completion' => $request->task_completion,
-                'innovation' => $request->innovation,
-                'teamwork' => $request->teamwork,
-                'communication' => $request->communication,
-                'attendance' => $request->attendance,
-                'manager_feedback' => $request->manager_final_feedback,
+                'manager_submitted' => false,
+                'hr_submitted' => false,
+                'overall_submitted' => false,
+                'manager_id' => $admin->id, // Assuming current admin is manager
+                'hr_id' => $admin->id, // Assuming current admin is HR
+                'final_approver_id' => $admin->id,
             ]);
-            \Log::info('PerformanceReport created', ['id' => $performanceReport->id]);
+            \Log::info('EvaluationReport created', ['id' => $evaluationReport->id]);
         } catch (\Exception $e) {
-            \Log::error('Failed to create PerformanceReport', ['error' => $e->getMessage()]);
-            return redirect()->back()->with('error', 'Failed to save performance report: ' . $e->getMessage());
+            \Log::error('Failed to create EvaluationReport', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Failed to save evaluation report: ' . $e->getMessage());
         }
 
-        // Create quality metrics
+        // Calculate manager total (sum of ratings * 3, out of 60)
+        $managerRatings = [
+            $request->code_efficiency ?? 0,
+            $request->uiux ?? 0,
+            $request->debugging ?? 0,
+            $request->version_control ?? 0,
+            $request->documentation ?? 0,
+        ];
+        $managerTotal = array_sum($managerRatings) * 3;
+
+        // Create evaluation manager
         try {
-            QualityMetric::create([
-                'report_id' => $performanceReport->id,
+            EvaluationManager::create([
+                'report_id' => $evaluationReport->id,
+                'project_delivery' => $request->project_delivery,
+                'code_quality' => $request->code_quality,
+                'performance' => $request->performance,
+                'task_completion' => $request->task_completion,
+                'innovation' => $request->innovation,
                 'code_efficiency' => $request->code_efficiency,
                 'uiux' => $request->uiux,
                 'debugging' => $request->debugging,
                 'version_control' => $request->version_control,
                 'documentation' => $request->documentation,
+                'manager_total' => $managerTotal,
+                'manager_comments' => $request->manager_comments,
             ]);
-            \Log::info('QualityMetric created', ['report_id' => $performanceReport->id]);
+            \Log::info('EvaluationManager created', ['report_id' => $evaluationReport->id]);
         } catch (\Exception $e) {
-            \Log::error('Failed to create QualityMetric', ['error' => $e->getMessage()]);
+            \Log::error('Failed to create EvaluationManager', ['error' => $e->getMessage()]);
         }
 
-        // Create soft skills
+        // Calculate HR total (sum of ratings * 3, out of 30)
+        $hrRatings = [
+            $request->professionalism ?? 0,
+            $request->team_collaboration ?? 0,
+            $request->learning ?? 0,
+            $request->initiative ?? 0,
+            $request->time_management ?? 0,
+        ];
+        $hrTotal = array_sum($hrRatings) * 3;
+
+        // Create evaluation hr
         try {
-            SoftSkill::create([
-                'report_id' => $performanceReport->id,
+            EvaluationHr::create([
+                'report_id' => $evaluationReport->id,
+                'teamwork' => $request->teamwork,
+                'communication' => $request->communication,
+                'attendance' => $request->attendance,
                 'professionalism' => $request->professionalism,
                 'team_collaboration' => $request->team_collaboration,
-                'learning_adaptability' => $request->learning,
-                'initiative_ownership' => $request->initiative,
+                'learning' => $request->learning,
+                'initiative' => $request->initiative,
                 'time_management' => $request->time_management,
+                'hr_total' => $hrTotal,
+                'hr_comments' => $request->hr_comments,
             ]);
-            \Log::info('SoftSkill created', ['report_id' => $performanceReport->id]);
+            \Log::info('EvaluationHr created', ['report_id' => $evaluationReport->id]);
         } catch (\Exception $e) {
-            \Log::error('Failed to create SoftSkill', ['error' => $e->getMessage()]);
+            \Log::error('Failed to create EvaluationHr', ['error' => $e->getMessage()]);
         }
 
-        // Create overall evaluation
+        // Calculate overall rating (sum of sliders, out of 100)
+        $overallRating = ($request->technical_skills ?? 0) + ($request->task_delivery_score ?? 0) +
+                        ($request->quality_work ?? 0) + ($request->communication_score ?? 0) +
+                        ($request->behavior_teamwork ?? 0);
+
+        // Determine performance grade based on overall rating
+        $performanceGrade = $request->performance_grade ?? 'Satisfactory';
+        if ($overallRating >= 80) {
+            $performanceGrade = 'Excellent';
+        } elseif ($overallRating >= 60) {
+            $performanceGrade = 'Good';
+        } elseif ($overallRating >= 40) {
+            $performanceGrade = 'Satisfactory';
+        } else {
+            $performanceGrade = 'Needs Improvement';
+        }
+
+        // Create evaluation overall
         try {
-            OverallEvaluation::create([
-                'report_id' => $performanceReport->id,
-                'technical_skills_score' => $request->technical_skills,
-                'task_delivery_score' => $request->task_delivery,
-                'quality_of_work_score' => $request->quality_work,
-                'communication_score' => $request->communication_score,
-                'teamwork_score' => $request->teamwork_score,
-                'overall_rating' => $request->overall_rating,
-                'performance_grade' => $request->performance_grade,
+            EvaluationOverall::create([
+                'report_id' => $evaluationReport->id,
+                'technical_skills' => $request->technical_skills,
+                'task_delivery' => $request->task_delivery_score,
+                'quality_work' => $request->quality_work,
+                'communication' => $request->communication_score,
+                'behavior_teamwork' => $request->behavior_teamwork,
+                'overall_rating' => $overallRating,
+                'performance_grade' => $performanceGrade,
+                'final_feedback' => $request->final_feedback,
             ]);
-            \Log::info('OverallEvaluation created', ['report_id' => $performanceReport->id]);
+            \Log::info('EvaluationOverall created', ['report_id' => $evaluationReport->id]);
         } catch (\Exception $e) {
-            \Log::error('Failed to create OverallEvaluation', ['error' => $e->getMessage()]);
+            \Log::error('Failed to create EvaluationOverall', ['error' => $e->getMessage()]);
         }
 
-        \Log::info('Evaluation report created successfully', ['report_id' => $performanceReport->id]);
+        // Update the main report with overall score and grade
+        $evaluationReport->update([
+            'overall_score' => $overallRating,
+            'performance_grade' => $performanceGrade,
+        ]);
+
+        \Log::info('Evaluation report created successfully', ['report_id' => $evaluationReport->id]);
 
         return redirect()->route('admin.evaluation-report')->with('success', 'Evaluation report submitted successfully!');
     }
@@ -924,7 +1014,7 @@ class AdminController extends Controller
             return redirect()->route('admin.dashboard')->with('error', 'You do not have permission to edit evaluation reports.');
         }
 
-        $report = PerformanceReport::with(['employee', 'qualityMetrics', 'softSkills', 'overallEvaluation'])->findOrFail($id);
+        $report = EvaluationReport::with(['employee', 'evaluationManager', 'evaluationHr', 'evaluationOverall'])->findOrFail($id);
 
         // Get all employees for the dropdown
         $employees = \App\Models\Employee::select('id', 'name', 'employee_code')->orderBy('name')->get();
@@ -943,41 +1033,42 @@ class AdminController extends Controller
 
         $request->validate([
             'employee_name' => 'required|string',
-            'designation' => 'required|string',
-            'department' => 'required|string',
-            'reporting_manager' => 'required|string',
             'review_from' => 'required|date',
             'review_to' => 'required|date',
             'evaluation_date' => 'required|date',
+            // Manager evaluation fields
             'project_delivery' => 'nullable|string',
             'code_quality' => 'nullable|string',
             'performance' => 'nullable|string',
             'task_completion' => 'nullable|string',
             'innovation' => 'nullable|string',
-            'teamwork' => 'nullable|string',
-            'communication' => 'nullable|string',
-            'attendance' => 'nullable|string',
             'code_efficiency' => 'nullable|integer|min:1|max:5',
             'uiux' => 'nullable|integer|min:1|max:5',
             'debugging' => 'nullable|integer|min:1|max:5',
             'version_control' => 'nullable|integer|min:1|max:5',
             'documentation' => 'nullable|integer|min:1|max:5',
+            'manager_comments' => 'nullable|string',
+            // HR evaluation fields
+            'teamwork' => 'nullable|string',
+            'communication' => 'nullable|string',
+            'attendance' => 'nullable|string',
             'professionalism' => 'nullable|integer|min:1|max:5',
             'team_collaboration' => 'nullable|integer|min:1|max:5',
             'learning' => 'nullable|integer|min:1|max:5',
             'initiative' => 'nullable|integer|min:1|max:5',
             'time_management' => 'nullable|integer|min:1|max:5',
+            'hr_comments' => 'nullable|string',
+            // Overall evaluation fields
             'technical_skills' => 'nullable|numeric|min:0|max:40',
-            'task_delivery' => 'nullable|numeric|min:0|max:25',
+            'task_delivery_score' => 'nullable|numeric|min:0|max:25',
             'quality_work' => 'nullable|numeric|min:0|max:15',
             'communication_score' => 'nullable|numeric|min:0|max:10',
-            'teamwork_score' => 'nullable|numeric|min:0|max:10',
-            'overall_rating' => 'nullable|numeric|min:0|max:100',
-            'performance_grade' => 'required|string',
-            'manager_final_feedback' => 'nullable|string',
+            'behavior_teamwork' => 'nullable|numeric|min:0|max:10',
+            'performance_grade' => 'nullable|string',
+            'final_feedback' => 'nullable|string',
         ]);
 
-        $report = PerformanceReport::findOrFail($id);
+        $report = EvaluationReport::findOrFail($id);
 
         // Extract employee ID from the employee_name field (format: "E101 - Aman Singh")
         $employeeNameParts = explode(' - ', $request->employee_name);
@@ -989,88 +1080,146 @@ class AdminController extends Controller
             return redirect()->back()->with('error', 'Employee not found with code: ' . $employeeCode);
         }
 
-        // Update the main performance report
+        // Update the main evaluation report
         $report->update([
             'employee_id' => $employee->id,
-            'designation' => $request->designation,
-            'reporting_manager' => $request->reporting_manager,
             'review_from' => $request->review_from,
             'review_to' => $request->review_to,
             'evaluation_date' => $request->evaluation_date,
-            'project_delivery' => $request->project_delivery,
-            'code_quality' => $request->code_quality,
-            'system_performance' => $request->performance,
-            'task_completion' => $request->task_completion,
-            'innovation' => $request->innovation,
-            'teamwork' => $request->teamwork,
-            'communication' => $request->communication,
-            'attendance' => $request->attendance,
-            'manager_feedback' => $request->manager_final_feedback,
         ]);
 
-        // Update or create quality metrics
-        if ($report->qualityMetrics) {
-            $report->qualityMetrics->update([
+        // Calculate manager total (sum of ratings * 3, out of 60)
+        $managerRatings = [
+            $request->code_efficiency ?? 0,
+            $request->uiux ?? 0,
+            $request->debugging ?? 0,
+            $request->version_control ?? 0,
+            $request->documentation ?? 0,
+        ];
+        $managerTotal = array_sum($managerRatings) * 3;
+
+        // Update or create evaluation manager
+        if ($report->evaluationManager) {
+            $report->evaluationManager->update([
+                'project_delivery' => $request->project_delivery,
+                'code_quality' => $request->code_quality,
+                'performance' => $request->performance,
+                'task_completion' => $request->task_completion,
+                'innovation' => $request->innovation,
                 'code_efficiency' => $request->code_efficiency,
                 'uiux' => $request->uiux,
                 'debugging' => $request->debugging,
                 'version_control' => $request->version_control,
                 'documentation' => $request->documentation,
+                'manager_total' => $managerTotal,
+                'manager_comments' => $request->manager_comments,
             ]);
         } else {
-            QualityMetric::create([
+            EvaluationManager::create([
                 'report_id' => $report->id,
+                'project_delivery' => $request->project_delivery,
+                'code_quality' => $request->code_quality,
+                'performance' => $request->performance,
+                'task_completion' => $request->task_completion,
+                'innovation' => $request->innovation,
                 'code_efficiency' => $request->code_efficiency,
                 'uiux' => $request->uiux,
                 'debugging' => $request->debugging,
                 'version_control' => $request->version_control,
                 'documentation' => $request->documentation,
+                'manager_total' => $managerTotal,
+                'manager_comments' => $request->manager_comments,
             ]);
         }
 
-        // Update or create soft skills
-        if ($report->softSkills) {
-            $report->softSkills->update([
+        // Calculate HR total (sum of ratings * 3, out of 30)
+        $hrRatings = [
+            $request->professionalism ?? 0,
+            $request->team_collaboration ?? 0,
+            $request->learning ?? 0,
+            $request->initiative ?? 0,
+            $request->time_management ?? 0,
+        ];
+        $hrTotal = array_sum($hrRatings) * 3;
+
+        // Update or create evaluation hr
+        if ($report->evaluationHr) {
+            $report->evaluationHr->update([
+                'teamwork' => $request->teamwork,
+                'communication' => $request->communication,
+                'attendance' => $request->attendance,
                 'professionalism' => $request->professionalism,
                 'team_collaboration' => $request->team_collaboration,
-                'learning_adaptability' => $request->learning,
-                'initiative_ownership' => $request->initiative,
+                'learning' => $request->learning,
+                'initiative' => $request->initiative,
                 'time_management' => $request->time_management,
+                'hr_total' => $hrTotal,
+                'hr_comments' => $request->hr_comments,
             ]);
         } else {
-            SoftSkill::create([
+            EvaluationHr::create([
                 'report_id' => $report->id,
+                'teamwork' => $request->teamwork,
+                'communication' => $request->communication,
+                'attendance' => $request->attendance,
                 'professionalism' => $request->professionalism,
                 'team_collaboration' => $request->team_collaboration,
-                'learning_adaptability' => $request->learning,
-                'initiative_ownership' => $request->initiative,
+                'learning' => $request->learning,
+                'initiative' => $request->initiative,
                 'time_management' => $request->time_management,
+                'hr_total' => $hrTotal,
+                'hr_comments' => $request->hr_comments,
             ]);
         }
 
-        // Update or create overall evaluation
-        if ($report->overallEvaluation) {
-            $report->overallEvaluation->update([
-                'technical_skills_score' => $request->technical_skills,
-                'task_delivery_score' => $request->task_delivery,
-                'quality_of_work_score' => $request->quality_work,
-                'communication_score' => $request->communication_score,
-                'teamwork_score' => $request->teamwork_score,
-                'overall_rating' => $request->overall_rating,
-                'performance_grade' => $request->performance_grade,
+        // Calculate overall rating (sum of sliders, out of 100)
+        $overallRating = ($request->technical_skills ?? 0) + ($request->task_delivery_score ?? 0) +
+                        ($request->quality_work ?? 0) + ($request->communication_score ?? 0) +
+                        ($request->behavior_teamwork ?? 0);
+
+        // Determine performance grade based on overall rating
+        $performanceGrade = $request->performance_grade ?? 'Satisfactory';
+        if ($overallRating >= 80) {
+            $performanceGrade = 'Excellent';
+        } elseif ($overallRating >= 60) {
+            $performanceGrade = 'Good';
+        } elseif ($overallRating >= 40) {
+            $performanceGrade = 'Satisfactory';
+        } else {
+            $performanceGrade = 'Needs Improvement';
+        }
+
+        // Update or create evaluation overall
+        if ($report->evaluationOverall) {
+            $report->evaluationOverall->update([
+                'technical_skills' => $request->technical_skills ?? 0,
+                'task_delivery' => $request->task_delivery_score ?? 0,
+                'quality_work' => $request->quality_work ?? 0,
+                'communication' => $request->communication_score ?? 0,
+                'behavior_teamwork' => $request->behavior_teamwork ?? 0,
+                'overall_rating' => $overallRating,
+                'performance_grade' => $performanceGrade,
+                'final_feedback' => $request->final_feedback,
             ]);
         } else {
-            OverallEvaluation::create([
+            EvaluationOverall::create([
                 'report_id' => $report->id,
-                'technical_skills_score' => $request->technical_skills,
-                'task_delivery_score' => $request->task_delivery,
-                'quality_of_work_score' => $request->quality_work,
-                'communication_score' => $request->communication_score,
-                'teamwork_score' => $request->teamwork_score,
-                'overall_rating' => $request->overall_rating,
-                'performance_grade' => $request->performance_grade,
+                'technical_skills' => $request->technical_skills ?? 0,
+                'task_delivery' => $request->task_delivery_score ?? 0,
+                'quality_work' => $request->quality_work ?? 0,
+                'communication' => $request->communication_score ?? 0,
+                'behavior_teamwork' => $request->behavior_teamwork ?? 0,
+                'overall_rating' => $overallRating,
+                'performance_grade' => $performanceGrade,
+                'final_feedback' => $request->final_feedback,
             ]);
         }
+
+        // Update the main report with overall score and grade
+        $report->update([
+            'overall_score' => $overallRating,
+            'performance_grade' => $performanceGrade,
+        ]);
 
         return redirect()->route('admin.evaluation-report')->with('success', 'Evaluation report updated successfully!');
     }
@@ -1084,7 +1233,7 @@ class AdminController extends Controller
             return redirect()->route('admin.dashboard')->with('error', 'You do not have permission to view evaluation reports.');
         }
 
-        $report = PerformanceReport::with(['employee', 'qualityMetrics', 'softSkills', 'overallEvaluation'])
+        $report = EvaluationReport::with(['employee', 'evaluationManager', 'evaluationHr', 'evaluationOverall'])
             ->findOrFail($id);
 
         return view('admin.show-evaluation-report', compact('report'));
@@ -1099,15 +1248,15 @@ class AdminController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $report = PerformanceReport::with(['employee', 'qualityMetrics', 'softSkills', 'overallEvaluation'])
+        $report = EvaluationReport::with(['employee', 'evaluationManager', 'evaluationHr', 'evaluationOverall'])
             ->findOrFail($id);
 
         return response()->json([
             'report' => $report,
             'employee' => $report->employee,
-            'qualityMetrics' => $report->qualityMetrics,
-            'softSkills' => $report->softSkills,
-            'overallEvaluation' => $report->overallEvaluation
+            'evaluationManager' => $report->evaluationManager,
+            'evaluationHr' => $report->evaluationHr,
+            'evaluationOverall' => $report->evaluationOverall
         ]);
     }
 
@@ -1120,12 +1269,12 @@ class AdminController extends Controller
             return redirect()->route('admin.dashboard')->with('error', 'You do not have permission to delete evaluation reports.');
         }
 
-        $report = PerformanceReport::findOrFail($id);
+        $report = EvaluationReport::findOrFail($id);
 
         // Delete related records first
-        $report->qualityMetrics()->delete();
-        $report->softSkills()->delete();
-        $report->overallEvaluation()->delete();
+        $report->evaluationManager()->delete();
+        $report->evaluationHr()->delete();
+        $report->evaluationOverall()->delete();
 
         // Delete the main report
         $report->delete();
@@ -1142,8 +1291,12 @@ class AdminController extends Controller
             return redirect()->route('admin.dashboard')->with('error', 'You do not have permission to download evaluation reports.');
         }
 
-        $report = PerformanceReport::with(['employee', 'qualityMetrics', 'softSkills', 'overallEvaluation'])
+        $report = EvaluationReport::with(['employee', 'evaluationManager', 'evaluationHr', 'evaluationOverall'])
             ->findOrFail($id);
+
+        // Get evaluation assignments
+        $step1Assignments = EvaluationAssignment::where('step', 'step1')->first();
+        $step2Assignments = EvaluationAssignment::where('step', 'step2')->first();
 
         // Get dynamic logo and company name from admin table
         $logo = '';
@@ -1164,7 +1317,7 @@ class AdminController extends Controller
         }
         $company_name = $admin->company_name ?? 'Bitmax Group';
 
-        $pdf = Pdf::loadView('admin.evaluation-report-pdf', compact('report', 'logo', 'company_name'));
+        $pdf = Pdf::loadView('admin.evaluation-report-pdf', compact('report', 'logo', 'company_name', 'step1Assignments', 'step2Assignments'));
 
         $filename = 'evaluation-report-' . $report->employee->name . '-' . $report->id . '.pdf';
 
@@ -1269,4 +1422,303 @@ public function search(Request $request)
     return response()->json($results);
 }
 
+    public function updateEvaluationAssignments(Request $request)
+    {
+        $admin = Auth::guard('admin')->user();
+
+        // Only super admin can update assignments
+        if ($admin->role !== 'super_admin') {
+            return redirect()->back()->with('error', 'Unauthorized access.');
+        }
+
+        $request->validate([
+            'step1_admins' => 'array',
+            'step2_admins' => 'array',
+        ]);
+
+        // Update step 1 assignments (Manager Evaluation)
+        EvaluationAssignment::updateOrCreate(
+            ['step' => 'step1'],
+            ['assigned_admins' => $request->step1_admins ?? []]
+        );
+
+        // Update step 2 assignments (HR Evaluation)
+        EvaluationAssignment::updateOrCreate(
+            ['step' => 'step2'],
+            ['assigned_admins' => $request->step2_admins ?? []]
+        );
+
+        // Log the activity
+        $this->logActivity('update_evaluation_assignments', null, null, "Admin {$admin->name} updated evaluation assignments");
+
+        return redirect()->back()->with('success', 'Evaluation assignments updated successfully.');
+    }
+
+    /**
+     * Save evaluation report draft for step-by-step submission
+     */
+    public function saveEvaluationDraft(Request $request)
+    {
+        $admin = Auth::guard('admin')->user();
+
+        // Check if admin has permission to add evaluation reports
+        if (!$admin->hasPermission('performance') || ($admin->role === 'sub_admin' && !$admin->hasPermission('evaluation-report'))) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'step' => 'required|in:employee_details,manager_evaluation,hr_evaluation,overall_evaluation',
+            'report_id' => 'nullable|exists:evaluation_reports,id',
+            // Employee details validation
+            'employee_name' => 'required_if:step,employee_details|string',
+            'review_from' => 'required_if:step,employee_details|date',
+            'review_to' => 'required_if:step,employee_details|date',
+            'evaluation_date' => 'required_if:step,employee_details|date',
+            // Manager evaluation validation
+            'project_delivery' => 'nullable|string',
+            'code_quality' => 'nullable|string',
+            'performance' => 'nullable|string',
+            'task_completion' => 'nullable|string',
+            'innovation' => 'nullable|string',
+            'code_efficiency' => 'nullable|integer|min:1|max:5',
+            'uiux' => 'nullable|integer|min:1|max:5',
+            'debugging' => 'nullable|integer|min:1|max:5',
+            'version_control' => 'nullable|integer|min:1|max:5',
+            'documentation' => 'nullable|integer|min:1|max:5',
+            'manager_comments' => 'nullable|string',
+            // HR evaluation validation
+            'teamwork' => 'nullable|string',
+            'communication' => 'nullable|string',
+            'attendance' => 'nullable|string',
+            'professionalism' => 'nullable|integer|min:1|max:5',
+            'team_collaboration' => 'nullable|integer|min:1|max:5',
+            'learning' => 'nullable|integer|min:1|max:5',
+            'initiative' => 'nullable|integer|min:1|max:5',
+            'time_management' => 'nullable|integer|min:1|max:5',
+            'hr_comments' => 'nullable|string',
+            // Overall evaluation validation
+            'technical_skills' => 'nullable|numeric|min:0|max:40',
+            'task_delivery_score' => 'nullable|numeric|min:0|max:25',
+            'quality_work' => 'nullable|numeric|min:0|max:15',
+            'communication_score' => 'nullable|numeric|min:0|max:10',
+            'behavior_teamwork' => 'nullable|numeric|min:0|max:10',
+            'performance_grade' => 'nullable|string',
+            'final_feedback' => 'nullable|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $report = null;
+            if ($request->report_id) {
+                $report = EvaluationReport::find($request->report_id);
+            }
+
+            // Create or update report based on step
+            if ($request->step === 'employee_details') {
+                // Extract employee ID from the employee_name field (format: "E101 - Aman Singh")
+                $employeeNameParts = explode(' - ', $request->employee_name);
+                $employeeCode = $employeeNameParts[0];
+
+                // Find the employee by employee_code to get the actual ID
+                $employee = \App\Models\Employee::where('employee_code', $employeeCode)->first();
+                if (!$employee) {
+                    return response()->json(['error' => 'Employee not found'], 404);
+                }
+
+                if (!$report) {
+                    $report = EvaluationReport::create([
+                        'employee_id' => $employee->id,
+                        'review_from' => $request->review_from,
+                        'review_to' => $request->review_to,
+                        'evaluation_date' => $request->evaluation_date,
+                        'status' => 'draft',
+                        'current_step' => 'employee_details',
+                        'manager_id' => $admin->id,
+                        'hr_id' => $admin->id,
+                        'final_approver_id' => $admin->id,
+                    ]);
+                } else {
+                    $report->update([
+                        'employee_id' => $employee->id,
+                        'review_from' => $request->review_from,
+                        'review_to' => $request->review_to,
+                        'evaluation_date' => $request->evaluation_date,
+                        'current_step' => 'employee_details',
+                    ]);
+                }
+            } else {
+                // For other steps, ensure report exists
+                if (!$report) {
+                    return response()->json(['error' => 'Report not found'], 404);
+                }
+
+                // Update current step
+                $report->update(['current_step' => $request->step]);
+            }
+
+            // Handle step-specific data
+            switch ($request->step) {
+                case 'manager_evaluation':
+                    $this->saveManagerEvaluation($report, $request);
+                    break;
+                case 'hr_evaluation':
+                    $this->saveHrEvaluation($report, $request);
+                    break;
+                case 'overall_evaluation':
+                    $this->saveOverallEvaluation($report, $request);
+                    break;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'report_id' => $report->id,
+                'message' => 'Draft saved successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Draft save failed', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Failed to save draft'], 500);
+        }
+    }
+
+    /**
+     * Save manager evaluation data
+     */
+    private function saveManagerEvaluation($report, $request)
+    {
+        // Calculate manager total (sum of ratings * 3, out of 60)
+        $managerRatings = [
+            $request->code_efficiency ?? 0,
+            $request->uiux ?? 0,
+            $request->debugging ?? 0,
+            $request->version_control ?? 0,
+            $request->documentation ?? 0,
+        ];
+        $managerTotal = array_sum($managerRatings) * 3;
+
+        EvaluationManager::updateOrCreate(
+            ['report_id' => $report->id],
+            [
+                'project_delivery' => $request->project_delivery,
+                'code_quality' => $request->code_quality,
+                'performance' => $request->performance,
+                'task_completion' => $request->task_completion,
+                'innovation' => $request->innovation,
+                'code_efficiency' => $request->code_efficiency,
+                'uiux' => $request->uiux,
+                'debugging' => $request->debugging,
+                'version_control' => $request->version_control,
+                'documentation' => $request->documentation,
+                'manager_total' => $managerTotal,
+                'manager_comments' => $request->manager_comments,
+            ]
+        );
+
+        $report->update(['manager_submitted' => true]);
+    }
+
+    /**
+     * Save HR evaluation data
+     */
+    private function saveHrEvaluation($report, $request)
+    {
+        // Calculate HR total (sum of ratings * 3, out of 30)
+        $hrRatings = [
+            $request->professionalism ?? 0,
+            $request->team_collaboration ?? 0,
+            $request->learning ?? 0,
+            $request->initiative ?? 0,
+            $request->time_management ?? 0,
+        ];
+        $hrTotal = array_sum($hrRatings) * 3;
+
+        EvaluationHr::updateOrCreate(
+            ['report_id' => $report->id],
+            [
+                'teamwork' => $request->teamwork,
+                'communication' => $request->communication,
+                'attendance' => $request->attendance,
+                'professionalism' => $request->professionalism,
+                'team_collaboration' => $request->team_collaboration,
+                'learning' => $request->learning,
+                'initiative' => $request->initiative,
+                'time_management' => $request->time_management,
+                'hr_total' => $hrTotal,
+                'hr_comments' => $request->hr_comments,
+            ]
+        );
+
+        $report->update(['hr_submitted' => true]);
+    }
+
+    /**
+     * Save overall evaluation data
+     */
+    private function saveOverallEvaluation($report, $request)
+    {
+        // Calculate overall rating (sum of sliders, out of 100)
+        $overallRating = ($request->technical_skills ?? 0) + ($request->task_delivery_score ?? 0) +
+                        ($request->quality_work ?? 0) + ($request->communication_score ?? 0) +
+                        ($request->behavior_teamwork ?? 0);
+
+        // Determine performance grade based on overall rating
+        $performanceGrade = $request->performance_grade ?? 'Satisfactory';
+        if ($overallRating >= 80) {
+            $performanceGrade = 'Excellent';
+        } elseif ($overallRating >= 60) {
+            $performanceGrade = 'Good';
+        } elseif ($overallRating >= 40) {
+            $performanceGrade = 'Satisfactory';
+        } else {
+            $performanceGrade = 'Needs Improvement';
+        }
+
+        EvaluationOverall::updateOrCreate(
+            ['report_id' => $report->id],
+            [
+                'technical_skills' => $request->technical_skills ?? 0,
+                'task_delivery' => $request->task_delivery_score ?? 0,
+                'quality_work' => $request->quality_work ?? 0,
+                'communication' => $request->communication_score ?? 0,
+                'behavior_teamwork' => $request->behavior_teamwork ?? 0,
+                'overall_rating' => $overallRating,
+                'performance_grade' => $performanceGrade,
+                'final_feedback' => $request->final_feedback,
+            ]
+        );
+
+        $report->update([
+            'overall_submitted' => true,
+            'status' => 'completed',
+            'overall_score' => $overallRating,
+            'performance_grade' => $performanceGrade,
+        ]);
+    }
+
+    /**
+     * Get draft data for a specific report
+     */
+    public function getEvaluationDraft($id)
+    {
+        $admin = Auth::guard('admin')->user();
+
+        if (!$admin->hasPermission('performance')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $report = EvaluationReport::with(['employee', 'evaluationManager', 'evaluationHr', 'evaluationOverall'])
+            ->findOrFail($id);
+
+        return response()->json([
+            'report' => $report,
+            'employee' => $report->employee,
+            'evaluationManager' => $report->evaluationManager,
+            'evaluationHr' => $report->evaluationHr,
+            'evaluationOverall' => $report->evaluationOverall
+        ]);
+    }
 }

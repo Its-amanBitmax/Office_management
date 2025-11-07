@@ -208,6 +208,9 @@ Route::prefix('admin')->group(function () {
         // Global Search Route
         Route::get('/search', [AdminController::class, 'search'])->name('admin.search');
 
+        // Evaluation Assignments Route
+        Route::post('/update-evaluation-assignments', [AdminController::class, 'updateEvaluationAssignments'])->name('admin.update-evaluation-assignments');
+
     });
 });
 

@@ -179,6 +179,49 @@
         </div>
     </div>
 
+    <!-- Evaluation Assignments Card -->
+    <div class="section">
+        <div class="section-header">Evaluation Assignments</div>
+        <div class="section-content">
+            <div style="display: table; width: 100%;">
+                <div style="display: table-row;">
+                    <div style="display: table-cell; padding: 8px; border: 1px solid #ddd; font-weight: bold; background-color: #f8f9fa; width: 30%;">Step 1 - Manager Evaluation</div>
+                    <div style="display: table-cell; padding: 8px; border: 1px solid #ddd;">
+                        @if(isset($step1Assignments) && count($step1Assignments->assigned_admins ?? []) > 0)
+                            @foreach($step1Assignments->assigned_admins as $adminId)
+                                @php
+                                    $admin = \App\Models\Admin::find($adminId);
+                                @endphp
+                                @if($admin)
+                                    {{ $admin->name }}@if(!$loop->last), @endif
+                                @endif
+                            @endforeach
+                        @else
+                            No admins assigned
+                        @endif
+                    </div>
+                </div>
+                <div style="display: table-row;">
+                    <div style="display: table-cell; padding: 8px; border: 1px solid #ddd; font-weight: bold; background-color: #f8f9fa; width: 30%;">Step 2 - HR Evaluation</div>
+                    <div style="display: table-cell; padding: 8px; border: 1px solid #ddd;">
+                        @if(isset($step2Assignments) && count($step2Assignments->assigned_admins ?? []) > 0)
+                            @foreach($step2Assignments->assigned_admins as $adminId)
+                                @php
+                                    $admin = \App\Models\Admin::find($adminId);
+                                @endphp
+                                @if($admin)
+                                    {{ $admin->name }}@if(!$loop->last), @endif
+                                @endif
+                            @endforeach
+                        @else
+                            No admins assigned
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="employee-info">
         <div class="info-row">
             <div class="info-cell info-label">Employee Name</div>
@@ -211,15 +254,15 @@
                 <div class="summary-label">Overall Rating</div>
             </div>
             <div class="summary-cell">
-                <div class="summary-value">{{ $report->overallEvaluation->technical_skills_score }}/40</div>
+                <div class="summary-value">{{ $report->overallEvaluation->technical_skills }}/40</div>
                 <div class="summary-label">Technical Skills</div>
             </div>
             <div class="summary-cell">
-                <div class="summary-value">{{ $report->overallEvaluation->task_delivery_score }}/25</div>
+                <div class="summary-value">{{ $report->overallEvaluation->task_delivery }}/25</div>
                 <div class="summary-label">Task Delivery</div>
             </div>
             <div class="summary-cell">
-                <div class="summary-value">{{ $report->overallEvaluation->communication_score + $report->overallEvaluation->teamwork_score }}/20</div>
+                <div class="summary-value">{{ $report->overallEvaluation->communication + $report->overallEvaluation->behavior_teamwork }}/20</div>
                 <div class="summary-label">Soft Skills</div>
             </div>
         </div>
@@ -233,76 +276,90 @@
                 {{ $report->overallEvaluation->performance_grade }}
             </span>
             <div style="margin-top: 5px; font-size: 10px; color: #666;">
-                Quality of Work: {{ $report->overallEvaluation->quality_of_work_score }}/15
+                Quality of Work: {{ $report->overallEvaluation->quality_work }}/15
             </div>
         </div>
     </div>
     @endif
 
+    @if($report->evaluationManager)
     <div class="section">
-        <div class="section-header">Key Performance Indicators</div>
+        <div class="section-header">Manager Evaluation</div>
         <div class="section-content">
             <table class="metrics-table">
-                <tr><th>Project Delivery</th><td>{{ $report->project_delivery ?: 'Not specified' }}</td></tr>
-                <tr><th>Code Quality</th><td>{{ $report->code_quality ?: 'Not specified' }}</td></tr>
-                <tr><th>System Performance</th><td>{{ $report->system_performance ?: 'Not specified' }}</td></tr>
-                <tr><th>Task Completion</th><td>{{ $report->task_completion ?: 'Not specified' }}</td></tr>
-                <tr><th>Innovation</th><td>{{ $report->innovation ?: 'Not specified' }}</td></tr>
-                <tr><th>Teamwork</th><td>{{ $report->teamwork ?: 'Not specified' }}</td></tr>
-                <tr><th>Communication</th><td>{{ $report->communication ?: 'Not specified' }}</td></tr>
-                <tr><th>Attendance</th><td>{{ $report->attendance ?: 'Not specified' }}</td></tr>
+                <tr><th>Project Delivery</th><td>{{ $report->evaluationManager->project_delivery ?: 'Not specified' }}</td></tr>
+                <tr><th>Code Quality</th><td>{{ $report->evaluationManager->code_quality ?: 'Not specified' }}</td></tr>
+                <tr><th>Performance</th><td>{{ $report->evaluationManager->performance ?: 'Not specified' }}</td></tr>
+                <tr><th>Task Completion</th><td>{{ $report->evaluationManager->task_completion ?: 'Not specified' }}</td></tr>
+                <tr><th>Innovation</th><td>{{ $report->evaluationManager->innovation ?: 'Not specified' }}</td></tr>
+                <tr><th>Manager Comments</th><td>{{ $report->evaluationManager->manager_comments ?: 'Not specified' }}</td></tr>
             </table>
         </div>
     </div>
+    @endif
 
-    @if($report->qualityMetrics)
+    @if($report->evaluationHr)
     <div class="section">
-        <div class="section-header">Quality & Efficiency Metrics</div>
+        <div class="section-header">HR Evaluation</div>
+        <div class="section-content">
+            <table class="metrics-table">
+                <tr><th>Teamwork</th><td>{{ $report->evaluationHr->teamwork ?: 'Not specified' }}</td></tr>
+                <tr><th>Communication</th><td>{{ $report->evaluationHr->communication ?: 'Not specified' }}</td></tr>
+                <tr><th>Attendance</th><td>{{ $report->evaluationHr->attendance ?: 'Not specified' }}</td></tr>
+                <tr><th>HR Comments</th><td>{{ $report->evaluationHr->hr_comments ?: 'Not specified' }}</td></tr>
+            </table>
+        </div>
+    </div>
+    @endif
+
+    @if($report->evaluationManager)
+    <div class="section">
+        <div class="section-header">Manager Evaluation Ratings</div>
         <div class="section-content">
             <table class="metrics-table">
                 <tr>
                     <th>Code Efficiency</th>
                     <td>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: {{ ($report->qualityMetrics->code_efficiency / 5) * 100 }}%"></div>
+                            <div class="progress-fill" style="width: {{ ($report->evaluationManager->code_efficiency / 5) * 100 }}%"></div>
                         </div>
-                        <div class="rating-text">{{ $report->qualityMetrics->code_efficiency }}/5</div>
+                        <div class="rating-text">{{ $report->evaluationManager->code_efficiency }}/5</div>
                     </td>
                 </tr>
                 <tr>
                     <th>UI/UX</th>
                     <td>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: {{ ($report->qualityMetrics->uiux / 5) * 100 }}%"></div>
+                            <div class="progress-fill" style="width: {{ ($report->evaluationManager->uiux / 5) * 100 }}%"></div>
                         </div>
-                        <div class="rating-text">{{ $report->qualityMetrics->uiux }}/5</div>
+                        <div class="rating-text">{{ $report->evaluationManager->uiux }}/5</div>
                     </td>
                 </tr>
                 <tr>
                     <th>Debugging</th>
                     <td>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: {{ ($report->qualityMetrics->debugging / 5) * 100 }}%"></div>
+                            <div class="progress-fill" style="width: {{ ($report->evaluationManager->debugging / 5) * 100 }}%"></div>
                         </div>
-                        <div class="rating-text">{{ $report->qualityMetrics->debugging }}/5</div>
+                        <div class="rating-text">{{ $report->evaluationManager->debugging }}/5</div>
                     </td>
                 </tr>
                 <tr>
                     <th>Version Control</th>
                     <td>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: {{ ($report->qualityMetrics->version_control / 5) * 100 }}%"></div>
+                            <div class="progress-fill" style="width: {{ ($report->evaluationManager->version_control / 5) * 100 }}%"></div>
                         </div>
-                        <div class="rating-text">{{ $report->qualityMetrics->version_control }}/5</div>
+                        <div class="rating-text">{{ $report->evaluationManager->version_control }}/5</div>
                     </td>
                 </tr>
                 <tr>
                     <th>Documentation</th>
                     <td>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: {{ ($report->qualityMetrics->documentation / 5) * 100 }}%"></div>
+                            <div class="progress-fill" style="width: {{ ($report->evaluationManager->documentation / 5) * 100 }}%"></div>
                         </div>
-                        <div class="rating-text">{{ $report->qualityMetrics->documentation }}/5</div>
+                        <div class="rating-text">{{ $report->evaluationManager->documentation }}/5</div>
                     </td>
                 </tr>
             </table>
@@ -310,54 +367,54 @@
     </div>
     @endif
 
-    @if($report->softSkills)
+    @if($report->evaluationHr)
     <div class="section">
-        <div class="section-header">Soft Skills & Behavior</div>
+        <div class="section-header">HR Evaluation Ratings</div>
         <div class="section-content">
             <table class="metrics-table">
                 <tr>
                     <th>Professionalism</th>
                     <td>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: {{ ($report->softSkills->professionalism / 5) * 100 }}%"></div>
+                            <div class="progress-fill" style="width: {{ ($report->evaluationHr->professionalism / 5) * 100 }}%"></div>
                         </div>
-                        <div class="rating-text">{{ $report->softSkills->professionalism }}/5</div>
+                        <div class="rating-text">{{ $report->evaluationHr->professionalism }}/5</div>
                     </td>
                 </tr>
                 <tr>
                     <th>Team Collaboration</th>
                     <td>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: {{ ($report->softSkills->team_collaboration / 5) * 100 }}%"></div>
+                            <div class="progress-fill" style="width: {{ ($report->evaluationHr->team_collaboration / 5) * 100 }}%"></div>
                         </div>
-                        <div class="rating-text">{{ $report->softSkills->team_collaboration }}/5</div>
+                        <div class="rating-text">{{ $report->evaluationHr->team_collaboration }}/5</div>
                     </td>
                 </tr>
                 <tr>
                     <th>Learning & Adaptability</th>
                     <td>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: {{ ($report->softSkills->learning_adaptability / 5) * 100 }}%"></div>
+                            <div class="progress-fill" style="width: {{ ($report->evaluationHr->learning / 5) * 100 }}%"></div>
                         </div>
-                        <div class="rating-text">{{ $report->softSkills->learning_adaptability }}/5</div>
+                        <div class="rating-text">{{ $report->evaluationHr->learning }}/5</div>
                     </td>
                 </tr>
                 <tr>
                     <th>Initiative & Ownership</th>
                     <td>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: {{ ($report->softSkills->initiative_ownership / 5) * 100 }}%"></div>
+                            <div class="progress-fill" style="width: {{ ($report->evaluationHr->initiative / 5) * 100 }}%"></div>
                         </div>
-                        <div class="rating-text">{{ $report->softSkills->initiative_ownership }}/5</div>
+                        <div class="rating-text">{{ $report->evaluationHr->initiative }}/5</div>
                     </td>
                 </tr>
                 <tr>
                     <th>Time Management</th>
                     <td>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: {{ ($report->softSkills->time_management / 5) * 100 }}%"></div>
+                            <div class="progress-fill" style="width: {{ ($report->evaluationHr->time_management / 5) * 100 }}%"></div>
                         </div>
-                        <div class="rating-text">{{ $report->softSkills->time_management }}/5</div>
+                        <div class="rating-text">{{ $report->evaluationHr->time_management }}/5</div>
                     </td>
                 </tr>
             </table>
