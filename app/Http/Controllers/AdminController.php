@@ -1088,33 +1088,47 @@ class AdminController extends Controller
             'evaluation_date' => $request->evaluation_date,
         ]);
 
-        // Calculate manager total (sum of ratings * 3, out of 60)
-        $managerRatings = [
-            $request->code_efficiency ?? 0,
-            $request->uiux ?? 0,
-            $request->debugging ?? 0,
-            $request->version_control ?? 0,
-            $request->documentation ?? 0,
-        ];
-        $managerTotal = array_sum($managerRatings) * 3;
-
         // Update or create evaluation manager
         if ($report->evaluationManager) {
-            $report->evaluationManager->update([
-                'project_delivery' => $request->project_delivery,
-                'code_quality' => $request->code_quality,
-                'performance' => $request->performance,
-                'task_completion' => $request->task_completion,
-                'innovation' => $request->innovation,
-                'code_efficiency' => $request->code_efficiency,
-                'uiux' => $request->uiux,
-                'debugging' => $request->debugging,
-                'version_control' => $request->version_control,
-                'documentation' => $request->documentation,
-                'manager_total' => $managerTotal,
-                'manager_comments' => $request->manager_comments,
-            ]);
+            $updateData = [];
+            if ($request->project_delivery !== null) $updateData['project_delivery'] = $request->project_delivery;
+            if ($request->code_quality !== null) $updateData['code_quality'] = $request->code_quality;
+            if ($request->performance !== null) $updateData['performance'] = $request->performance;
+            if ($request->task_completion !== null) $updateData['task_completion'] = $request->task_completion;
+            if ($request->innovation !== null) $updateData['innovation'] = $request->innovation;
+            if ($request->code_efficiency !== null) $updateData['code_efficiency'] = $request->code_efficiency;
+            if ($request->uiux !== null) $updateData['uiux'] = $request->uiux;
+            if ($request->debugging !== null) $updateData['debugging'] = $request->debugging;
+            if ($request->version_control !== null) $updateData['version_control'] = $request->version_control;
+            if ($request->documentation !== null) $updateData['documentation'] = $request->documentation;
+            if ($request->manager_comments !== null) $updateData['manager_comments'] = $request->manager_comments;
+
+            if (!empty($updateData)) {
+                $report->evaluationManager->update($updateData);
+
+                // Recalculate manager total after update
+                $manager = $report->evaluationManager->fresh();
+                $managerRatings = [
+                    $manager->code_efficiency ?? 0,
+                    $manager->uiux ?? 0,
+                    $manager->debugging ?? 0,
+                    $manager->version_control ?? 0,
+                    $manager->documentation ?? 0,
+                ];
+                $managerTotal = array_sum($managerRatings) * 3;
+                $report->evaluationManager->update(['manager_total' => $managerTotal]);
+            }
         } else {
+            // Calculate manager total (sum of ratings * 3, out of 60)
+            $managerRatings = [
+                $request->code_efficiency ?? 0,
+                $request->uiux ?? 0,
+                $request->debugging ?? 0,
+                $request->version_control ?? 0,
+                $request->documentation ?? 0,
+            ];
+            $managerTotal = array_sum($managerRatings) * 3;
+
             EvaluationManager::create([
                 'report_id' => $report->id,
                 'project_delivery' => $request->project_delivery,
@@ -1132,31 +1146,45 @@ class AdminController extends Controller
             ]);
         }
 
-        // Calculate HR total (sum of ratings * 3, out of 30)
-        $hrRatings = [
-            $request->professionalism ?? 0,
-            $request->team_collaboration ?? 0,
-            $request->learning ?? 0,
-            $request->initiative ?? 0,
-            $request->time_management ?? 0,
-        ];
-        $hrTotal = array_sum($hrRatings) * 3;
-
         // Update or create evaluation hr
         if ($report->evaluationHr) {
-            $report->evaluationHr->update([
-                'teamwork' => $request->teamwork,
-                'communication' => $request->communication,
-                'attendance' => $request->attendance,
-                'professionalism' => $request->professionalism,
-                'team_collaboration' => $request->team_collaboration,
-                'learning' => $request->learning,
-                'initiative' => $request->initiative,
-                'time_management' => $request->time_management,
-                'hr_total' => $hrTotal,
-                'hr_comments' => $request->hr_comments,
-            ]);
+            $updateData = [];
+            if ($request->teamwork !== null) $updateData['teamwork'] = $request->teamwork;
+            if ($request->communication !== null) $updateData['communication'] = $request->communication;
+            if ($request->attendance !== null) $updateData['attendance'] = $request->attendance;
+            if ($request->professionalism !== null) $updateData['professionalism'] = $request->professionalism;
+            if ($request->team_collaboration !== null) $updateData['team_collaboration'] = $request->team_collaboration;
+            if ($request->learning !== null) $updateData['learning'] = $request->learning;
+            if ($request->initiative !== null) $updateData['initiative'] = $request->initiative;
+            if ($request->time_management !== null) $updateData['time_management'] = $request->time_management;
+            if ($request->hr_comments !== null) $updateData['hr_comments'] = $request->hr_comments;
+
+            if (!empty($updateData)) {
+                $report->evaluationHr->update($updateData);
+
+                // Recalculate HR total after update
+                $hr = $report->evaluationHr->fresh();
+                $hrRatings = [
+                    $hr->professionalism ?? 0,
+                    $hr->team_collaboration ?? 0,
+                    $hr->learning ?? 0,
+                    $hr->initiative ?? 0,
+                    $hr->time_management ?? 0,
+                ];
+                $hrTotal = array_sum($hrRatings) * 3;
+                $report->evaluationHr->update(['hr_total' => $hrTotal]);
+            }
         } else {
+            // Calculate HR total (sum of ratings * 3, out of 30)
+            $hrRatings = [
+                $request->professionalism ?? 0,
+                $request->team_collaboration ?? 0,
+                $request->learning ?? 0,
+                $request->initiative ?? 0,
+                $request->time_management ?? 0,
+            ];
+            $hrTotal = array_sum($hrRatings) * 3;
+
             EvaluationHr::create([
                 'report_id' => $report->id,
                 'teamwork' => $request->teamwork,
@@ -1191,16 +1219,41 @@ class AdminController extends Controller
 
         // Update or create evaluation overall
         if ($report->evaluationOverall) {
-            $report->evaluationOverall->update([
-                'technical_skills' => $request->technical_skills ?? 0,
-                'task_delivery' => $request->task_delivery_score ?? 0,
-                'quality_work' => $request->quality_work ?? 0,
-                'communication' => $request->communication_score ?? 0,
-                'behavior_teamwork' => $request->behavior_teamwork ?? 0,
-                'overall_rating' => $overallRating,
-                'performance_grade' => $performanceGrade,
-                'final_feedback' => $request->final_feedback,
-            ]);
+            $updateData = [];
+            if ($request->technical_skills !== null) $updateData['technical_skills'] = $request->technical_skills;
+            if ($request->task_delivery_score !== null) $updateData['task_delivery'] = $request->task_delivery_score;
+            if ($request->quality_work !== null) $updateData['quality_work'] = $request->quality_work;
+            if ($request->communication_score !== null) $updateData['communication'] = $request->communication_score;
+            if ($request->behavior_teamwork !== null) $updateData['behavior_teamwork'] = $request->behavior_teamwork;
+            if ($request->performance_grade !== null) $updateData['performance_grade'] = $request->performance_grade;
+            if ($request->final_feedback !== null) $updateData['final_feedback'] = $request->final_feedback;
+
+            if (!empty($updateData)) {
+                $report->evaluationOverall->update($updateData);
+
+                // Recalculate overall rating after update
+                $overall = $report->evaluationOverall->fresh();
+                $overallRating = ($overall->technical_skills ?? 0) + ($overall->task_delivery ?? 0) +
+                                ($overall->quality_work ?? 0) + ($overall->communication ?? 0) +
+                                ($overall->behavior_teamwork ?? 0);
+
+                // Determine performance grade based on overall rating
+                $performanceGrade = $overall->performance_grade ?? 'Satisfactory';
+                if ($overallRating >= 80) {
+                    $performanceGrade = 'Excellent';
+                } elseif ($overallRating >= 60) {
+                    $performanceGrade = 'Good';
+                } elseif ($overallRating >= 40) {
+                    $performanceGrade = 'Satisfactory';
+                } else {
+                    $performanceGrade = 'Needs Improvement';
+                }
+
+                $report->evaluationOverall->update([
+                    'overall_rating' => $overallRating,
+                    'performance_grade' => $performanceGrade,
+                ]);
+            }
         } else {
             EvaluationOverall::create([
                 'report_id' => $report->id,

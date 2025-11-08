@@ -12,7 +12,7 @@ class SalarySlip extends Model
 
     protected $fillable = [
         'employee_id',
-        'month',
+        'month',           // e.g., '2025-11'
         'year',
         'basic_salary',
         'hra',
@@ -31,84 +31,74 @@ class SalarySlip extends Model
         'pdf_path',
     ];
 
+    // CRITICAL: Cast dates to prevent "Trailing data"
     protected $casts = [
-        'basic_salary' => 'decimal:2',
-        'hra' => 'decimal:2',
-        'conveyance' => 'decimal:2',
-        'medical' => 'decimal:2',
-        'gross_salary' => 'decimal:2',
-        'net_salary' => 'decimal:2',
-        'deductions' => 'array',
-        'generated_at' => 'datetime',
-        'year' => 'integer',
-        'holiday_days' => 'integer',
+        'basic_salary'     => 'decimal:2',
+        'hra'              => 'decimal:2',
+        'conveyance'       => 'decimal:2',
+        'medical'          => 'decimal:2',
+        'gross_salary'     => 'decimal:2',
+        'net_salary'       => 'decimal:2',
+        'deductions'       => 'array',
+        'generated_at'     => 'datetime:Y-m-d H:i:s',  // Safe format
+        'year'             => 'integer',
+        'holiday_days'     => 'integer',
+        'month'            => 'string',               // Keep as string for Y-m
     ];
 
-    /**
-     * Get the employee that owns the salary slip.
-     */
+    // Employee relationship
     public function employee()
     {
         return $this->belongsTo(Employee::class);
     }
 
-    /**
-     * Calculate total deductions
-     */
+    // Total Deductions (Accessor)
     public function getTotalDeductionsAttribute()
     {
-        if (!$this->deductions) {
-            return 0;
-        }
-
-        return collect($this->deductions)->sum('amount');
+        return collect($this->deductions ?? [])->sum('amount');
     }
 
-    /**
-     * Get formatted month name
-     */
+    // Formatted Month Name: "Nov 2025"
     public function getMonthNameAttribute()
     {
-        return Carbon::createFromFormat('Y-m', $this->month . '-01')->format('F Y');
+        try {
+            return Carbon::createFromFormat('Y-m', $this->month . '-01')->format('M Y');
+        } catch (\Exception $e) {
+            return 'Invalid Month';
+        }
     }
 
-    /**
-     * Get holiday days (stored or calculated from attendance)
-     */
+    // Holiday Days (from DB or calculated)
     public function getHolidayDaysAttribute()
     {
-        if (isset($this->attributes['holiday_days'])) {
+        if (array_key_exists('holiday_days', $this->attributes)) {
             return $this->attributes['holiday_days'];
         }
 
-        $holidays = \App\Models\Attendance::where('employee_id', $this->employee_id)
+        return \App\Models\Attendance::where('employee_id', $this->employee_id)
             ->whereYear('date', $this->year)
-            ->whereMonth('date', $this->month)
+            ->whereMonth('date', explode('-', $this->month)[1] ?? 1)
             ->where('status', 'Holiday')
             ->count();
-
-        return $holidays;
     }
 
-    /**
-     * Scope for filtering by employee
-     */
+    // Slip ID: BT/HR/2025/123
+    public function getSlipIdAttribute()
+    {
+        return "BT/HR/{$this->year}/{$this->id}";
+    }
+
+    // Scopes
     public function scopeForEmployee($query, $employeeId)
     {
         return $query->where('employee_id', $employeeId);
     }
 
-    /**
-     * Scope for filtering by month and year
-     */
     public function scopeForMonth($query, $month, $year)
     {
         return $query->where('month', $month)->where('year', $year);
     }
 
-    /**
-     * Check if salary slip exists for employee and month
-     */
     public static function existsForEmployeeMonth($employeeId, $month, $year)
     {
         return self::where('employee_id', $employeeId)

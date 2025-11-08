@@ -41,7 +41,7 @@
                             <strong>Employee Code:</strong> {{ $salarySlip->employee->employee_code }}
                         </div>
                         <div class="mb-2">
-                            <strong>Joining Date:</strong> {{ $salarySlip->employee->joining_date ? $salarySlip->employee->joining_date->format('d M Y') : 'N/A' }}
+                            <strong>Joining Date:</strong> {{ $salarySlip->employee->hire_date ? \Carbon\Carbon::parse($salarySlip->employee->hire_date)->format('d M Y') : 'N/A' }}
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -53,7 +53,7 @@
                             <strong>Generated At:</strong> {{ $salarySlip->generated_at->format('d M Y, h:i A') }}
                         </div>
                         <div class="mb-2">
-                            <strong>Slip ID:</strong> {{ $salarySlip->id }}
+                            <strong>Slip ID:</strong> {{ $salarySlip->slip_id }}
                         </div>
                     </div>
                 </div>

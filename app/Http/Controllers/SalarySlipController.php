@@ -74,7 +74,7 @@ class SalarySlipController extends Controller
     $attendanceData = $this->calculateAttendanceData($employee, $request->month);
 
     // Calculate salary
-    $salaryData = $this->calculateSalary($employee, $attendanceData, $request->deductions ?? []);
+    $salaryData = $this->calculateSalary($employee, $attendanceData, $request->deductions ?? [], $request->month);
 
     // Create salary slip
     $salarySlip = SalarySlip::create([
@@ -129,22 +129,25 @@ class SalarySlipController extends Controller
             'deductions' => 'nullable|array',
             'deductions.*.type' => 'required|string',
             'deductions.*.amount' => 'required|numeric|min:0',
+            'holiday_days' => 'nullable|integer|min:0|max:31',
         ]);
 
         $employee = $salarySlip->employee;
 
-        // Recalculate salary with new deductions
+        // Recalculate salary with new deductions and holiday days
         $attendanceData = [
             'total_days' => $salarySlip->total_working_days,
             'present' => $salarySlip->present_days,
             'absent' => $salarySlip->absent_days,
             'leave' => $salarySlip->leave_days,
             'half_day' => $salarySlip->half_day_count,
+            'holiday' => $request->holiday_days ?? $salarySlip->holiday_days,
         ];
 
         $salaryData = $this->calculateSalary($employee, $attendanceData, $request->deductions ?? []);
 
         $salarySlip->update([
+            'holiday_days' => $request->holiday_days ?? $salarySlip->holiday_days,
             'deductions' => $request->deductions,
             'gross_salary' => $salaryData['gross_salary'],
             'net_salary' => $salaryData['net_salary'],
@@ -210,15 +213,22 @@ private function calculateAttendanceData(Employee $employee, string $month): arr
     /**
      * Calculate salary based on attendance and deductions
      */
-private function calculateSalary(Employee $employee, array $attendanceData, array $deductions = []): array
+private function calculateSalary(Employee $employee, array $attendanceData, array $deductions = [], string $month = null): array
 {
     $basicSalary = $employee->basic_salary ?? 0;
     $hra = $employee->hra ?? 0;
     $conveyance = $employee->conveyance ?? 0;
     $medical = $employee->medical ?? 0;
 
+    // Calculate total days in the specific month
+    if ($month) {
+        $date = Carbon::createFromFormat('Y-m', $month);
+        $totalDaysInMonth = $date->daysInMonth;
+    } else {
+        $totalDaysInMonth = Carbon::now()->daysInMonth; // Fallback
+    }
+
     // Calculate daily rates
-    $totalDaysInMonth = Carbon::now()->daysInMonth; // Approximate
     $basicDaily = $basicSalary / $totalDaysInMonth;
     $hraDaily = $hra / $totalDaysInMonth;
     $conveyanceDaily = $conveyance / $totalDaysInMonth;

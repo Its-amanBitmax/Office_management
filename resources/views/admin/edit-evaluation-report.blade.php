@@ -276,7 +276,6 @@
 
                                         <div class="subsection">
                                             <h4>3.1 Performance Scoring</h4>
-                                            <div> **Image ke hisaab se sliders**:
                                             <div class="grid">
                                                 <div>
                                                     <label>Technical Skills (40%)</label>
@@ -368,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     sliders.forEach(slider => {
-        updateSlider(slider);
+        updateSlider(slider); // Update on load
         slider.addEventListener('input', () => updateSlider(slider));
     });
 

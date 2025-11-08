@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+    @extends('layouts.admin')
 
 @section('page-title', 'Edit Salary Slip')
 @section('page-description', 'Modify salary slip details and deductions')
@@ -58,6 +58,9 @@
                                 <div class="mb-2">
                                     <strong>Conveyance:</strong> ₹{{ number_format($salarySlip->conveyance, 2) }}
                                 </div>
+                                <div class="mb-2">
+                                    <strong>Joining Date:</strong> {{ $salarySlip->employee->hire_date ? \Carbon\Carbon::parse($salarySlip->employee->hire_date)->format('d M Y') : 'N/A' }}
+                                </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-2">
@@ -65,8 +68,6 @@
                                 </div>
                                 <div class="mb-2">
                                     <strong>Gross Salary:</strong> ₹{{ number_format($salarySlip->gross_salary, 2) }}
-                                </div>
-                            </div>
                         </div>
                     </div>
 
@@ -106,6 +107,35 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-success">{{ $salarySlip->holiday_days }}</h5>
+                                        <small>Holiday Days</small>
+                        </div>
+                    </div>
+
+                        <!-- Editable Holiday Days Section -->
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="card border-warning">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-warning">
+                                            <i class="fas fa-edit"></i> Edit Holiday Days
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="holiday_days" class="form-label">Holiday Days</label>
+                                                <input type="number" class="form-control" id="holiday_days" name="holiday_days"
+                                                       value="{{ $salarySlip->holiday_days }}" min="0" max="31">
+                                                <div class="form-text">Number of holiday days for this month</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                         </div>
                     </div>
 
