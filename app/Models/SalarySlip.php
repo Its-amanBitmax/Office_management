@@ -12,7 +12,7 @@ class SalarySlip extends Model
 
     protected $fillable = [
         'employee_id',
-        'month',           // e.g., '2025-11'
+        'month',
         'year',
         'basic_salary',
         'hra',
@@ -31,79 +31,97 @@ class SalarySlip extends Model
         'pdf_path',
     ];
 
-    // CRITICAL: Cast dates to prevent "Trailing data"
     protected $casts = [
-        'basic_salary'     => 'decimal:2',
-        'hra'              => 'decimal:2',
-        'conveyance'       => 'decimal:2',
-        'medical'          => 'decimal:2',
-        'gross_salary'     => 'decimal:2',
-        'net_salary'       => 'decimal:2',
-        'deductions'       => 'array',
-        'generated_at'     => 'datetime:Y-m-d H:i:s',  // Safe format
-        'year'             => 'integer',
-        'holiday_days'     => 'integer',
-        'month'            => 'string',               // Keep as string for Y-m
+        'basic_salary' => 'decimal:2',
+        'hra' => 'decimal:2',
+        'conveyance' => 'decimal:2',
+        'medical' => 'decimal:2',
+        'gross_salary' => 'decimal:2',
+        'net_salary' => 'decimal:2',
+        'deductions' => 'array',
+        'generated_at' => 'datetime',
+        'year' => 'integer',
+        'holiday_days' => 'integer',
     ];
 
-    // Employee relationship
+    /**
+     * Get the employee that owns the salary slip.
+     */
     public function employee()
     {
         return $this->belongsTo(Employee::class);
     }
 
-    // Total Deductions (Accessor)
+    /**
+     * Calculate total deductions
+     */
     public function getTotalDeductionsAttribute()
     {
-        return collect($this->deductions ?? [])->sum('amount');
+        if (!$this->deductions) {
+            return 0;
+        }
+
+        return collect($this->deductions)->sum('amount');
     }
 
-    // Formatted Month Name: "Nov 2025"
+    /**
+     * Get formatted month name
+     */
     public function getMonthNameAttribute()
     {
-        try {
-            return Carbon::createFromFormat('Y-m', $this->month . '-01')->format('M Y');
-        } catch (\Exception $e) {
-            return 'Invalid Month';
-        }
+        return Carbon::createFromFormat('Y-m', $this->month . '-01')->format('F Y');
     }
 
-    // Holiday Days (from DB or calculated)
+    /**
+     * Get holiday days (stored or calculated from attendance)
+     */
     public function getHolidayDaysAttribute()
     {
-        if (array_key_exists('holiday_days', $this->attributes)) {
+        if (isset($this->attributes['holiday_days'])) {
             return $this->attributes['holiday_days'];
         }
 
-        return \App\Models\Attendance::where('employee_id', $this->employee_id)
+        $holidays = \App\Models\Attendance::where('employee_id', $this->employee_id)
             ->whereYear('date', $this->year)
-            ->whereMonth('date', explode('-', $this->month)[1] ?? 1)
+            ->whereMonth('date', $this->month)
             ->where('status', 'Holiday')
             ->count();
+
+        return $holidays;
     }
 
-    // Slip ID: BT/HR/2025/123
-    public function getSlipIdAttribute()
-    {
-        return "BT/HR/{$this->year}/{$this->id}";
-    }
-
-    // Scopes
+    /**
+     * Scope for filtering by employee
+     */
     public function scopeForEmployee($query, $employeeId)
     {
         return $query->where('employee_id', $employeeId);
     }
 
+    /**
+     * Scope for filtering by month and year
+     */
     public function scopeForMonth($query, $month, $year)
     {
         return $query->where('month', $month)->where('year', $year);
     }
 
+    /**
+     * Check if salary slip exists for employee and month
+     */
     public static function existsForEmployeeMonth($employeeId, $month, $year)
     {
         return self::where('employee_id', $employeeId)
             ->where('month', $month)
             ->where('year', $year)
             ->exists();
+    }
+
+    /**
+     * Get formatted slip ID in BT/HR/year/ID format
+     */
+    public function getSlipIdAttribute()
+    {
+        return 'BT/HR/' . $this->year . '/' . str_pad($this->id, 4, '0', STR_PAD_LEFT);
     }
 }
