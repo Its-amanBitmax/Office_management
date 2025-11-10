@@ -121,6 +121,7 @@ Route::prefix('admin')->group(function () {
 
         // Salary Slips Management Routes
         Route::get('salary-slips/{salarySlip}/download-pdf', [\App\Http\Controllers\SalarySlipController::class, 'downloadPdf'])->name('salary-slips.download-pdf');
+        Route::get('salary-slips/template', [\App\Http\Controllers\SalarySlipController::class, 'template'])->name('salary-slips.template');
         Route::resource('salary-slips', \App\Http\Controllers\SalarySlipController::class)->names([
             'index' => 'salary-slips.index',
             'create' => 'salary-slips.create',

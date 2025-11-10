@@ -186,6 +186,15 @@ class SalarySlipController extends Controller
     }
 
     /**
+     * Show salary slip template
+     */
+    public function template()
+    {
+        $admin = auth('admin')->user();
+        return view('admin.salary-slips.template', compact('admin'));
+    }
+
+    /**
      * Calculate attendance data for the month
      */
 private function calculateAttendanceData(Employee $employee, string $month): array

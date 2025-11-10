@@ -68,6 +68,9 @@
     <a href="{{ route('salary-slips.create') }}" class="btn btn-success">
         <i class="fas fa-plus"></i> Generate New Salary Slip
     </a>
+    <a href="{{ route('salary-slips.template') }}" class="btn btn-info">
+        <i class="fas fa-file-alt"></i> Salary Slip Template
+    </a>
 </div>
 
 @if(session('success'))
