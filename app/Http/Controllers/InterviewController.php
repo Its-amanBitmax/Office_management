@@ -219,4 +219,57 @@ class InterviewController extends Controller
             'message' => 'Interview started successfully.'
         ]);
     }
+
+    /**
+     * Show the interview room for candidates.
+     */
+    public function showInterviewRoom($unique_link)
+    {
+        $interview = Interview::where('unique_link', $unique_link)->first();
+
+        if (!$interview) {
+            abort(404, 'Interview not found.');
+        }
+
+        if (!$interview->is_started) {
+            return redirect()->route('interview.link', $unique_link)->with('error', 'Interview has not started yet.');
+        }
+
+        \Log::error('Loading interview room for candidate: Interview ID ' . $interview->id . ', Unique Link: ' . $interview->unique_link);
+
+        return view('interview.room', compact('interview') + ['is_interviewer' => false, 'is_candidate' => true]);
+    }
+
+    /**
+     * Show the interview room for admins/interviewers.
+     */
+    public function showInterviewRoomAdmin(Interview $interview)
+    {
+        return view('interview.room', compact('interview') + ['is_interviewer' => true, 'is_candidate' => false]);
+    }
+
+    /**
+     * Log JavaScript errors from the frontend.
+     */
+    public function logError(Request $request)
+    {
+        $request->validate([
+            'message' => 'required|string',
+            'filename' => 'nullable|string',
+            'lineno' => 'nullable|integer',
+            'colno' => 'nullable|integer',
+            'error' => 'nullable|string',
+        ]);
+
+        \Log::error('JavaScript Error: ' . $request->message, [
+            'filename' => $request->filename,
+            'lineno' => $request->lineno,
+            'colno' => $request->colno,
+            'error' => $request->error,
+            'user_agent' => $request->userAgent(),
+            'url' => $request->fullUrl(),
+        ]);
+
+        return response()->json(['success' => true]);
+    }
 }

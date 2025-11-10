@@ -24,9 +24,12 @@
       min-height: 100vh;
       font-family: 'Inter', sans-serif;
       color: var(--gray-900);
-      overflow: hidden;
+      overflow: auto;
       position: relative;
       background: #f0f4ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* ===== SHARED ANIMATED BACKGROUND ===== */
@@ -137,10 +140,11 @@
       background: rgba(255, 255, 255, 0.94);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      padding: 44px 36px;
+      padding: 0;
       border-radius: var(--radius);
       width: 90%;
-      max-width: 450px;
+      max-width: 900px;
+      max-height: 90vh;
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
       border: 1px solid rgba(226, 232, 240, 0.8);
       z-index: 10;
@@ -148,6 +152,26 @@
       transform: translateY(40px);
       transition: all 0.7s ease;
       margin: 20px auto;
+      display: flex;
+      overflow-y: auto;
+    }
+
+    .left-panel {
+      flex: 1;
+      padding: 44px 36px;
+      background: rgba(255, 255, 255, 0.94);
+      border-right: 1px solid rgba(226, 232, 240, 0.3);
+    }
+
+    .right-panel {
+      flex: 1;
+      padding: 44px 36px;
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(79, 70, 229, 0.1) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
     }
 
     .login-card.show {
@@ -257,83 +281,49 @@
       text-decoration: underline;
     }
 
-    /* ===== POPUP ===== */
-    .popup {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(12px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      transition: var(--transition);
-    }
-
-    .popup.show {
-      display: flex;
-    }
-
-    .popup-content {
-      background: white;
-      padding: 36px;
-      border-radius: var(--radius);
+    /* ===== STATUS MESSAGE ===== */
+    .status-message {
       text-align: center;
-      max-width: 360px;
-      width: 90%;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-      transform: scale(0.9);
-      transition: transform 0.4s ease;
+      margin-top: 10px;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 500;
+      display: none;
     }
 
-    .popup.show .popup-content {
-      transform: scale(1);
+    .status-waiting {
+      background: rgba(245, 158, 11, 0.1);
+      color: #d97706;
+      border: 1px solid rgba(245, 158, 11, 0.2);
     }
 
-    .popup-icon {
-      width: 70px; height: 70px;
-      margin: 0 auto 18px;
-      background: #10b981;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .status-ready {
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
-    .popup-icon svg {
-      width: 40px; height: 40px;
-      stroke: white;
-      stroke-width: 3.5;
-      fill: none;
-    }
-
-    .popup h3 {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--gray-900);
-      margin-bottom: 10px;
-    }
-
-    .popup p {
-      color: var(--gray-500);
-      font-size: 15px;
-      margin-bottom: 22px;
-    }
-
-    .popup button {
-      background: var(--primary);
+    /* ===== ENTER ROOM BUTTON ===== */
+    .enter-room-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(to right, #10b981, #059669);
       color: white;
-      padding: 13px 28px;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
+      font-size: 17px;
       font-weight: 600;
       cursor: pointer;
       transition: var(--transition);
+      margin-top: 10px;
+      letter-spacing: 0.3px;
+      display: none;
     }
 
-    .popup button:hover {
-      background: var(--primary-light);
-      transform: translateY(-1px);
+    .enter-room-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(16, 185, 129, 0.35);
     }
 
     /* Alert for messages */
@@ -344,27 +334,175 @@
 
     /* Interview Info */
     .interview-info {
-      background: rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.9);
       border-radius: 12px;
-      padding: 16px;
-      margin-top: 20px;
+      padding: 24px;
+      margin-bottom: 30px;
       border: 1px solid rgba(226, 232, 240, 0.6);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      width: 100%;
     }
 
     .interview-info-icon {
-      width: 20px;
-      height: 20px;
-      margin-right: 8px;
+      width: 24px;
+      height: 24px;
+      margin-right: 12px;
       vertical-align: middle;
-      opacity: 0.7;
+      opacity: 0.8;
     }
 
-    .interview-info-text {
-      font-size: 14px;
-      color: var(--gray-600);
-      font-weight: 500;
+    .interview-details h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .interview-details p {
+      font-size: 16px;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .interview-details strong {
+      color: var(--gray-900);
+    }
+
+    /* Interview Tips */
+    .interview-tips {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid rgba(226, 232, 240, 0.6);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      width: 100%;
+    }
+
+    .interview-tips h4 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .interview-tips ul {
+      list-style: none;
+      padding: 0;
       margin: 0;
+    }
+
+    .interview-tips li {
+      font-size: 14px;
+      color: var(--gray-700);
+      margin-bottom: 12px;
+      padding-left: 20px;
+      position: relative;
+      text-align: center;
+    }
+
+    .interview-tips li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #10b981;
+      font-weight: bold;
+    }
+
+    /* ===== POPUP ===== */
+    .popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .popup-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+    }
+
+    .popup-content {
+      position: relative;
+      background: white;
+      padding: 32px;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      animation: popupSlideIn 0.3s ease-out;
+    }
+
+    @keyframes popupSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .popup-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 20px;
+      background: rgba(245, 158, 11, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .popup-icon svg {
+      width: 32px;
+      height: 32px;
+      color: #d97706;
+    }
+
+    .popup-content h3 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 12px;
+    }
+
+    .popup-content p {
+      font-size: 16px;
+      color: var(--gray-700);
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .popup-content button {
+      padding: 12px 24px;
+      background: linear-gradient(to right, var(--primary), var(--primary-light));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .popup-content button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
     }
   </style>
 </head>
@@ -385,56 +523,86 @@
 
   <!-- Login Card (after 5 sec) -->
   <div class="login-card" id="loginCard">
-    <div class="card-header">
-      <div class="card-logo">
-        <img src="http://127.0.0.1:8000/storage/company_logos/1759835482.png" alt="Bitmax Group Logo" class="logo-img">
-      </div>
-      <div class="title">Welcome Candidate</div>
-      <div class="subtitle">Enter your credentials to begin</div>
-    </div>
-
-    <div id="message" class="alert d-none" role="alert"></div>
-
-    <form id="interviewForm">
-      <div class="input-group">
-        <input type="text" id="interview_code" name="interview_code" required />
-        <label for="interview_code">Interview Code</label>
+    <!-- Left Panel - Login Form -->
+    <div class="left-panel">
+      <div class="card-header">
+        <div class="card-logo">
+          <img src="http://127.0.0.1:8000/storage/company_logos/1759835482.png" alt="Bitmax Group Logo" class="logo-img">
+        </div>
+        <div class="title">Welcome Candidate</div>
+        <div class="subtitle">Enter your credentials to begin</div>
       </div>
 
-      <div class="input-group">
-        <input type="password" id="password" name="password" required />
-        <label for="password">Password</label>
+      <div id="message" class="alert d-none" role="alert"></div>
+
+      <form id="interviewForm">
+        <div class="input-group">
+          <input type="text" id="interview_code" name="interview_code" required />
+          <label for="interview_code">Interview Code</label>
+        </div>
+
+        <div class="input-group">
+          <input type="password" id="password" name="password" required />
+          <label for="password">Password</label>
+        </div>
+
+        <button type="submit" class="btn" id="submitBtn">
+          <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+          Verify Credentials
+        </button>
+      </form>
+
+      <div class="status-message status-waiting" id="statusMessage">
+        <strong>Waiting for Interviewer:</strong> The interviewer needs to start the interview before you can enter the room.
       </div>
 
-      <button type="submit" class="btn" id="submitBtn">
-        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-        Verify Credentials
+      <button class="enter-room-btn" id="enterRoomBtn" onclick="enterRoom()">
+        <i class="fas fa-door-open" style="margin-right: 8px;"></i>
+        Enter Room
       </button>
-    </form>
 
-    <div class="interview-info">
-      <svg class="interview-info-icon" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
-      </svg> {{ $interview->date->format('l, F j, Y') }} at {{ $interview->time->format('g:i A') }}
-      <p class="interview-info-text">
-        
-      </p>
+      <a href="/" class="back">Back to Home</a>
     </div>
 
-    <a href="/" class="back">Back to Home</a>
+    <!-- Right Panel - Interview Info -->
+    <div class="right-panel">
+      <div class="interview-info">
+        <svg class="interview-info-icon" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+        </svg>
+        <div class="interview-details">
+          <h3>Interview Details</h3>
+          <p><strong>Date:</strong> {{ $interview->date->format('l, F j, Y') }}</p>
+          <p><strong>Time:</strong> {{ $interview->time->format('g:i A') }}</p>
+          <p><strong>Candidate:</strong> {{ $interview->candidate_name }}</p>
+        </div>
+      </div>
+
+      <div class="interview-tips">
+        <h4>Interview Tips</h4>
+        <ul>
+          <li>Ensure you have a stable internet connection</li>
+          <li>Test your camera and microphone beforehand</li>
+          <li>Find a quiet, well-lit environment</li>
+          <li>Be ready 5 minutes before the scheduled time</li>
+        </ul>
+      </div>
+    </div>
   </div>
 
-  <!-- Success Popup -->
-  <div class="popup" id="popup">
+  <!-- Waiting Popup -->
+  <div class="popup" id="waitingPopup" style="display: none;">
+    <div class="popup-overlay"></div>
     <div class="popup-content">
       <div class="popup-icon">
-        <svg viewBox="0 0 24 24">
-          <polyline points="20 6 9 17 4 12" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12,6 12,12 16,14"/>
         </svg>
       </div>
-      <h3>Login Successful!</h3>
-      <p>Can the candidate access the room?</p>
-      <button onclick="startInterview()">Yes, Start Interview</button>
+      <h3>Waiting for Interviewer</h3>
+      <p>The interviewer needs to start the interview before you can enter the room.</p>
+      <button onclick="closeWaitingPopup()">OK</button>
     </div>
   </div>
 
@@ -503,8 +671,9 @@
             // Interview already started, redirect immediately
             window.location.href = '/interview/start/{{ $interview->unique_link }}';
           } else {
-            // Show popup asking to start interview
-            document.getElementById('popup').classList.add('show');
+            // Show status message and enter room button
+            document.getElementById('statusMessage').style.display = 'block';
+            document.getElementById('enterRoomBtn').style.display = 'block';
           }
         }
       })
@@ -544,6 +713,38 @@
         console.error('Error:', error);
         alert('An error occurred. Please try again.');
       });
+    }
+
+    // Enter Room
+    function enterRoom() {
+      // Check if interview is started before allowing entry
+      fetch(`{{ route('interview.verify', $interview->unique_link) }}`, {
+        method: 'POST',
+        body: new FormData(document.getElementById('interviewForm')),
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.is_started) {
+          // Interview is started, allow entry
+          window.location.href = '/interview/start/{{ $interview->unique_link }}';
+        } else {
+          // Interview not started yet, show popup
+          document.getElementById('waitingPopup').style.display = 'flex';
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+      });
+    }
+
+    // Close Waiting Popup
+    function closeWaitingPopup() {
+      document.getElementById('waitingPopup').style.display = 'none';
     }
 
     // Go to Schedule (for backward compatibility)

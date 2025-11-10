@@ -76,7 +76,7 @@
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     @if($interview->interview_code && $interview->password)
-                                        <a href="{{ route('interview.link', $interview->unique_link) }}" class="btn btn-success btn-sm" title="Start Interview" target="_blank">
+                                        <a href="{{ route('admin.interviews.room', $interview) }}" class="btn btn-success btn-sm" title="Start Interview" target="_blank">
                                             <i class="fas fa-play"></i>
                                         </a>
                                     @endif

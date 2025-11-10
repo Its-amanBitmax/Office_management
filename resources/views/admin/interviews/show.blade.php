@@ -94,6 +94,14 @@
                                 </td>
                             </tr>
                             <tr>
+                                <th>Interview Room:</th>
+                                <td>
+                                    <a href="{{ route('admin.interviews.room', $interview) }}" target="_blank" class="btn btn-sm btn-success">
+                                        <i class="fas fa-video"></i> Enter Interview Room
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
                                 <th>Results:</th>
                                 <td>
                                     @if($interview->results)

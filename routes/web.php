@@ -222,14 +222,17 @@ Route::prefix('admin')->group(function () {
             'update' => 'admin.interviews.update',
             'destroy' => 'admin.interviews.destroy',
         ]);
+        Route::get('interviews/{interview}/room', [\App\Http\Controllers\InterviewController::class, 'showInterviewRoomAdmin'])->name('admin.interviews.room');
 
     });
 });
 
 // Interview Link Routes (Public - outside admin middleware)
+Route::get('interview/start/{unique_link}', [\App\Http\Controllers\InterviewController::class, 'showInterviewRoom'])->name('interview.room');
 Route::get('interview/{unique_link}', [\App\Http\Controllers\InterviewController::class, 'showInterviewLink'])->name('interview.link');
 Route::post('interview/{unique_link}/verify', [\App\Http\Controllers\InterviewController::class, 'verifyCredentials'])->name('interview.verify');
 Route::post('interview/{unique_link}/start', [\App\Http\Controllers\InterviewController::class, 'startInterview'])->name('interview.start');
+Route::post('interview/log-error', [\App\Http\Controllers\InterviewController::class, 'logError'])->name('interview.log-error');
 
 Route::prefix('employee')->group(function () {
     Route::get('/login', [EmployeeController::class, 'showLoginForm'])->name('employee.login');
