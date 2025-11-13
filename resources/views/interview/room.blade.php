@@ -111,15 +111,15 @@
             <div class="video-container" id="videoContainer">
                 <div class="video-placeholder"><h3>Connecting...</h3></div>
                 <div class="connection-info" id="connectionInfo" style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.7);color:#fff;padding:5px 10px;border-radius:5px;font-size:12px;z-index:20;">Initializing...</div>
+            </div>
 
-                <button class="video-controls-toggle" id="controlsToggle">Controls</button>
+            <button class="video-controls-toggle" id="controlsToggle"><i class="fas fa-cog"></i></button>
 
-                <div class="video-controls" id="videoControls">
-                    <button class="control-btn btn-mic" id="btnMic" title="Toggle Mic">Mic</button>
-                    <button class="control-btn btn-camera" id="btnCamera" title="Toggle Camera">Cam</button>
-                    <button class="control-btn btn-screen" id="btnScreen" title="Share Screen">Screen</button>
-                    <button class="control-btn btn-end" id="btnEnd" title="End Interview">End</button>
-                </div>
+            <div class="video-controls" id="videoControls">
+                <button class="control-btn btn-mic" id="btnMic" title="Toggle Mic"><i class="fas fa-microphone"></i></button>
+                <button class="control-btn btn-camera" id="btnCamera" title="Toggle Camera"><i class="fas fa-video"></i></button>
+                <button class="control-btn btn-screen" id="btnScreen" title="Share Screen"><i class="fas fa-desktop"></i></button>
+                <button class="control-btn btn-end" id="btnEnd" title="End Interview"><i class="fas fa-phone-slash"></i></button>
             </div>
         </div>
 
@@ -237,10 +237,26 @@ async function requestMedia(retryCount = 0) {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({
             video: { width: 1280, height: 720, facingMode: 'user' },
-            audio: { echoCancellation: true, noiseSuppression: true }
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
         });
         isMicOn = isCamOn = true;
-        console.log('%c[MEDIA] GRANTED - Video tracks:', 'color: green', localStream.getVideoTracks().length, 'Audio tracks:', localStream.getAudioTracks().length);
+
+        // Debug audio tracks specifically
+        const audioTracks = localStream.getAudioTracks();
+        const videoTracks = localStream.getVideoTracks();
+        console.log('%c[MEDIA] GRANTED - Video tracks:', 'color: green', videoTracks.length, 'Audio tracks:', audioTracks.length);
+
+        // Log audio track details
+        audioTracks.forEach((track, index) => {
+            console.log(`%c[AUDIO] Track ${index}:`, 'color: blue', {
+                label: track.label,
+                enabled: track.enabled,
+                muted: track.muted,
+                readyState: track.readyState,
+                settings: track.getSettings()
+            });
+        });
+
         document.getElementById('mediaModal').style.display = 'none';
         initWebRTC();
     } catch (e) {
@@ -442,7 +458,7 @@ async function initWebRTC() {
             // Ensure video is visible and playing
             v.style.display = 'block';
             v.volume = 1;
-            v.muted = false;
+            v.muted = false; // Explicitly unmute for audio
 
             // Force play with better error handling
             const playPromise = v.play();
@@ -452,6 +468,20 @@ async function initWebRTC() {
                     // Update UI to show remote video is active
                     const placeholder = document.querySelector('.video-placeholder');
                     if (placeholder) placeholder.style.display = 'none';
+
+                    // Check if audio is working
+                    if (v.srcObject) {
+                        const audioTracks = v.srcObject.getAudioTracks();
+                        const videoTracks = v.srcObject.getVideoTracks();
+                        console.log('%c[AUDIO] Remote stream audio tracks:', 'color: blue', audioTracks.length);
+                        audioTracks.forEach((track, index) => {
+                            console.log(`%c[AUDIO] Remote track ${index}:`, 'color: blue', {
+                                enabled: track.enabled,
+                                muted: track.muted,
+                                readyState: track.readyState
+                            });
+                        });
+                    }
                 }).catch(err => {
                     console.warn('%c[VIDEO] Play failed, trying muted:', 'color: orange', err);
                     v.muted = true;
@@ -477,7 +507,9 @@ async function initWebRTC() {
                 videoTracks: v.srcObject ? v.srcObject.getVideoTracks().length : 0,
                 audioTracks: v.srcObject ? v.srcObject.getAudioTracks().length : 0,
                 readyState: v.readyState,
-                networkState: v.networkState
+                networkState: v.networkState,
+                muted: v.muted,
+                volume: v.volume
             });
         } else {
             console.error('%c[WEBRTC] Remote video element not found!', 'color: red');
@@ -899,7 +931,8 @@ document.getElementById('btnEnd')?.addEventListener('click', () => {
 /* ==================== CONTROL TOGGLE ==================== */
 controlsToggle?.addEventListener('click', () => {
     const isHidden = videoControls.classList.toggle('hidden');
-    controlsToggle.innerHTML = isHidden ? 'Controls' : 'Hide';
+    controlsToggle.innerHTML = isHidden ? '<i class="fas fa-eye"></i> Show Controls' : '<i class="fas fa-eye-slash"></i> Hide Controls';
+    controlsToggle.title = isHidden ? 'Show Controls' : 'Hide Controls';
 });
 
 /* ==================== RESIZER (FIXED) ==================== */

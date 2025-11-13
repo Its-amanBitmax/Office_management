@@ -63,6 +63,7 @@
                         <th rowspan="2" class="align-middle">L</th>
                         <th rowspan="2" class="align-middle">HD</th>
                         <th rowspan="2" class="align-middle">H</th>
+                        <th rowspan="2" class="align-middle">Total Salary</th>
                     </tr>
                     <tr>
                         @for($day = 1; $day <= $daysInMonth; $day++)
@@ -107,6 +108,7 @@
                             <td class="text-center"><span class="badge bg-warning text-dark">{{ $summary['leave'] }}</span></td>
                             <td class="text-center"><span class="badge bg-info text-dark">{{ $summary['half_day'] }}</span></td>
                             <td class="text-center"><span class="badge bg-primary">{{ $summary['holiday'] }}</span></td>
+                            <td class="text-center fw-bold text-success">₹{{ number_format($summary['total_salary'], 2) }}</td>
                         </tr>
                     @endforeach
                 </tbody>

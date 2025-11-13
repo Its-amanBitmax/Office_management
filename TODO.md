@@ -27,6 +27,9 @@
 - [ ] Verify TURN server connectivity and fallback mechanisms (Manual Testing Required)
 - [ ] Test end-to-end video calling with real devices (Manual Testing Required)
 - [ ] Add connection quality indicators
+- [ ] Fix audio not working in video calls (Debugging Added - Check console logs for audio track details)
+- [ ] Fix video controls not showing (Moved controls outside video-container div)
+- [ ] Replace button text with FontAwesome icons (Mic, Camera, Screen, End Call, Controls toggle with icon + text)
 - [x] Fix sendSignal() function for robust signaling (Completed - improved CSRF handling, content-type headers, and response parsing)
 - [x] Fix server-side SDP handling and validation (Completed - merged query params, improved content-type detection, better error responses)
 - [x] Add defensive SDP validation in handleOffer() (Completed - checks for valid SDP format before setRemoteDescription)

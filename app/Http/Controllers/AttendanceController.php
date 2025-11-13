@@ -278,7 +278,7 @@ class AttendanceController extends Controller
             $employeeSummaries = [];
             foreach ($employees as $employee) {
                 $employeeAttendances = $attendances->where('employee_id', $employee->id);
-                $employeeSummaries[$employee->id] = [
+                $summary = [
                     'employee' => $employee,
                     'total_days' => $employeeAttendances->count(),
                     'present' => $employeeAttendances->where('status', 'Present')->count(),
@@ -287,6 +287,20 @@ class AttendanceController extends Controller
                     'half_day' => $employeeAttendances->where('status', 'Half Day')->count(),
                     'holiday' => $employeeAttendances->where('status', 'Holiday')->count(),
                 ];
+
+                // Calculate salary for the month
+                $attendanceData = [
+                    'total_days' => $summary['total_days'],
+                    'present' => $summary['present'],
+                    'absent' => $summary['absent'],
+                    'leave' => $summary['leave'],
+                    'half_day' => $summary['half_day'],
+                    'holiday' => $summary['holiday'],
+                ];
+                $salaryData = $this->calculateSalary($employee, $attendanceData, [], $month);
+                $summary['total_salary'] = $salaryData['net_salary'];
+
+                $employeeSummaries[$employee->id] = $summary;
             }
 
             // Group attendances by employee_id and date string for correct lookup in view
@@ -401,5 +415,54 @@ class AttendanceController extends Controller
         }
 
         return Excel::download(new MonthlyAttendanceExport($request->employee_id, $month, $year), $fileName);
+    }
+
+    /**
+     * Calculate salary based on attendance and deductions
+     */
+    private function calculateSalary(Employee $employee, array $attendanceData, array $deductions = [], string $month = null): array
+    {
+        $basicSalary = $employee->basic_salary ?? 0;
+        $hra = $employee->hra ?? 0;
+        $conveyance = $employee->conveyance ?? 0;
+        $medical = $employee->medical ?? 0;
+
+        // Calculate total days in the specific month
+        if ($month) {
+            $date = Carbon::createFromFormat('Y-m', $month);
+            $totalDaysInMonth = $date->daysInMonth;
+        } else {
+            $totalDaysInMonth = Carbon::now()->daysInMonth; // Fallback
+        }
+
+        // Calculate daily rates
+        $basicDaily = $basicSalary / $totalDaysInMonth;
+        $hraDaily = $hra / $totalDaysInMonth;
+        $conveyanceDaily = $conveyance / $totalDaysInMonth;
+        $medicalDaily = $medical / $totalDaysInMonth;
+
+        // Attendance breakdown
+        $presentDays = $attendanceData['present'] ?? 0;
+        $halfDays = $attendanceData['half_day'] ?? 0;
+        $holidayDays = $attendanceData['holiday'] ?? 0; // new
+
+        // Calculate effective days (Holiday counted as full day)
+        $effectiveDays = $presentDays + $holidayDays + ($halfDays * 0.5);
+
+        $grossSalary = ($basicDaily * $effectiveDays) +
+                      ($hraDaily * $effectiveDays) +
+                      ($conveyanceDaily * $effectiveDays) +
+                      ($medicalDaily * $effectiveDays);
+
+        // Calculate deductions
+        $totalDeductions = collect($deductions)->sum('amount');
+
+        $netSalary = $grossSalary - $totalDeductions;
+
+        return [
+            'gross_salary' => round($grossSalary, 2),
+            'net_salary' => round(max(0, $netSalary), 2),
+            'total_deductions' => $totalDeductions,
+        ];
     }
 }
