@@ -234,6 +234,11 @@ Route::post('interview/{unique_link}/verify', [\App\Http\Controllers\InterviewCo
 Route::post('interview/{unique_link}/start', [\App\Http\Controllers\InterviewController::class, 'startInterview'])->name('interview.start');
 Route::post('interview/log-error', [\App\Http\Controllers\InterviewController::class, 'logError'])->name('interview.log-error');
 
+// WebRTC Signaling Routes (API routes without web middleware)
+Route::post('interview/{unique_link}/signaling/send', [\App\Http\Controllers\InterviewController::class, 'sendSignalingMessage'])->name('interview.signaling.send')->withoutMiddleware(['web', 'csrf']);
+Route::get('interview/{unique_link}/signaling/messages', [\App\Http\Controllers\InterviewController::class, 'getSignalingMessages'])->name('interview.signaling.messages')->withoutMiddleware(['web', 'csrf']);
+Route::delete('interview/{unique_link}/signaling/clear', [\App\Http\Controllers\InterviewController::class, 'clearSignalingMessages'])->name('interview.signaling.clear')->withoutMiddleware(['web', 'csrf']);
+
 Route::prefix('employee')->group(function () {
     Route::get('/login', [EmployeeController::class, 'showLoginForm'])->name('employee.login');
     Route::post('/login', [EmployeeController::class, 'login']);

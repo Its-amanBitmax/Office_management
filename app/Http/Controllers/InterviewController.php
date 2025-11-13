@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Interview;
+use App\Models\SignalingMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Crypt;
@@ -174,31 +175,36 @@ class InterviewController extends Controller
      */
     public function verifyCredentials(Request $request, $unique_link)
     {
-        $interview = Interview::where('unique_link', $unique_link)->first();
+        try {
+            $interview = Interview::where('unique_link', $unique_link)->first();
 
-        if (!$interview) {
-            return response()->json(['success' => false, 'message' => 'Interview not found.'], 404);
-        }
+            if (!$interview) {
+                return response()->json(['success' => false, 'message' => 'Interview not found.'], 404, [], JSON_UNESCAPED_SLASHES);
+            }
 
-        $request->validate([
-            'interview_code' => 'required|string',
-            'password' => 'required|string',
-        ]);
-
-        // Check if credentials match
-        $decryptedPassword = $interview->decrypted_password;
-        if ($request->interview_code === $interview->interview_code && $request->password === $decryptedPassword) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Credentials verified successfully! Interview access granted.',
-                'is_started' => $interview->is_started
+            $request->validate([
+                'interview_code' => 'required|string', // Remove "in:" for flexibility
+                'password' => 'required|string',
             ]);
-        }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Invalid interview code or password.'
-        ], 401);
+            // Check if credentials match
+            $decryptedPassword = $interview->decrypted_password;
+            if ($request->interview_code === $interview->interview_code && $request->password === $decryptedPassword) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Credentials verified successfully! Interview access granted.',
+                    'is_started' => $interview->is_started
+                ], 200, [], JSON_UNESCAPED_SLASHES);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid interview code or password.'
+            ], 401, [], JSON_UNESCAPED_SLASHES);
+        } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(['error' => true], 500, [], JSON_UNESCAPED_SLASHES);
+        }
     }
 
     /**
@@ -206,18 +212,23 @@ class InterviewController extends Controller
      */
     public function startInterview($unique_link)
     {
-        $interview = Interview::where('unique_link', $unique_link)->first();
+        try {
+            $interview = Interview::where('unique_link', $unique_link)->first();
 
-        if (!$interview) {
-            return response()->json(['success' => false, 'message' => 'Interview not found.'], 404);
+            if (!$interview) {
+                return response()->json(['success' => false, 'message' => 'Interview not found.'], 404, [], JSON_UNESCAPED_SLASHES);
+            }
+
+            $interview->update(['is_started' => true]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Interview started successfully.'
+            ], 200, [], JSON_UNESCAPED_SLASHES);
+        } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(['error' => true], 500, [], JSON_UNESCAPED_SLASHES);
         }
-
-        $interview->update(['is_started' => true]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Interview started successfully.'
-        ]);
     }
 
     /**
@@ -235,7 +246,7 @@ class InterviewController extends Controller
             return redirect()->route('interview.link', $unique_link)->with('error', 'Interview has not started yet.');
         }
 
-        \Log::error('Loading interview room for candidate: Interview ID ' . $interview->id . ', Unique Link: ' . $interview->unique_link);
+        \Log::info('Loading interview room for candidate: Interview ID ' . $interview->id . ', Unique Link: ' . $interview->unique_link);
 
         return view('interview.room', compact('interview') + ['is_interviewer' => false, 'is_candidate' => true]);
     }
@@ -245,6 +256,8 @@ class InterviewController extends Controller
      */
     public function showInterviewRoomAdmin(Interview $interview)
     {
+        \Log::info('Loading interview room for interviewer: Interview ID ' . $interview->id);
+
         return view('interview.room', compact('interview') + ['is_interviewer' => true, 'is_candidate' => false]);
     }
 
@@ -253,23 +266,180 @@ class InterviewController extends Controller
      */
     public function logError(Request $request)
     {
-        $request->validate([
-            'message' => 'required|string',
-            'filename' => 'nullable|string',
-            'lineno' => 'nullable|integer',
-            'colno' => 'nullable|integer',
-            'error' => 'nullable|string',
-        ]);
+        try {
+            $request->validate([
+                'message' => 'required|string', // Remove "in:" for flexibility
+                'filename' => 'nullable|string',
+                'lineno' => 'nullable|integer',
+                'colno' => 'nullable|integer',
+                'error' => 'nullable|string',
+            ]);
 
-        \Log::error('JavaScript Error: ' . $request->message, [
-            'filename' => $request->filename,
-            'lineno' => $request->lineno,
-            'colno' => $request->colno,
-            'error' => $request->error,
-            'user_agent' => $request->userAgent(),
-            'url' => $request->fullUrl(),
-        ]);
+            \Log::error('JavaScript Error: ' . $request->message, [
+                'filename' => $request->filename,
+                'lineno' => $request->lineno,
+                'colno' => $request->colno,
+                'error' => $request->error,
+                'user_agent' => $request->userAgent(),
+                'url' => $request->fullUrl(),
+            ]);
 
-        return response()->json(['success' => true]);
+            return response()->json(['success' => true], 200, [], JSON_UNESCAPED_SLASHES);
+        } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(['error' => true], 500, [], JSON_UNESCAPED_SLASHES);
+        }
+    }
+
+    /**
+     * Send WebRTC signaling message (including questions).
+     */
+    public function sendSignalingMessage(Request $request, $unique_link)
+    {
+        try {
+            $interview = Interview::where('unique_link', $unique_link)->first();
+
+            if (!$interview) {
+                return response()->json(['success' => false, 'message' => 'Interview not found.'], 404, [], JSON_UNESCAPED_SLASHES);
+            }
+
+            $type = $request->query('type', $request->input('type'));
+            $sender = $request->query('sender_type', $request->input('sender_type'));
+
+            // Very important: raw body for SDP
+            $contentType = $request->header('Content-Type');
+            $sdp = null;
+
+            if (str_contains($contentType, 'text/plain') || str_contains($contentType, 'application/sdp')) {
+                $sdp = $request->getContent(); // RAW SDP!
+            } else {
+                $sdp = $request->input('sdp');
+            }
+
+            $msg = SignalingMessage::create([
+                'interview_id' => $interview->id,
+                'sender_type'  => $sender,
+                'type'         => $type,
+                'sdp'          => $sdp,
+                'ice_candidate'=> $request->input('ice_candidate'),
+                'text'         => $request->input('text'),
+                'question_id'  => $request->input('question_id'),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message_id' => $msg->id
+            ], 200, [], JSON_UNESCAPED_SLASHES);
+        } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(['error' => true, 'message' => $e->getMessage()], 500, [], JSON_UNESCAPED_SLASHES);
+        }
+    }
+
+    /**
+     * Get pending WebRTC signaling messages.
+     */
+    public function getSignalingMessages(Request $request, $unique_link)
+    {
+        try {
+            $interview = Interview::where('unique_link', $unique_link)->first();
+
+            if (!$interview) {
+                return response()->json(['success' => false, 'message' => 'Interview not found.'], 404, [], JSON_UNESCAPED_SLASHES);
+            }
+
+            $request->validate([
+                'receiver_type' => 'required|string', // Remove "in:" for flexibility
+                'last_message_id' => 'nullable|integer',
+                'check_online' => 'nullable|boolean',
+            ]);
+
+            $receiverType = $request->receiver_type;
+
+            // Check if peer is online (has sent messages recently)
+            $peerOnline = false;
+            if ($request->check_online) {
+                $oppositeType = $receiverType === 'interviewer' ? 'candidate' : 'interviewer';
+                $recentMessages = SignalingMessage::where('interview_id', $interview->id)
+                    ->where('sender_type', $oppositeType)
+                    ->where('created_at', '>=', now()->subSeconds(30)) // Active in last 30 seconds
+                    ->exists();
+                $peerOnline = $recentMessages;
+            }
+
+            $query = SignalingMessage::where('interview_id', $interview->id)
+                ->where('delivered', false)
+                ->where(function ($q) use ($receiverType) {
+                    // Target must match receiver, or null (broadcast)
+                    $q->where('target_type', $receiverType)
+                      ->orWhereNull('target_type');
+                });
+
+            if ($request->last_message_id) {
+                $query->where('id', '>', $request->last_message_id);
+            }
+
+            $messages = $query->orderBy('created_at', 'asc')->get();
+
+            // Mark messages as delivered
+            foreach ($messages as $message) {
+                $message->markAsDelivered();
+            }
+
+            return response()->json([
+                'success' => true,
+                'peer_online' => $peerOnline,
+                'messages' => $messages->map(function ($message) {
+                    $response = [
+                        'id' => $message->id,
+                        'type' => $message->type,
+                        'sender_type' => $message->sender_type,
+                        'created_at' => $message->created_at->toISOString(),
+                    ];
+
+                    if ($message->type === 'offer' || $message->type === 'answer') {
+                        \Log::info('Sending SDP length=' . strlen($message->sdp));
+                        $response['sdp'] = $message->sdp;
+                    } elseif ($message->type === 'ice-candidate') {
+                        $response['ice_candidate'] = $message->ice_candidate;
+                    } elseif ($message->type === 'question') {
+                        $response['text'] = $message->text;
+                        $response['question_id'] = $message->question_id;
+                    }
+
+                    return $response;
+                }),
+            ], 200, [], JSON_UNESCAPED_SLASHES);
+        } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(['error' => true], 500, [], JSON_UNESCAPED_SLASHES);
+        }
+    }
+
+        /**
+     * Clear old signaling messages for an interview.
+     */
+    public function clearSignalingMessages($unique_link)
+    {
+        try {
+            $interview = Interview::where('unique_link', $unique_link)->first();
+
+            if (!$interview) {
+                return response()->json(['success' => false, 'message' => 'Interview not found.'], 404, [], JSON_UNESCAPED_SLASHES);
+            }
+
+            // Delete messages older than 1 hour
+            SignalingMessage::where('interview_id', $interview->id)
+                ->where('created_at', '<', now()->subHour())
+                ->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Signaling messages cleared successfully.'
+            ], 200, [], JSON_UNESCAPED_SLASHES);
+        } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(['error' => true], 500, [], JSON_UNESCAPED_SLASHES);
+        }
     }
 }

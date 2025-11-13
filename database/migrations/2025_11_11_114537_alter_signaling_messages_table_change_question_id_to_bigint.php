@@ -11,7 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::rename('payroll', 'payrolls');
+        Schema::table('signaling_messages', function (Blueprint $table) {
+            $table->bigInteger('question_id')->nullable()->change();
+        });
     }
 
     /**
@@ -19,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::rename('payrolls', 'payroll');
+        Schema::table('signaling_messages', function (Blueprint $table) {
+            $table->integer('question_id')->nullable()->change();
+        });
     }
 };
