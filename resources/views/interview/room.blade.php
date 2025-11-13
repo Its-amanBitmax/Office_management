@@ -33,6 +33,7 @@
         .sidebar::-webkit-scrollbar{display:none;}
         .video-container{flex:1;background:var(--gray-900);border-radius:8px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
         #remoteVideo{width:100%;height:100%;object-fit:cover;border-radius:8px;display:none;}
+        #remoteAudio{display:none;}
         .local-video-overlay{position:absolute;bottom:20px;left:20px;width:200px;height:150px;border-radius:8px;border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:10;cursor:pointer;}
         .local-video-overlay video{width:100%;height:100%;object-fit:cover;border-radius:5px;}
         .video-controls-toggle{position:absolute;top:20px;right:20px;width:40px;height:40px;border-radius:50%;background:var(--primary);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;z-index:15;}
@@ -111,6 +112,7 @@
             <div class="video-container" id="videoContainer">
                 <div class="video-placeholder"><h3>Connecting...</h3></div>
                 <div class="connection-info" id="connectionInfo" style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.7);color:#fff;padding:5px 10px;border-radius:5px;font-size:12px;z-index:20;">Initializing...</div>
+                <button id="enableAudioBtn" style="position:absolute;bottom:10px;left:10px;background:#10b981;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;z-index:25;display:none;">Enable Audio</button>
             </div>
 
             <button class="video-controls-toggle" id="controlsToggle"><i class="fas fa-cog"></i></button>
@@ -379,6 +381,13 @@ function setupVideoElements() {
     remote.style.objectFit = 'cover';
     remote.style.display = 'none'; // Initially hidden until we get a stream
 
+    // Create remote audio element
+    const remoteAudio = document.createElement('audio');
+    remoteAudio.id = 'remoteAudio';
+    remoteAudio.autoplay = true;
+    remoteAudio.volume = 1;
+    remoteAudio.muted = false;
+
     // Create local video overlay
     const overlay = document.createElement('div');
     overlay.className = 'local-video-overlay';
@@ -396,6 +405,7 @@ function setupVideoElements() {
 
     overlay.appendChild(local);
     videoContainer.appendChild(remote);
+    videoContainer.appendChild(remoteAudio);
     videoContainer.appendChild(overlay);
 
     // Set local stream if available
@@ -441,17 +451,23 @@ async function initWebRTC() {
         console.log('%c[WEBRTC] Event streams:', e.streams.length, 'Stream 0 tracks:', e.streams[0]?.getTracks().length || 0);
 
         const v = document.getElementById('remoteVideo');
-        if (v) {
+        const a = document.getElementById('remoteAudio');
+        if (v && a) {
             // Always use the stream from the event if available
             if (e.streams[0]) {
                 v.srcObject = e.streams[0];
+                a.srcObject = e.streams[0];
                 console.log('%c[WEBRTC] REMOTE STREAM ASSIGNED FROM EVENT', 'color: green; font-weight: bold');
             } else {
                 // Fallback: create new stream and add track
                 if (!v.srcObject) {
                     v.srcObject = new MediaStream();
                 }
+                if (!a.srcObject) {
+                    a.srcObject = new MediaStream();
+                }
                 v.srcObject.addTrack(e.track);
+                a.srcObject.addTrack(e.track);
                 console.log('%c[WEBRTC] INDIVIDUAL TRACK ADDED TO STREAM', 'color: cyan', e.track.kind);
             }
 
@@ -459,6 +475,8 @@ async function initWebRTC() {
             v.style.display = 'block';
             v.volume = 1;
             v.muted = false; // Explicitly unmute for audio
+            a.volume = 1;
+            a.muted = false;
 
             // Force play with better error handling
             const playPromise = v.play();
@@ -487,6 +505,8 @@ async function initWebRTC() {
                     v.muted = true;
                     v.play().then(() => {
                         console.log('%c[VIDEO] Remote video playing muted', 'color: yellow');
+                        // Show enable audio button since video is muted
+                        document.getElementById('enableAudioBtn').style.display = 'block';
                     }).catch(err2 => {
                         console.error('%c[VIDEO] Play failed even muted:', 'color: red', err2);
                         // Try one more time with user interaction
@@ -512,7 +532,7 @@ async function initWebRTC() {
                 volume: v.volume
             });
         } else {
-            console.error('%c[WEBRTC] Remote video element not found!', 'color: red');
+            console.error('%c[WEBRTC] Remote video or audio element not found!', 'color: red');
         }
     };
 
@@ -1044,6 +1064,31 @@ function startRecording() {
 }
 document.getElementById('btnStartRecord')?.addEventListener('click', startRecording);
 document.getElementById('btnStopRecord')?.addEventListener('click', () => recorder?.stop());
+
+// Enable Audio Button Handler
+document.getElementById('enableAudioBtn')?.addEventListener('click', () => {
+    const remoteVideo = document.getElementById('remoteVideo');
+    const remoteAudio = document.getElementById('remoteAudio');
+    if (remoteVideo) {
+        remoteVideo.muted = false;
+        remoteVideo.volume = 1.0;
+        remoteVideo.play();
+    }
+    if (remoteAudio) {
+        remoteAudio.muted = false;
+        remoteAudio.volume = 1.0;
+    }
+    document.getElementById('enableAudioBtn').style.display = 'none';
+    console.log('%c[AUDIO] Audio enabled via button click', 'color: green');
+});
+
+// Ensure local audio track is enabled
+if (localStream) {
+    localStream.getAudioTracks().forEach(track => {
+        track.enabled = true;
+        console.log('%c[AUDIO] Local audio track enabled:', 'color: blue', track.enabled);
+    });
+}
 
 console.log('%c[DEBUG] FULLY LOADED – 10:23 PM IST, 10 Nov 2025', 'color: red; font-weight: bold; font-size: 18px');
 </script>
