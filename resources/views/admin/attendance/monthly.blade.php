@@ -63,6 +63,8 @@
                         <th rowspan="2" class="align-middle">L</th>
                         <th rowspan="2" class="align-middle">HD</th>
                         <th rowspan="2" class="align-middle">H</th>
+                        <th rowspan="2" class="align-middle">NCNS</th>
+                        <th rowspan="2" class="align-middle">LWP</th>
                         <th rowspan="2" class="align-middle">Total Salary</th>
                     </tr>
                     <tr>
@@ -96,6 +98,10 @@
                                             <span class="badge bg-info text-dark">HD</span>
                                         @elseif($attendance->status == 'Holiday')
                                             <span class="badge bg-primary">H</span>
+                                        @elseif($attendance->status == 'NCNS')
+                                            <span class="badge bg-danger">NCNS</span>
+                                        @elseif($attendance->status == 'LWP')
+                                            <span class="badge bg-warning text-dark">LWP</span>
                                         @endif
                                     @else
                                         <span class="badge bg-secondary">NM</span>
@@ -108,6 +114,8 @@
                             <td class="text-center"><span class="badge bg-warning text-dark">{{ $summary['leave'] }}</span></td>
                             <td class="text-center"><span class="badge bg-info text-dark">{{ $summary['half_day'] }}</span></td>
                             <td class="text-center"><span class="badge bg-primary">{{ $summary['holiday'] }}</span></td>
+                            <td class="text-center"><span class="badge bg-danger">{{ $summary['ncns'] }}</span></td>
+                            <td class="text-center"><span class="badge bg-warning text-dark">{{ $summary['lwp'] }}</span></td>
                             <td class="text-center fw-bold text-success">₹{{ number_format($summary['total_salary'], 2) }}</td>
                         </tr>
                     @endforeach
@@ -143,6 +151,10 @@
                                 <span class="badge bg-info text-dark">HD</span>
                             @elseif($dayData['status'] == 'Holiday')
                                 <span class="badge bg-primary">H</span>
+                            @elseif($dayData['status'] == 'NCNS')
+                                <span class="badge bg-danger">NCNS</span>
+                            @elseif($dayData['status'] == 'LWP')
+                                <span class="badge bg-warning text-dark">LWP</span>
                             @else
                                 <span class="badge bg-secondary">NM</span>
                             @endif
@@ -160,7 +172,9 @@
                         A: {{ $summary['absent'] }} |
                         L: {{ $summary['leave'] }} |
                         HD: {{ $summary['half_day'] }} |
-                        H: {{ $summary['holiday'] }}
+                        H: {{ $summary['holiday'] }} |
+                        NCNS: {{ $summary['ncns'] }} |
+                        LWP: {{ $summary['lwp'] }}
                     </th>
                     <th colspan="2"></th>
                 </tr>

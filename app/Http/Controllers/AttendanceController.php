@@ -37,6 +37,8 @@ class AttendanceController extends Controller
             'leave' => Attendance::where('date', $date)->where('status', 'Leave')->count(),
             'half_day' => Attendance::where('date', $date)->where('status', 'Half Day')->count(),
             'holiday' => Attendance::where('date', $date)->where('status', 'Holiday')->count(),
+            'ncns' => Attendance::where('date', $date)->where('status', 'NCNS')->count(),
+            'lwp' => Attendance::where('date', $date)->where('status', 'LWP')->count(),
         ];
 
         return view('admin.attendance.index', compact('employees', 'selectedDate', 'stats', 'date'));
@@ -57,12 +59,12 @@ class AttendanceController extends Controller
     public function store(Request $request)
     {
         try {
-            $request->validate([
-                'employee_id' => 'required|exists:employees,id',
-                'date' => 'required|date',
-                'status' => 'required|in:Present,Absent,Leave,Half Day,Holiday',
-                'remarks' => 'nullable|string|max:255',
-            ]);
+        $request->validate([
+            'employee_id' => 'required|exists:employees,id',
+            'date' => 'required|date',
+            'status' => 'required|in:Present,Absent,Leave,Half Day,Holiday,NCNS,LWP',
+            'remarks' => 'nullable|string|max:255',
+        ]);
 
             // Check if attendance already exists for this employee on this date
             $existingAttendance = Attendance::where('employee_id', $request->employee_id)
@@ -150,7 +152,7 @@ class AttendanceController extends Controller
         $request->validate([
             'employee_id' => 'required|exists:employees,id',
             'date' => 'required|date',
-            'status' => 'required|in:Present,Absent,Leave,Half Day,Holiday',
+            'status' => 'required|in:Present,Absent,Leave,Half Day,Holiday,NCNS,LWP',
             'remarks' => 'nullable|string|max:255',
             'marked_time' => 'required|date_format:H:i',
         ]);
@@ -197,7 +199,7 @@ class AttendanceController extends Controller
             'attendance' => 'required|array',
             'attendance.*.id' => 'nullable|exists:attendances,id',
             'attendance.*.employee_id' => 'required|exists:employees,id',
-            'attendance.*.status' => 'required|in:Present,Absent,Leave,Half Day,Holiday',
+            'attendance.*.status' => 'required|in:Present,Absent,Leave,Half Day,Holiday,NCNS,LWP',
             'attendance.*.remarks' => 'nullable|string|max:255',
             'date' => 'required|date',
         ]);
@@ -274,10 +276,41 @@ class AttendanceController extends Controller
                 ->orderBy('date')
                 ->get();
 
-            // Get all active employees and create summaries (even for those with no attendance)
+            // Get the selected month start and end dates
+            $selectedMonthStart = Carbon::create($year, $monthNum, 1, 0, 0, 0, 'Asia/Kolkata');
+            $selectedMonthEnd = $selectedMonthStart->copy()->endOfMonth();
+
+            // Get all employees and create summaries (even for those with no attendance)
             $employeeSummaries = [];
             foreach ($employees as $employee) {
+                // Determine inactive date - use updated_at if employee is currently inactive
+                $inactiveDate = null;
+                if ($employee->status === 'inactive') {
+                    $inactiveDate = Carbon::parse($employee->updated_at);
+                }
+
+                // Determine if employee should be included based on inactive date
+                $shouldInclude = true;
+                if ($inactiveDate) {
+                    // If inactive date is before or on the selected month start, don't include
+                    if ($inactiveDate->lte($selectedMonthStart)) {
+                        $shouldInclude = false;
+                    }
+                }
+
+                if (!$shouldInclude) {
+                    continue;
+                }
+
                 $employeeAttendances = $attendances->where('employee_id', $employee->id);
+
+                // Filter attendances up to inactive date if exists
+                if ($inactiveDate) {
+                    $employeeAttendances = $employeeAttendances->filter(function ($att) use ($inactiveDate) {
+                        return Carbon::parse($att->date)->lte($inactiveDate);
+                    });
+                }
+
                 $summary = [
                     'employee' => $employee,
                     'total_days' => $employeeAttendances->count(),
@@ -286,6 +319,9 @@ class AttendanceController extends Controller
                     'leave' => $employeeAttendances->where('status', 'Leave')->count(),
                     'half_day' => $employeeAttendances->where('status', 'Half Day')->count(),
                     'holiday' => $employeeAttendances->where('status', 'Holiday')->count(),
+                    'ncns' => $employeeAttendances->where('status', 'NCNS')->count(),
+                    'lwp' => $employeeAttendances->where('status', 'LWP')->count(),
+                    'inactive_date' => $inactiveDate,
                 ];
 
                 // Calculate salary for the month
@@ -296,6 +332,8 @@ class AttendanceController extends Controller
                     'leave' => $summary['leave'],
                     'half_day' => $summary['half_day'],
                     'holiday' => $summary['holiday'],
+                    'ncns' => $summary['ncns'],
+                    'lwp' => $summary['lwp'],
                 ];
                 $salaryData = $this->calculateSalary($employee, $attendanceData, [], $month);
                 $summary['total_salary'] = $salaryData['net_salary'];
@@ -444,10 +482,12 @@ class AttendanceController extends Controller
         // Attendance breakdown
         $presentDays = $attendanceData['present'] ?? 0;
         $halfDays = $attendanceData['half_day'] ?? 0;
-        $holidayDays = $attendanceData['holiday'] ?? 0; // new
+        $holidayDays = $attendanceData['holiday'] ?? 0;
+        $ncnsDays = $attendanceData['ncns'] ?? 0; // NCNS: 1 day salary deduction per occurrence
+        $lwpDays = $attendanceData['lwp'] ?? 0; // LWP: Leave Without Pay
 
-        // Calculate effective days (Holiday counted as full day)
-        $effectiveDays = $presentDays + $holidayDays + ($halfDays * 0.5);
+        // Calculate effective days (Holiday counted as full day, NCNS deducts 1 day, LWP deducts 1 day)
+        $effectiveDays = $presentDays + $holidayDays + ($halfDays * 0.5) - $ncnsDays - $lwpDays;
 
         $grossSalary = ($basicDaily * $effectiveDays) +
                       ($hraDaily * $effectiveDays) +

@@ -56,6 +56,8 @@
                                 <option value="Leave" {{ $attendance->status == 'Leave' ? 'selected' : '' }}>Leave</option>
                                 <option value="Half Day" {{ $attendance->status == 'Half Day' ? 'selected' : '' }}>Half Day</option>
                                 <option value="Holiday" {{ $attendance->status == 'Holiday' ? 'selected' : '' }}>Holiday</option>
+                                <option value="NCNS" {{ $attendance->status == 'NCNS' ? 'selected' : '' }}>NCNS</option>
+                                <option value="LWP" {{ $attendance->status == 'LWP' ? 'selected' : '' }}>LWP</option>
                             </select>
                         </div>
                         <div class="col-md-6">

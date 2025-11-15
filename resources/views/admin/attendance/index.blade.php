@@ -51,6 +51,8 @@
                         @elseif($currentStatus == 'Leave') bg-warning
                         @elseif($currentStatus == 'Half Day') bg-info
                         @elseif($currentStatus == 'Holiday') bg-primary
+                        @elseif($currentStatus == 'NCNS') bg-danger
+                        @elseif($currentStatus == 'LWP') bg-warning
                         @else bg-secondary
                         @endif">
                         {{ $currentStatus }}
@@ -66,6 +68,8 @@
                         <button type="button" class="btn {{ $attendance ? 'btn-secondary' : 'btn-warning' }}" {{ $attendance ? 'disabled' : '' }} onclick="{{ $attendance ? '' : 'markAttendance(' . $employee->id . ', \'Leave\', \'' . ($date ?? \Carbon\Carbon::today()->format('Y-m-d')) . '\')' }}" title="Leave">{{ $attendance ? 'Marked' : 'L' }}</button>
                         <button type="button" class="btn {{ $attendance ? 'btn-secondary' : 'btn-info' }}" {{ $attendance ? 'disabled' : '' }} onclick="{{ $attendance ? '' : 'markAttendance(' . $employee->id . ', \'Half Day\', \'' . ($date ?? \Carbon\Carbon::today()->format('Y-m-d')) . '\')' }}" title="Half Day">{{ $attendance ? 'Marked' : 'HD' }}</button>
                         <button type="button" class="btn {{ $attendance ? 'btn-secondary' : 'btn-primary' }}" {{ $attendance ? 'disabled' : '' }} onclick="{{ $attendance ? '' : 'markAttendance(' . $employee->id . ', \'Holiday\', \'' . ($date ?? \Carbon\Carbon::today()->format('Y-m-d')) . '\')' }}" title="Holiday">{{ $attendance ? 'Marked' : 'H' }}</button>
+                        <button type="button" class="btn {{ $attendance ? 'btn-secondary' : 'btn-danger' }}" {{ $attendance ? 'disabled' : '' }} onclick="{{ $attendance ? '' : 'markAttendance(' . $employee->id . ', \'NCNS\', \'' . ($date ?? \Carbon\Carbon::today()->format('Y-m-d')) . '\')' }}" title="NCNS">{{ $attendance ? 'Marked' : 'NCNS' }}</button>
+                        <button type="button" class="btn {{ $attendance ? 'btn-secondary' : 'btn-warning' }}" {{ $attendance ? 'disabled' : '' }} onclick="{{ $attendance ? '' : 'markAttendance(' . $employee->id . ', \'LWP\', \'' . ($date ?? \Carbon\Carbon::today()->format('Y-m-d')) . '\')' }}" title="LWP">{{ $attendance ? 'Marked' : 'LWP' }}</button>
                     </div>
                 </td>
                 {{-- <td>
@@ -226,6 +230,8 @@ function getStatusClass(status) {
         case 'Leave': return 'bg-warning';
         case 'Half Day': return 'bg-info';
         case 'Holiday': return 'bg-primary';
+        case 'NCNS': return 'bg-danger';
+        case 'LWP': return 'bg-warning';
         default: return 'bg-secondary';
     }
 }

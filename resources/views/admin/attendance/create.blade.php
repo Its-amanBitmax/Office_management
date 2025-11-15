@@ -56,6 +56,8 @@
                                 <option value="Leave">Leave</option>
                                 <option value="Half Day">Half Day</option>
                                 <option value="Holiday">Holiday</option>
+                                <option value="NCNS">NCNS</option>
+                                <option value="LWP">LWP</option>
                             </select>
                         </div>
                         <div class="col-md-6">

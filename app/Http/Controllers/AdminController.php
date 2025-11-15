@@ -191,6 +191,7 @@ class AdminController extends Controller
             'stock' => 'Stock Management',
             'performance' => 'Performance',
             'evaluation-report' => 'Evaluation Report',
+            'interviews' => 'Interviews',
             'expenses' => 'Expenses',
             'settings' => 'Settings',
             'logs' => 'Logs',
@@ -244,6 +245,7 @@ class AdminController extends Controller
             'stock' => 'Stock Management',
             'performance' => 'Performance',
             'evaluation-report' => 'Evaluation Report',
+            'interviews' => 'Interviews',
             'expenses' => 'Expenses',
             'settings' => 'Settings',
             'logs' => 'Logs',
@@ -309,6 +311,7 @@ class AdminController extends Controller
             'stock' => 'Stock Management',
             'performance' => 'Performance',
             'evaluation-report' => 'Evaluation Report',
+            'interviews' => 'Interviews',
             'settings' => 'Settings',
             'logs' => 'Logs',
         ];
