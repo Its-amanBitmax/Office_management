@@ -24,6 +24,8 @@ class SalarySlip extends Model
         'leave_days',
         'half_day_count',
         'holiday_days',
+        'ncns_days',
+        'lwp_days',
         'gross_salary',
         'deductions',
         'net_salary',
@@ -42,6 +44,8 @@ class SalarySlip extends Model
         'generated_at' => 'datetime',
         'year' => 'integer',
         'holiday_days' => 'integer',
+        'ncns_days' => 'integer',
+        'lwp_days' => 'integer',
     ];
 
     /**
@@ -124,4 +128,10 @@ class SalarySlip extends Model
     {
         return 'BT/HR/' . $this->year . '/' . str_pad($this->id, 4, '0', STR_PAD_LEFT);
     }
+    public function getNetSalaryAttribute()
+{
+    $deductions = collect($this->deductions ?? [])->sum('amount');
+    return $this->gross_salary - $deductions;
+}
+
 }

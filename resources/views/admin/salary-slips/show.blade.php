@@ -112,6 +112,14 @@
                                 <td>Holidays</td>
                                 <td class="text-end">{{ $salarySlip->holiday_days ?? 0 }}</td>
                             </tr>
+                            <tr class="text-danger">
+                                <td>NCNS</td>
+                                <td class="text-end">{{ $salarySlip->ncns_days ?? 0 }}</td>
+                            </tr>
+                            <tr class="text-danger">
+                                <td>LWP</td>
+                                <td class="text-end">{{ $salarySlip->lwp_days ?? 0 }}</td>
+                            </tr>
                         </table>
                     </div>
                 </div>

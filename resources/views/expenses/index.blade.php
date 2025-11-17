@@ -63,16 +63,30 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-wallet text-primary"></i> Expense Budget</h5>
-                    @if(auth('admin')->user()->is_super_admin ?? false)
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
-                            <i class="fas fa-plus"></i> Add Budget
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#budgetModal">
-                            <i class="fas fa-edit"></i> Set Total Budget
-                        </button>
+                    <div class="d-flex align-items-center gap-2">
+                        <select id="monthSelector" class="form-select form-select-sm" style="width: auto;">
+                            @for($i = 1; $i <= 12; $i++)
+                                <option value="{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}" {{ (isset($month) ? $month : date('m')) == str_pad($i, 2, '0', STR_PAD_LEFT) ? 'selected' : '' }}>
+                                    {{ date('F', mktime(0, 0, 0, $i, 1)) }}
+                                </option>
+                            @endfor
+                        </select>
+                        <select id="yearSelector" class="form-select form-select-sm" style="width: auto;">
+                            @for($y = date('Y') - 5; $y <= date('Y'); $y++)
+                                <option value="{{ $y }}" {{ (isset($year) ? $year : date('Y')) == $y ? 'selected' : '' }}>{{ $y }}</option>
+                            @endfor
+                        </select>
+                        @if(auth('admin')->user()->is_super_admin ?? false)
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
+                                <i class="fas fa-plus"></i> Add Budget
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#budgetModal">
+                                <i class="fas fa-edit"></i> Set Total Budget
+                            </button>
+                        </div>
+                        @endif
                     </div>
-                    @endif
                 </div>
                 <div class="card-body">
                     <div class="row text-center">
@@ -84,13 +98,13 @@
                         </div>
                         <div class="col-md-4">
                             <div class="border-end">
-                                <h4 class="text-success">₹{{ number_format($budget->remaining_amount, 2) }}</h4>
-                                <p class="text-muted mb-0">Remaining</p>
+                                <h4 class="text-success">₹{{ number_format($monthlyRemaining, 2) }}</h4>
+                                <p class="text-muted mb-0">Monthly Remaining</p>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <h4 class="text-danger">₹{{ number_format($budget->budget_amount - $budget->remaining_amount, 2) }}</h4>
-                            <p class="text-muted mb-0">Spent</p>
+                            <h4 class="text-danger">₹{{ number_format($monthlySpent, 2) }}</h4>
+                            <p class="text-muted mb-0">Monthly Spent</p>
                         </div>
                     </div>
                     @if($budget->remaining_amount <= 0)
@@ -236,3 +250,23 @@
     </div>
 </div>
 @endsection
+
+<script>
+document.getElementById('monthSelector').addEventListener('change', function() {
+    const selectedMonth = this.value;
+    const selectedYear = document.getElementById('yearSelector').value;
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('month', selectedMonth);
+    currentUrl.searchParams.set('year', selectedYear);
+    window.location.href = currentUrl.toString();
+});
+
+document.getElementById('yearSelector').addEventListener('change', function() {
+    const selectedYear = this.value;
+    const selectedMonth = document.getElementById('monthSelector').value;
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('month', selectedMonth);
+    currentUrl.searchParams.set('year', selectedYear);
+    window.location.href = currentUrl.toString();
+});
+</script>

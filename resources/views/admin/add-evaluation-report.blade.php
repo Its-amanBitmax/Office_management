@@ -42,22 +42,8 @@
                         </div>
                         <div class="card-body">
                             <div class="evaluation-form">
-                                @php
-                                    // Check if a report already exists for this employee and period
-                                    $existingReport = null;
-                                    if (isset($reviewFrom) && isset($reviewTo)) {
-                                        $existingReport = \App\Models\EvaluationReport::where('employee_id', $employees->first()->id ?? null)
-                                            ->where('review_from', $reviewFrom)
-                                            ->where('review_to', $reviewTo)
-                                            ->with(['evaluationManager', 'evaluationHr', 'evaluationOverall'])
-                                            ->first();
-                                    }
-                                @endphp
                                 <form id="performanceForm" action="{{ route('admin.store-evaluation-report') }}" method="POST">
                                     @csrf
-                                    @if($existingReport)
-                                        <input type="hidden" name="report_id" value="{{ $existingReport->id }}">
-                                    @endif
 
                                     <!-- Employee Details Section -->
                                     <div class="form-section employee-details">
@@ -65,33 +51,24 @@
                                         <div class="grid">
                                             <div>
                                                 <label>Select Employee</label>
-                                                <select name="employee_name" id="employeeSelect" required {{ $existingReport ? 'disabled' : '' }}>
+                                                <select name="employee_name" id="employeeSelect" required>
                                                     <option value="">-- Select Employee --</option>
                                                     @foreach($employees as $employee)
-                                                        <option value="{{ $employee->employee_code }} - {{ $employee->name }}" {{ $existingReport && $existingReport->employee_id == $employee->id ? 'selected' : '' }}>{{ $employee->name }} ({{ $employee->employee_code }})</option>
+                                                        <option value="{{ $employee->employee_code }} - {{ $employee->name }}">{{ $employee->name }} ({{ $employee->employee_code }})</option>
                                                     @endforeach
                                                 </select>
-                                                @if($existingReport)
-                                                    <input type="hidden" name="employee_name" value="{{ $existingReport->employee->employee_code }} - {{ $existingReport->employee->name }}">
-                                                @endif
                                             </div>
                                             <div>
                                                 <label>Review Period (From)</label>
-                                                <input type="date" name="review_from" value="{{ $reviewFrom ?? ($existingReport ? $existingReport->review_from : '') }}" required {{ $existingReport ? 'disabled' : '' }}>
-                                                @if($existingReport)
-                                                    <input type="hidden" name="review_from" value="{{ $existingReport->review_from }}">
-                                                @endif
+                                                <input type="date" name="review_from" value="{{ $reviewFrom ?? '' }}" required>
                                             </div>
                                             <div>
                                                 <label>Review Period (To)</label>
-                                                <input type="date" name="review_to" value="{{ $reviewTo ?? ($existingReport ? $existingReport->review_to : '') }}" required {{ $existingReport ? 'disabled' : '' }}>
-                                                @if($existingReport)
-                                                    <input type="hidden" name="review_to" value="{{ $existingReport->review_to }}">
-                                                @endif
+                                                <input type="date" name="review_to" value="{{ $reviewTo ?? '' }}" required>
                                             </div>
                                             <div>
                                                 <label>Date of Evaluation</label>
-                                                <input type="date" name="evaluation_date" value="{{ $reviewTo ?? ($existingReport ? $existingReport->evaluation_date : now()->format('Y-m-d')) }}" required>
+                                                <input type="date" name="evaluation_date" value="{{ $reviewTo ?? now()->format('Y-m-d') }}" required>
                                             </div>
                                         </div>
                                     </div>
@@ -121,19 +98,19 @@
                                         <div class="subsection">
                                             <h4>1.1 Key Performance Indicators (KPIs)</h4>
                                             <label>Project Delivery & Updates</label>
-                                            <input type="text" name="project_delivery" class="form-control" placeholder="Timely completion of assigned tasks" value="{{ $existingReport && $existingReport->evaluationManager ? $existingReport->evaluationManager->project_delivery : '' }}">
+                                            <input type="text" name="project_delivery" class="form-control" placeholder="Timely completion of assigned tasks">
 
                                             <label>Code Quality & Standards</label>
-                                            <input type="text" name="code_quality" class="form-control" placeholder="Clean, optimized, maintainable code" value="{{ $existingReport && $existingReport->evaluationManager ? $existingReport->evaluationManager->code_quality : '' }}">
+                                            <input type="text" name="code_quality" class="form-control" placeholder="Clean, optimized, maintainable code">
 
                                             <label>System/Application Performance</label>
-                                            <input type="text" name="performance" class="form-control" placeholder="Speed, optimization, responsiveness, testing" value="{{ $existingReport && $existingReport->evaluationManager ? $existingReport->evaluationManager->performance : '' }}">
+                                            <input type="text" name="performance" class="form-control" placeholder="Speed, optimization, responsiveness, testing">
 
                                             <label>Task Completion & Accuracy</label>
-                                            <input type="text" name="task_completion" class="form-control" placeholder="Adherence to project timelines & quality" value="{{ $existingReport && $existingReport->evaluationManager ? $existingReport->evaluationManager->task_completion : '' }}">
+                                            <input type="text" name="task_completion" class="form-control" placeholder="Adherence to project timelines & quality">
 
                                             <label>Innovation & Problem Solving</label>
-                                            <input type="text" name="innovation" class="form-control" placeholder="New ideas, tools, or solutions suggested" value="{{ $existingReport && $existingReport->evaluationManager ? $existingReport->evaluationManager->innovation : '' }}">
+                                            <input type="text" name="innovation" class="form-control" placeholder="New ideas, tools, or solutions suggested">
                                         </div>
 
                                         <div class="subsection">
@@ -189,6 +166,9 @@
                                                         <input type="radio" name="documentation" id="doc1" value="1" {{ $existingReport && $existingReport->evaluationManager && $existingReport->evaluationManager->documentation == 1 ? 'checked' : '' }}><label for="doc1"></label>
                                                     </div>
                                                 </div>
+                                            </div>
+                                            <div class="total-display">
+                                                <strong>Manager Total: <span id="manager-total">{{ $existingReport && $existingReport->evaluationManager ? $existingReport->evaluationManager->manager_total : 0 }}</span> / 60</strong>
                                             </div>
                                         </div>
 
@@ -272,6 +252,9 @@
                                                         <input type="radio" name="time_management" id="tm1" value="1" {{ $existingReport && $existingReport->evaluationHr && $existingReport->evaluationHr->time_management == 1 ? 'checked' : '' }}><label for="tm1"></label>
                                                     </div>
                                                 </div>
+                                            </div>
+                                            <div class="total-display">
+                                                <strong>HR Total: <span id="hr-total">{{ $existingReport && $existingReport->evaluationHr ? $existingReport->evaluationHr->hr_total : 0 }}</span> / 30</strong>
                                             </div>
                                         </div>
 
@@ -377,6 +360,52 @@ document.addEventListener('DOMContentLoaded', function() {
         progressFill.style.width = percentage + '%';
         displaySpan.textContent = `${value} / ${max} (${Math.round(percentage)}%)`;
     }
+
+    // Calculate manager total dynamically
+    const managerRatings = document.querySelectorAll('input[name="code_efficiency"], input[name="uiux"], input[name="debugging"], input[name="version_control"], input[name="documentation"]');
+    const managerTotalDisplay = document.getElementById('manager-total');
+
+    function calculateManagerTotal() {
+        let total = 0;
+        managerRatings.forEach(rating => {
+            if (rating.checked) {
+                total += parseInt(rating.value);
+            }
+        });
+        const scaledTotal = total * (12 / 5);
+        managerTotalDisplay.textContent = scaledTotal.toFixed(1);
+    }
+
+    // Add event listeners to manager rating inputs
+    managerRatings.forEach(rating => {
+        rating.addEventListener('change', calculateManagerTotal);
+    });
+
+    // Initial calculation
+    calculateManagerTotal();
+
+    // Calculate HR total dynamically
+    const hrRatings = document.querySelectorAll('input[name="professionalism"], input[name="team_collaboration"], input[name="learning"], input[name="initiative"], input[name="time_management"]');
+    const hrTotalDisplay = document.getElementById('hr-total');
+
+    function calculateHrTotal() {
+        let total = 0;
+        hrRatings.forEach(rating => {
+            if (rating.checked) {
+                total += parseInt(rating.value);
+            }
+        });
+        const scaledTotal = total * (6 / 5);
+        hrTotalDisplay.textContent = scaledTotal.toFixed(1);
+    }
+
+    // Add event listeners to HR rating inputs
+    hrRatings.forEach(rating => {
+        rating.addEventListener('change', calculateHrTotal);
+    });
+
+    // Initial calculation
+    calculateHrTotal();
 });
 </script>
 

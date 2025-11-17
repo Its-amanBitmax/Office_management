@@ -90,7 +90,9 @@ class SalarySlipController extends Controller
         'absent_days' => $attendanceData['absent'],
         'leave_days' => $attendanceData['leave'],
         'half_day_count' => $attendanceData['half_day'],
-        'holiday_days' => $attendanceData['holiday'], // added
+        'holiday_days' => $attendanceData['holiday'],
+        'ncns_days' => $attendanceData['ncns'],
+        'lwp_days' => $attendanceData['lwp'],
         'gross_salary' => $salaryData['gross_salary'],
         'deductions' => $request->deductions,
         'net_salary' => $salaryData['net_salary'],
@@ -142,6 +144,8 @@ class SalarySlipController extends Controller
             'leave' => $salarySlip->leave_days,
             'half_day' => $salarySlip->half_day_count,
             'holiday' => $request->holiday_days ?? $salarySlip->holiday_days,
+            'ncns' => $salarySlip->ncns_days,
+            'lwp' => $salarySlip->lwp_days,
         ];
 
         $salaryData = $this->calculateSalary($employee, $attendanceData, $request->deductions ?? []);
@@ -214,7 +218,9 @@ private function calculateAttendanceData(Employee $employee, string $month): arr
         'absent' => $attendances->where('status', 'Absent')->count(),
         'leave' => $attendances->where('status', 'Leave')->count(),
         'half_day' => $attendances->where('status', 'Half Day')->count(),
-        'holiday' => $attendances->where('status', 'Holiday')->count(), // naya
+        'holiday' => $attendances->where('status', 'Holiday')->count(),
+        'ncns' => $attendances->where('status', 'NCNS')->count(),
+        'lwp' => $attendances->where('status', 'LWP')->count(),
     ];
 }
 
@@ -246,10 +252,12 @@ private function calculateSalary(Employee $employee, array $attendanceData, arra
     // Attendance breakdown
     $presentDays = $attendanceData['present'] ?? 0;
     $halfDays = $attendanceData['half_day'] ?? 0;
-    $holidayDays = $attendanceData['holiday'] ?? 0; // new
+    $holidayDays = $attendanceData['holiday'] ?? 0;
+    $ncnsDays = $attendanceData['ncns'] ?? 0; // NCNS: 1 day salary deduction per occurrence
+    $lwpDays = $attendanceData['lwp'] ?? 0; // LWP: Leave Without Pay
 
-    // Calculate effective days (Holiday counted as full day)
-    $effectiveDays = $presentDays + $holidayDays + ($halfDays * 0.5);
+    // Calculate effective days (Holiday counted as full day, NCNS and LWP deduct 1 day each)
+    $effectiveDays = $presentDays + $holidayDays + ($halfDays * 0.5) - $ncnsDays - $lwpDays;
 
     $grossSalary = ($basicDaily * $effectiveDays) +
                   ($hraDaily * $effectiveDays) +

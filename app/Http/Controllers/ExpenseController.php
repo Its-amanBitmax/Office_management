@@ -10,16 +10,31 @@ use App\Traits\Loggable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
 
 class ExpenseController extends Controller
 {
     use Loggable;
 
-    public function index()
+    public function index(Request $request)
     {
-        $expenses = Expense::with('admin')->orderBy('expense_date', 'desc')->paginate(10);
+        $query = Expense::with('admin');
+
+        // Default to current month and year if not provided
+        $month = $request->filled('month') ? $request->month : date('m');
+        $year = $request->filled('year') ? $request->year : date('Y');
+
+        $query->whereYear('expense_date', $year)
+              ->whereMonth('expense_date', $month);
+
+        $expenses = $query->orderBy('expense_date', 'desc')->paginate(10);
         $budget = ExpenseBudget::getCurrentBudget();
-        return view('expenses.index', compact('expenses', 'budget'));
+
+        // Calculate monthly spent and remaining
+        $monthlySpent = $expenses->sum('amount');
+        $monthlyRemaining = $budget->remaining_amount - $monthlySpent;
+
+        return view('expenses.index', compact('expenses', 'budget', 'month', 'year', 'monthlySpent', 'monthlyRemaining'));
     }
 
     public function create()

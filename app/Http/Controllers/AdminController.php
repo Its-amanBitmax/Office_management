@@ -818,7 +818,10 @@ class AdminController extends Controller
         $reviewFrom = $request->get('review_from');
         $reviewTo = $request->get('review_to');
 
-        return view('admin.add-evaluation-report', compact('employees', 'reviewFrom', 'reviewTo'));
+        // For new reports, existingReport is null
+        $existingReport = null;
+
+        return view('admin.add-evaluation-report', compact('employees', 'reviewFrom', 'reviewTo', 'existingReport'));
     }
 
     public function storeEvaluationReport(Request $request)
@@ -900,7 +903,7 @@ class AdminController extends Controller
             return redirect()->back()->with('error', 'Failed to save evaluation report: ' . $e->getMessage());
         }
 
-        // Calculate manager total (sum of ratings * 3, out of 60)
+        // Calculate manager total (sum of ratings * (12 / 5), out of 60)
         $managerRatings = [
             $request->code_efficiency ?? 0,
             $request->uiux ?? 0,
@@ -908,7 +911,7 @@ class AdminController extends Controller
             $request->version_control ?? 0,
             $request->documentation ?? 0,
         ];
-        $managerTotal = array_sum($managerRatings) * 3;
+        $managerTotal = array_sum($managerRatings) * (12 / 5);
 
         // Create evaluation manager
         try {
@@ -932,7 +935,7 @@ class AdminController extends Controller
             \Log::error('Failed to create EvaluationManager', ['error' => $e->getMessage()]);
         }
 
-        // Calculate HR total (sum of ratings * 3, out of 30)
+        // Calculate HR total (sum of ratings * (6 / 5), out of 30)
         $hrRatings = [
             $request->professionalism ?? 0,
             $request->team_collaboration ?? 0,
@@ -940,7 +943,7 @@ class AdminController extends Controller
             $request->initiative ?? 0,
             $request->time_management ?? 0,
         ];
-        $hrTotal = array_sum($hrRatings) * 3;
+        $hrTotal = array_sum($hrRatings) * (6 / 5);
 
         // Create evaluation hr
         try {
@@ -1118,11 +1121,11 @@ class AdminController extends Controller
                     $manager->version_control ?? 0,
                     $manager->documentation ?? 0,
                 ];
-                $managerTotal = array_sum($managerRatings) * 3;
+                $managerTotal = array_sum($managerRatings) * (12 / 5);
                 $report->evaluationManager->update(['manager_total' => $managerTotal]);
             }
         } else {
-            // Calculate manager total (sum of ratings * 3, out of 60)
+            // Calculate manager total (sum of ratings * (12 / 5), out of 60)
             $managerRatings = [
                 $request->code_efficiency ?? 0,
                 $request->uiux ?? 0,
@@ -1130,7 +1133,7 @@ class AdminController extends Controller
                 $request->version_control ?? 0,
                 $request->documentation ?? 0,
             ];
-            $managerTotal = array_sum($managerRatings) * 3;
+            $managerTotal = array_sum($managerRatings) * (12 / 5);
 
             EvaluationManager::create([
                 'report_id' => $report->id,
@@ -1174,11 +1177,11 @@ class AdminController extends Controller
                     $hr->initiative ?? 0,
                     $hr->time_management ?? 0,
                 ];
-                $hrTotal = array_sum($hrRatings) * 3;
+                $hrTotal = array_sum($hrRatings) * (6 / 5);
                 $report->evaluationHr->update(['hr_total' => $hrTotal]);
             }
         } else {
-            // Calculate HR total (sum of ratings * 3, out of 30)
+            // Calculate HR total (sum of ratings * (6 / 5), out of 30)
             $hrRatings = [
                 $request->professionalism ?? 0,
                 $request->team_collaboration ?? 0,
@@ -1186,7 +1189,7 @@ class AdminController extends Controller
                 $request->initiative ?? 0,
                 $request->time_management ?? 0,
             ];
-            $hrTotal = array_sum($hrRatings) * 3;
+            $hrTotal = array_sum($hrRatings) * (6 / 5);
 
             EvaluationHr::create([
                 'report_id' => $report->id,
@@ -1646,7 +1649,7 @@ public function search(Request $request)
      */
     private function saveManagerEvaluation($report, $request)
     {
-        // Calculate manager total (sum of ratings * 3, out of 60)
+        // Calculate manager total (sum of ratings * (12 / 5), out of 60)
         $managerRatings = [
             $request->code_efficiency ?? 0,
             $request->uiux ?? 0,
@@ -1654,7 +1657,7 @@ public function search(Request $request)
             $request->version_control ?? 0,
             $request->documentation ?? 0,
         ];
-        $managerTotal = array_sum($managerRatings) * 3;
+        $managerTotal = array_sum($managerRatings) * (12 / 5);
 
         EvaluationManager::updateOrCreate(
             ['report_id' => $report->id],
@@ -1682,7 +1685,7 @@ public function search(Request $request)
      */
     private function saveHrEvaluation($report, $request)
     {
-        // Calculate HR total (sum of ratings * 3, out of 30)
+        // Calculate HR total (sum of ratings * (6 / 5), out of 30)
         $hrRatings = [
             $request->professionalism ?? 0,
             $request->team_collaboration ?? 0,
@@ -1690,7 +1693,7 @@ public function search(Request $request)
             $request->initiative ?? 0,
             $request->time_management ?? 0,
         ];
-        $hrTotal = array_sum($hrRatings) * 3;
+        $hrTotal = array_sum($hrRatings) * (6 / 5);
 
         EvaluationHr::updateOrCreate(
             ['report_id' => $report->id],
