@@ -197,7 +197,7 @@
                                                                 </div>
                                                                 <div class="col-md-6">
                                                                     <div class="p-3 bg-light rounded">
-                                                                        <h4 class="text-danger">{{ $report->evaluationManager->manager_total }}/60</h4>
+                                                                        <h4 class="text-danger">{{ $report->evaluationManager->manager_total }}/30</h4>
                                                                         <p class="mb-0">Total Score</p>
                                                                     </div>
                                                                 </div>
@@ -295,7 +295,7 @@
                                                                 </div>
                                                                 <div class="col-md-6">
                                                                     <div class="p-3 bg-light rounded">
-                                                                        <h4 class="text-danger">{{ $report->evaluationHr->hr_total }}/30</h4>
+                                                                        <h4 class="text-danger">{{ $report->evaluationHr->hr_total }}/20</h4>
                                                                         <p class="mb-0">Total Score</p>
                                                                     </div>
                                                                 </div>
@@ -332,28 +332,40 @@
                                                 </div>
                                                 <div class="card-body">
                                                     <div class="row text-center mb-4">
-                                                        <div class="col-md-3">
+                                                        <div class="col-md-2">
                                                             <div class="p-3 bg-light rounded">
-                                                                <h3 class="text-success">{{ $report->evaluationOverall->overall_rating }}/100</h3>
+                                                                <h4 class="text-success">{{ $report->evaluationOverall->overall_rating }}/50</h4>
                                                                 <p class="mb-0">Overall Rating</p>
                                                             </div>
                                                         </div>
-                                                        <div class="col-md-3">
+                                                        <div class="col-md-2">
                                                             <div class="p-3 bg-light rounded">
-                                                                <h3 class="text-primary">{{ $report->evaluationOverall->technical_skills }}/40</h3>
+                                                                <h4 class="text-primary">{{ $report->evaluationOverall->technical_skills }}/10</h4>
                                                                 <p class="mb-0">Technical Skills</p>
                                                             </div>
                                                         </div>
-                                                        <div class="col-md-3">
+                                                        <div class="col-md-2">
                                                             <div class="p-3 bg-light rounded">
-                                                                <h3 class="text-info">{{ $report->evaluationOverall->task_delivery }}/25</h3>
+                                                                <h4 class="text-info">{{ $report->evaluationOverall->task_delivery }}/10</h4>
                                                                 <p class="mb-0">Task Delivery</p>
                                                             </div>
                                                         </div>
-                                                        <div class="col-md-3">
+                                                        <div class="col-md-2">
                                                             <div class="p-3 bg-light rounded">
-                                                                <h3 class="text-warning">{{ $report->evaluationOverall->communication + $report->evaluationOverall->behavior_teamwork }}/20</h3>
-                                                                <p class="mb-0">Soft Skills</p>
+                                                                <h4 class="text-warning">{{ $report->evaluationOverall->communication }}/10</h4>
+                                                                <p class="mb-0">Communication</p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <div class="p-3 bg-light rounded">
+                                                                <h4 class="text-secondary">{{ $report->evaluationOverall->behavior_teamwork }}/10</h4>
+                                                                <p class="mb-0">Behavior/Teamwork</p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <div class="p-3 bg-light rounded">
+                                                                <h4 class="text-danger">{{ $report->evaluationOverall->quality_work }}/10</h4>
+                                                                <p class="mb-0">Quality of Work</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -361,18 +373,18 @@
                                                     <div class="row">
                                                         <div class="col-md-6">
                                                             <strong>Performance Grade:</strong>
-                                                            <span class="badge badge-lg
-                                                                @if($report->evaluationOverall->performance_grade == 'Excellent') badge-success
-                                                                @elseif($report->evaluationOverall->performance_grade == 'Good') badge-primary
-                                                                @elseif($report->evaluationOverall->performance_grade == 'Satisfactory') badge-warning
-                                                                @else badge-danger
-                                                                @endif">
-                                                                {{ $report->evaluationOverall->performance_grade }}
-                                                            </span>
+                                                           <span class="badge px-3 py-2 fs-6
+    @if($report->evaluationOverall->performance_grade == 'Excellent') bg-success
+    @elseif($report->evaluationOverall->performance_grade == 'Good') bg-primary
+    @elseif($report->evaluationOverall->performance_grade == 'Satisfactory') bg-warning
+    @else bg-danger
+    @endif
+">
+    {{ $report->evaluationOverall->performance_grade }}
+</span>
+
                                                         </div>
-                                                        <div class="col-md-6">
-                                                            <strong>Quality of Work:</strong> {{ $report->evaluationOverall->quality_work }}/15
-                                                        </div>
+                                                        
                                                     </div>
                                                     <div class="row mt-3">
                                                         <div class="col-12">
@@ -411,6 +423,45 @@
                                     <button class="btn btn-danger" onclick="deleteReport({{ $report->id }}, '{{ $report->employee->name ?? 'N/A' }}')">
                                         <i class="fas fa-trash"></i> Delete Report
                                     </button>
+                                    <button class="btn btn-primary" onclick="saveEvaluationPdf({{ $report->id }})">
+    <i class="fas fa-paper-plane"></i> Submit & Save PDF
+</button>
+
+<script>
+function saveEvaluationPdf(reportId) {
+    fetch(`/admin/evaluation-report/save-pdf/${reportId}`, {
+        method: 'POST',
+        headers: {
+            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: data.message,
+            showConfirmButton: false,
+            timer: 2500
+        });
+
+    })
+    .catch(err => {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: "Something went wrong",
+            showConfirmButton: false,
+            timer: 2500
+        });
+    });
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
                                 </div>
                             </div>
                         </div>

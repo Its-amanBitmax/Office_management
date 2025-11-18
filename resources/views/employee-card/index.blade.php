@@ -95,8 +95,8 @@
                 <div style="font-size:10px;font-weight:900;color:#111;">: {{ $employee->employee_code }}</div>
             </div>
             <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                <div style="font-size:10px;font-weight:900;color:#333;">EMAIL</div>
-                <div style="font-size:10px;font-weight:900;color:#111;">: {{ $employee->email ?? 'N/A' }}</div>
+                <div style="font-size:10px;font-weight:900;color:#333;">Blood Group</div>
+                <div style="font-size:10px;font-weight:900;color:#111;">-</div>
             </div>
             <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
                 <div style="font-size:10px;font-weight:900;color:#333;">DOB</div>

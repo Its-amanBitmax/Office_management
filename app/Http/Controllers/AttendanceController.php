@@ -458,51 +458,55 @@ class AttendanceController extends Controller
     /**
      * Calculate salary based on attendance and deductions
      */
-    private function calculateSalary(Employee $employee, array $attendanceData, array $deductions = [], string $month = null): array
-    {
-        $basicSalary = $employee->basic_salary ?? 0;
-        $hra = $employee->hra ?? 0;
-        $conveyance = $employee->conveyance ?? 0;
-        $medical = $employee->medical ?? 0;
+  private function calculateSalary(Employee $employee, array $attendanceData, array $deductions = [], string $month = null): array
+{
+    $basicSalary = $employee->basic_salary ?? 0;
+    $hra = $employee->hra ?? 0;
+    $conveyance = $employee->conveyance ?? 0;
+    $medical = $employee->medical ?? 0;
 
-        // Calculate total days in the specific month
-        if ($month) {
-            $date = Carbon::createFromFormat('Y-m', $month);
-            $totalDaysInMonth = $date->daysInMonth;
-        } else {
-            $totalDaysInMonth = Carbon::now()->daysInMonth; // Fallback
-        }
-
-        // Calculate daily rates
-        $basicDaily = $basicSalary / $totalDaysInMonth;
-        $hraDaily = $hra / $totalDaysInMonth;
-        $conveyanceDaily = $conveyance / $totalDaysInMonth;
-        $medicalDaily = $medical / $totalDaysInMonth;
-
-        // Attendance breakdown
-        $presentDays = $attendanceData['present'] ?? 0;
-        $halfDays = $attendanceData['half_day'] ?? 0;
-        $holidayDays = $attendanceData['holiday'] ?? 0;
-        $ncnsDays = $attendanceData['ncns'] ?? 0; // NCNS: 1 day salary deduction per occurrence
-        $lwpDays = $attendanceData['lwp'] ?? 0; // LWP: Leave Without Pay
-
-        // Calculate effective days (Holiday counted as full day, NCNS deducts 1 day, LWP deducts 1 day)
-        $effectiveDays = $presentDays + $holidayDays + ($halfDays * 0.5) - $ncnsDays - $lwpDays;
-
-        $grossSalary = ($basicDaily * $effectiveDays) +
-                      ($hraDaily * $effectiveDays) +
-                      ($conveyanceDaily * $effectiveDays) +
-                      ($medicalDaily * $effectiveDays);
-
-        // Calculate deductions
-        $totalDeductions = collect($deductions)->sum('amount');
-
-        $netSalary = $grossSalary - $totalDeductions;
-
-        return [
-            'gross_salary' => round($grossSalary, 2),
-            'net_salary' => round(max(0, $netSalary), 2),
-            'total_deductions' => $totalDeductions,
-        ];
+    // Calculate total days in the specific month
+    if ($month) {
+        $date = Carbon::createFromFormat('Y-m', $month);
+        $totalDaysInMonth = $date->daysInMonth;
+    } else {
+        $totalDaysInMonth = Carbon::now()->daysInMonth; // Fallback
     }
+
+    // Daily salary rates
+    $basicDaily = $basicSalary / $totalDaysInMonth;
+    $hraDaily = $hra / $totalDaysInMonth;
+    $conveyanceDaily = $conveyance / $totalDaysInMonth;
+    $medicalDaily = $medical / $totalDaysInMonth;
+
+    // Attendance breakdown
+    $presentDays = $attendanceData['present'] ?? 0;
+    $halfDays = $attendanceData['half_day'] ?? 0;
+    $holidayDays = $attendanceData['holiday'] ?? 0;
+    $lwpDays = $attendanceData['lwp'] ?? 0;   
+    $ncnsDays = $attendanceData['ncns'] ?? 0;
+
+    /*
+     * ✔ Paid Days = Present + Holiday + (Half Day × 0.5)
+     * LWP & NCNS are only UNPAID days — NO minus calculation
+     */
+    $paidDays = $presentDays + $holidayDays + ($halfDays * 0.5);
+
+    // Gross Salary (Unpaid days not counted)
+    $grossSalary = ($basicDaily * $paidDays) +
+                   ($hraDaily * $paidDays) +
+                   ($conveyanceDaily * $paidDays) +
+                   ($medicalDaily * $paidDays);
+
+    // Calculate deductions
+    $totalDeductions = collect($deductions)->sum('amount');
+    $netSalary = $grossSalary - $totalDeductions;
+
+    return [
+        'gross_salary' => round($grossSalary, 2),
+        'net_salary' => round(max(0, $netSalary), 2),
+        'total_deductions' => $totalDeductions,
+    ];
+}
+
 }

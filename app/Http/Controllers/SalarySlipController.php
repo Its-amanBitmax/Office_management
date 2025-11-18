@@ -243,7 +243,7 @@ private function calculateSalary(Employee $employee, array $attendanceData, arra
         $totalDaysInMonth = Carbon::now()->daysInMonth; // Fallback
     }
 
-    // Calculate daily rates
+    // Daily salary rates
     $basicDaily = $basicSalary / $totalDaysInMonth;
     $hraDaily = $hra / $totalDaysInMonth;
     $conveyanceDaily = $conveyance / $totalDaysInMonth;
@@ -253,20 +253,23 @@ private function calculateSalary(Employee $employee, array $attendanceData, arra
     $presentDays = $attendanceData['present'] ?? 0;
     $halfDays = $attendanceData['half_day'] ?? 0;
     $holidayDays = $attendanceData['holiday'] ?? 0;
-    $ncnsDays = $attendanceData['ncns'] ?? 0; // NCNS: 1 day salary deduction per occurrence
-    $lwpDays = $attendanceData['lwp'] ?? 0; // LWP: Leave Without Pay
+    $lwpDays = $attendanceData['lwp'] ?? 0;   
+    $ncnsDays = $attendanceData['ncns'] ?? 0;
 
-    // Calculate effective days (Holiday counted as full day, NCNS and LWP deduct 1 day each)
-    $effectiveDays = $presentDays + $holidayDays + ($halfDays * 0.5) - $ncnsDays - $lwpDays;
+    /*
+     * ✔ Paid Days = Present + Holiday + (Half Day × 0.5)
+     * LWP & NCNS are only UNPAID days — NO minus calculation
+     */
+    $paidDays = $presentDays + $holidayDays + ($halfDays * 0.5);
 
-    $grossSalary = ($basicDaily * $effectiveDays) +
-                  ($hraDaily * $effectiveDays) +
-                  ($conveyanceDaily * $effectiveDays) +
-                  ($medicalDaily * $effectiveDays);
+    // Gross Salary (Unpaid days not counted)
+    $grossSalary = ($basicDaily * $paidDays) +
+                   ($hraDaily * $paidDays) +
+                   ($conveyanceDaily * $paidDays) +
+                   ($medicalDaily * $paidDays);
 
     // Calculate deductions
     $totalDeductions = collect($deductions)->sum('amount');
-
     $netSalary = $grossSalary - $totalDeductions;
 
     return [
@@ -275,5 +278,7 @@ private function calculateSalary(Employee $employee, array $attendanceData, arra
         'total_deductions' => $totalDeductions,
     ];
 }
+
+
 
 }

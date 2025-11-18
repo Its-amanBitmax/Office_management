@@ -268,75 +268,72 @@
 
                                     <!-- Part 3: Overall Evaluation (Super Admin Only) -->
                                     @if($isSuperAdmin)
-                                    <div class="form-section overall-evaluation">
-                                        <div class="section-header">
-                                            <h3>Part 3: Overall Evaluation</h3>
-                                            <span class="section-badge overall-badge">Final Assessment</span>
-                                        </div>
+                                  <div class="form-section overall-evaluation">
+    <div class="section-header">
+        <h3>Part 3: Overall Evaluation</h3>
+        <span class="section-badge overall-badge">Final Assessment</span>
+    </div>
 
-                                        <div class="subsection">
-                                            <h4>3.1 Performance Scoring</h4>
-                                            <div class="grid">
-                                                <div>
-                                                    <label>Technical Skills (40%)</label>
-                                                    <input type="range" name="technical_skills" min="0" max="40"
-                                                           value="{{ $overall?->technical_skills ?? 0 }}" class="score-slider" data-max="40">
-                                                    <div class="progress-bar"><div class="progress-fill"></div></div>
-                                                    <span class="score-display">0 / 40 (0%)</span>
-                                                </div>
-                                                <div>
-                                                    <label>Task Delivery (25%)</label>
-                                                    <input type="range" name="task_delivery_score" min="0" max="25"
-                                                           value="{{ $overall?->task_delivery ?? 0 }}" class="score-slider" data-max="25">
-                                                    <div class="progress-bar"><div class="progress-fill"></div></div>
-                                                    <span class="score-display">0 / 25 (0%)</span>
-                                                </div>
-                                                <div>
-                                                    <label>Quality of Work (15%)</label>
-                                                    <input type="range" name="quality_work" min="0" max="15"
-                                                           value="{{ $overall?->quality_work ?? 0 }}" class="score-slider" data-max="15">
-                                                    <div class="progress-bar"><div class="progress-fill"></div></div>
-                                                    <span class="score-display">0 / 15 (0%)</span>
-                                                </div>
-                                                <div>
-                                                    <label>Communication (10%)</label>
-                                                    <input type="range" name="communication_score" min="0" max="10"
-                                                           value="{{ $overall?->communication ?? 0 }}" class="score-slider" data-max="10">
-                                                    <div class="progress-bar"><div class="progress-fill"></div></div>
-                                                    <span class="score-display">0 / 10 (0%)</span>
-                                                </div>
-                                                <div>
-                                                    <label>Behavior & Teamwork (10%)</label>
-                                                    <input type="range" name="behavior_teamwork" min="0" max="10"
-                                                           value="{{ $overall?->behavior_teamwork ?? 0 }}" class="score-slider" data-max="10">
-                                                    <div class="progress-bar"><div class="progress-fill"></div></div>
-                                                    <span class="score-display">0 / 10 (0%)</span>
-                                                </div>
-                                                <div>
-                                                    <label>Overall Rating (out of 100)</label>
-                                                    <input type="range" name="overall_rating" min="0" max="100"
-                                                           value="{{ $overall?->overall_rating ?? 0 }}" class="score-slider" data-max="100" readonly>
-                                                    <div class="progress-bar"><div class="progress-fill"></div></div>
-                                                    <span class="score-display">0 / 100 (0%)</span>
-                                                </div>
-                                            </div>
-                                        </div>
+    <div class="subsection">
+        <h4>3.1 Performance Scoring</h4>
+        <div class="grid">
 
-                                        <div class="subsection">
-                                            <h4>3.2 Final Assessment</h4>
-                                            <label>Performance Grade</label>
-                                            <select name="performance_grade" required>
-                                                <option value="">Select Grade</option>
-                                                <option value="Excellent" {{ $overall?->performance_grade == 'Excellent' ? 'selected' : '' }}>Excellent</option>
-                                                <option value="Good" {{ $overall?->performance_grade == 'Good' ? 'selected' : '' }}>Good</option>
-                                                <option value="Satisfactory" {{ $overall?->performance_grade == 'Satisfactory' ? 'selected' : '' }}>Satisfactory</option>
-                                                <option value="Needs Improvement" {{ $overall?->performance_grade == 'Needs Improvement' ? 'selected' : '' }}>Needs Improvement</option>
-                                            </select>
+            <div>
+                <label>Skills</label>
+                <input type="range" name="technical_skills" min="0" max="10"
+                       value="{{ $overall?->technical_skills ?? 0 }}" class="score-slider" data-max="10">
+                <span class="score-display">0 / 10</span>
+            </div>
 
-                                            <label>Final Feedback</label>
-                                            <textarea name="final_feedback" placeholder="Overall summary, strengths, improvement areas...">{{ $overall?->final_feedback ?? '' }}</textarea>
-                                        </div>
-                                    </div>
+            <div>
+                <label>Task Delivery</label>
+                <input type="range" name="task_delivery_score" min="0" max="10"
+                       value="{{ $overall?->task_delivery ?? 0 }}" class="score-slider" data-max="10">
+                <span class="score-display">0 / 10</span>
+            </div>
+
+            <div>
+                <label>Quality of Work</label>
+                <input type="range" name="quality_work" min="0" max="10"
+                       value="{{ $overall?->quality_work ?? 0 }}" class="score-slider" data-max="10">
+                <span class="score-display">0 / 10</span>
+            </div>
+
+            <div>
+                <label>Communication</label>
+                <input type="range" name="communication_score" min="0" max="10"
+                       value="{{ $overall?->communication ?? 0 }}" class="score-slider" data-max="10">
+                <span class="score-display">0 / 10</span>
+            </div>
+
+            <div>
+                <label>Behavior & Teamwork</label>
+                <input type="range" name="behavior_teamwork" min="0" max="10"
+                       value="{{ $overall?->behavior_teamwork ?? 0 }}" class="score-slider" data-max="10">
+                <span class="score-display">0 / 10</span>
+            </div>
+
+            <input type="hidden" name="overall_rating" value="{{ $overall?->overall_rating ?? 0 }}">
+        </div>
+    </div>
+
+    <div class="subsection">
+        <h4>3.2 Final Assessment</h4>
+
+        <label>Performance Grade</label>
+        <select name="performance_grade" required>
+            <option value="">Select Grade</option>
+            <option value="Excellent" {{ $overall?->performance_grade == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+            <option value="Good" {{ $overall?->performance_grade == 'Good' ? 'selected' : '' }}>Good</option>
+            <option value="Satisfactory" {{ $overall?->performance_grade == 'Satisfactory' ? 'selected' : '' }}>Satisfactory</option>
+            <option value="Needs Improvement" {{ $overall?->performance_grade == 'Needs Improvement' ? 'selected' : '' }}>Needs Improvement</option>
+        </select>
+
+        <label>Final Feedback</label>
+        <textarea name="final_feedback" placeholder="Overall summary, strengths, improvement areas...">{{ $overall?->final_feedback ?? '' }}</textarea>
+    </div>
+</div>
+
                                     @endif
 
                                     <button type="submit">Update Evaluation Report</button>
@@ -351,48 +348,41 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const sliders = document.querySelectorAll('.score-slider');
-    const overallRating = document.querySelector('input[name="overall_rating"]');
+document.querySelectorAll('.score-slider').forEach(function(slider) {
 
-    function updateSlider(slider) {
-        const max = parseFloat(slider.dataset.max);
-        const value = parseFloat(slider.value);
-        const percentage = (value / max) * 100;
-        const fill = slider.nextElementSibling.querySelector('.progress-fill');
-        const display = fill.nextElementSibling;
+    function updateScore(slider) {
+        let value = slider.value;
+        let max = slider.getAttribute('max');
+        let display = slider.parentElement.querySelector('.score-display');
 
-        fill.style.width = percentage + '%';
-        display.textContent = `${value} / ${max} (${Math.round(percentage)}%)`;
-    }
-
-    sliders.forEach(slider => {
-        updateSlider(slider); // Update on load
-        slider.addEventListener('input', () => updateSlider(slider));
-    });
-
-    // Auto-calculate overall rating
-    const fields = ['technical_skills', 'task_delivery_score', 'quality_work', 'communication_score', 'behavior_teamwork'];
-    fields.forEach(field => {
-        const input = document.querySelector(`input[name="${field}"]`);
-        if (input) {
-            input.addEventListener('input', calculateOverall);
+        if (display) {
+            display.textContent = value + " / " + max;
         }
-    });
 
-    function calculateOverall() {
-        let total = 0;
-        fields.forEach(field => {
-            const val = parseFloat(document.querySelector(`input[name="${field}"]`)?.value) || 0;
-            total += val;
-        });
-        overallRating.value = total;
-        updateSlider(overallRating);
+        calculateOverall(); // update overall score
     }
 
-    calculateOverall(); // Initial calc
+    slider.addEventListener('input', function() {
+        updateScore(slider);
+    });
+
+    // initialize on page load
+    updateScore(slider);
 });
+
+function calculateOverall() {
+    let t = parseInt(document.querySelector('[name="technical_skills"]').value || 0);
+    let d = parseInt(document.querySelector('[name="task_delivery_score"]').value || 0);
+    let q = parseInt(document.querySelector('[name="quality_work"]').value || 0);
+    let c = parseInt(document.querySelector('[name="communication_score"]').value || 0);
+    let b = parseInt(document.querySelector('[name="behavior_teamwork"]').value || 0);
+
+    let total = t + d + q + c + b; // 0–50
+
+    document.querySelector('[name="overall_rating"]').value = total;
+}
 </script>
+
 
 <style>
 .evaluation-form form {

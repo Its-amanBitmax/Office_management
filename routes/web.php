@@ -18,11 +18,14 @@ Route::get('/privacy-policy', function () {
     return view('privacy-policy');
 })->name('privacy');
 
+
 Route::prefix('admin')->group(function () {
     Route::get('/login', [AdminController::class, 'showLoginForm'])->name('admin.login');
     Route::post('/login', [AdminController::class, 'login']);
     Route::post('/logout', [AdminController::class, 'logout'])->name('admin.logout');
-
+ Route::post('evaluation-report/save-pdf/{id}', 
+        [AdminController::class, 'saveEvaluationPdf']
+    )->name('admin.evaluation-report.save-pdf');
     Route::middleware('admin')->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
         Route::get('/profile', [AdminController::class, 'profile'])->name('admin.profile');
@@ -288,6 +291,7 @@ Route::prefix('employee')->group(function () {
         // Employee Attendance Routes
         Route::get('/attendance', [EmployeeController::class, 'attendance'])->name('employee.attendance');
         Route::get('/attendance/show', [EmployeeController::class, 'showAttendance'])->name('employee.attendance.show');
+        
 
         // Employee Leave Request Routes
         Route::get('/leave-requests', [\App\Http\Controllers\LeaveRequestController::class, 'employeeIndex'])->name('employee.leave-requests.index');
