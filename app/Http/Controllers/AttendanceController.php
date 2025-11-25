@@ -370,6 +370,8 @@ class AttendanceController extends Controller
                 'leave' => $attendances->where('status', 'Leave')->count(),
                 'half_day' => $attendances->where('status', 'Half Day')->count(),
                 'holiday' => $attendances->where('status', 'Holiday')->count(),
+                'ncns' => $attendances->where('status', 'NCNS')->count(),
+                'lwp' => $attendances->where('status', 'LWP')->count(),
             ];
 
             // Get all days in the month for calendar view
