@@ -1,33 +1,21 @@
-# Evaluation Scoring Changes TODO
+# Fixing 419 CSRF Error on /interview/{uuid}/start
 
-## Overview
-Modify evaluation system to change scoring and add department-based logic.
+## Steps:
 
-## Changes Required
-1. **Scoring Adjustments:**
-   - Manager evaluation: 60 → 30 points (change multiplier from 12/5 to 6/5)
-   - HR evaluation: 30 → 20 points (change multiplier from 6/5 to 4/5)
-   - Overall evaluation: 100 → 50 points (adjust slider max values proportionally)
+- [x] Edit `resources/views/interview/room.blade.php`:
+  - Update `startInterview()` JS function to include `X-CSRF-TOKEN` header from meta tag.
+  - Add `credentials: 'same-origin'` and `Content-Type: 'application/json'` for consistency.
+  - Include empty JSON body.
 
-2. **Department Logic:**
-   - Skip manager evaluation if employee has no department
-   - Show manager section conditionally based on employee's department field
+- [x] Test the changes:
+  - Create/load an interview not started.
+  - As interviewer, visit `/admin/interviews/{id}/room`.
+  - Click "Start Interview" modal button → should succeed without 419, hide modal, init WebRTC.
 
-## Files to Modify
-- [ ] `app/Http/Controllers/AdminController.php` - Update calculation logic
-- [ ] `resources/views/admin/add-evaluation-report.blade.php` - Update display and conditional logic
-- [ ] `resources/views/admin/evaluation-report.blade.php` - Update display for viewing reports
+- [x] Verify no regressions:
+  - Candidate flow in `link.blade.php` (already has CSRF).
+  - Signaling routes (already excluded).
 
-## Implementation Steps
-1. Update AdminController calculation methods
-2. Update add-evaluation-report view for conditional display and new totals
-3. Update evaluation-report view for correct display
-4. Test the changes
+- [x] Update TODO.md upon completion of each step.
 
-## Progress
-- [x] Plan approved by user
-- [x] Update AdminController.php scoring multipliers
-- [x] Update AdminController.php overall slider max values
-- [x] Update add-evaluation-report.blade.php conditional display
-- [x] Update evaluation-report.blade.php display
-- [ ] Test changes
+Current status: Task completed. The 419 CSRF error on POST /interview/{uuid}/start is fixed by adding the missing X-CSRF-TOKEN header to the interviewer's startInterview() fetch in room.blade.php.

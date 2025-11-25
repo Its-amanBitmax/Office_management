@@ -1014,11 +1014,18 @@ if ({{ $interview->is_started ? 'true' : 'false' }}) requestMedia();
 
 /* ==================== START INTERVIEW ==================== */
 function startInterview() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    const csrf = meta ? meta.getAttribute('content') : '';
+
     fetch(`{{ route('interview.start', $interview->unique_link) }}`, {
         method: 'POST',
+        credentials: 'same-origin',
         headers: {
-            'Accept': 'application/json'
-        }
+            'X-CSRF-TOKEN': csrf,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
     })
     .then(response => response.json())
     .then(data => {

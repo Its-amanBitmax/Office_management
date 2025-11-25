@@ -650,6 +650,7 @@
       fetch(`{{ route('interview.verify', $interview->unique_link) }}`, {
         method: 'POST',
         body: formData,
+        credentials: 'same-origin',
         headers: {
           'X-CSRF-TOKEN': '{{ csrf_token() }}',
           'Accept': 'application/json'
@@ -692,28 +693,31 @@
     });
 
     // Start Interview
-    function startInterview() {
-      fetch(`{{ route('interview.start', $interview->unique_link) }}`, {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'Accept': 'application/json'
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          // Redirect to interview room
-          window.location.href = '/interview/start/{{ $interview->unique_link }}';
-        } else {
-          alert('Failed to start interview. Please try again.');
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred. Please try again.');
-      });
+function startInterview() {
+  fetch(`{{ route('interview.start', $interview->unique_link) }}`, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'X-CSRF-TOKEN': '{{ csrf_token() }}',
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'   // 🔥 REQUIRED!
+    },
+    body: JSON.stringify({}) // Empty body but needed
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      window.location.href = '/interview/start/{{ $interview->unique_link }}';
+    } else {
+      alert('Failed to start interview. Please try again.');
     }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('An error occurred. Please try again.');
+  });
+}
+
 
     // Enter Room
     function enterRoom() {
@@ -721,6 +725,7 @@
       fetch(`{{ route('interview.verify', $interview->unique_link) }}`, {
         method: 'POST',
         body: new FormData(document.getElementById('interviewForm')),
+        credentials: 'same-origin',
         headers: {
           'X-CSRF-TOKEN': '{{ csrf_token() }}',
           'Accept': 'application/json'

@@ -11,10 +11,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+
+        // Custom middleware aliases
         $middleware->alias([
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
-            'employee' => \App\Http\Middleware\EmployeeMiddleware::class,
+            'admin'     => \App\Http\Middleware\AdminMiddleware::class,
+            'employee'  => \App\Http\Middleware\EmployeeMiddleware::class,
         ]);
+
+        // 🔥 Add CSRF excluded patterns (Laravel 10 compatible)
+        $middleware->appendToGroup('web', \App\Http\Middleware\VerifyCsrfToken::class);
+
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
