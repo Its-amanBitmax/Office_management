@@ -185,7 +185,7 @@
     }
 
     .card-logo {
-      width: 80px;
+      width: 150px;
       height: 80px;
       margin: 0 auto 20px;
     }
@@ -515,7 +515,7 @@
   <!-- Welcome Screen (5 sec) -->
   <div class="welcome" id="welcome">
     <div class="welcome-logo">
-      <img src="http://127.0.0.1:8000/storage/company_logos/1759835482.png" alt="Bitmax Group Logo" class="logo-img">
+      <img src="https://www.bitmaxgroup.com/assets/logo/logo.png" alt="Bitmax Group Logo" class="logo-img">
     </div>
     <h1>Welcome to Bitmax Group</h1>
     <p>Prepare for your interview with confidence, {{ $interview->candidate_name }}</p>
@@ -527,7 +527,7 @@
     <div class="left-panel">
       <div class="card-header">
         <div class="card-logo">
-          <img src="http://127.0.0.1:8000/storage/company_logos/1759835482.png" alt="Bitmax Group Logo" class="logo-img">
+          <img src="https://www.bitmaxgroup.com/assets/logo/logo.png" alt="Bitmax Group Logo" class="logo-img">
         </div>
         <div class="title">Welcome Candidate</div>
         <div class="subtitle">Enter your credentials to begin</div>
