@@ -484,7 +484,7 @@ class InterviewController extends Controller
     }
 
     /**
-     * End the interview and deactivate the link.
+     * End the interview and deactivate the link (for both sides).
      */
     public function endInterview($unique_link)
     {
@@ -495,10 +495,25 @@ class InterviewController extends Controller
                 return response()->json(['success' => false, 'message' => 'Interview not found.'], 404, [], JSON_UNESCAPED_SLASHES);
             }
 
+            // Set link_status and is_started to 0 (inactive)
             $interview->update([
                 'link_status' => '0',
                 'is_started' => 0
             ]);
+
+            // Broadcast a socket.io message to force end for the other side
+            try {
+                $http = new \GuzzleHttp\Client(['timeout' => 2]);
+                $socketServer = 'https://socket.bitmaxgroup.com/interview-force-end';
+                $http->post($socketServer, [
+                    'json' => [
+                        'room' => 'interview.' . $unique_link,
+                        'action' => 'force-end'
+                    ]
+                ]);
+            } catch (\Throwable $e) {
+                \Log::warning('Could not notify socket server for force end: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'success' => true,

@@ -17,7 +17,7 @@
         *{margin:0;padding:0;box-sizing:border-box;}
         body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;color:var(--gray-800);}
         .container{max-width:1400px;margin:0 auto;padding:20px;}
-        .header{background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-radius:var(--border-radius);padding:20px;margin-bottom:20px;box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center;}
+        .header{background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-radius:var(--border-radius);padding:20px;margin-bottom:20px;box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
         .header-left h1{font-size:24px;font-weight:700;color:var(--gray-900);margin-bottom:4px;}
         .header-left p{color:var(--gray-600);font-size:14px;}
         .debug-info{font-size:10px;color:var(--gray-500);margin-top:4px;}
@@ -26,12 +26,12 @@
         .status-waiting{background:var(--warning);color:#fff;}
         .time-display{background:var(--gray-100);color:var(--gray-700);padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;}
         .main-content{display:flex;height:calc(100vh - 140px);}
-        .video-section{flex:0 0 400px;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-radius:var(--border-radius);padding:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;position:relative;}
+        .video-section{flex:0 0 400px;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-radius:var(--border-radius);padding:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;position:relative;min-width:0;}
         .resizer{width:5px;height:100%;background:transparent;cursor:col-resize;flex-shrink:0;position:relative;}
         .resizer:hover,.resizer.active{background:var(--primary);}
         .sidebar{flex:1;min-width:300px;overflow-y:auto;scrollbar-width:none;}
         .sidebar::-webkit-scrollbar{display:none;}
-        .video-container{flex:1;background:var(--gray-900);border-radius:8px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+        .video-container{flex:1;background:var(--gray-900);border-radius:8px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:220px;}
         #remoteVideo{width:100%;height:100%;object-fit:cover;border-radius:8px;display:none;}
         #remoteAudio{display:none;}
         .local-video-overlay{position:absolute;bottom:20px;left:20px;width:200px;height:150px;border-radius:8px;border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:10;cursor:pointer;}
@@ -85,7 +85,27 @@
         .btn-primary:hover{background:var(--primary-dark);}
         .btn-secondary{background:var(--gray-200);color:var(--gray-700);}
         .btn-secondary:hover{background:var(--gray-300);}
-        @media(max-width:1024px){.main-content{flex-direction:column;height:auto;}.video-section{flex:none;height:50vh;}.sidebar{order:-1;}}
+        /* Responsive styles for mobile */
+        @media (max-width: 1024px) {
+            .main-content{flex-direction:column;height:auto;}
+            .video-section{flex:none;height:auto;width:100%;min-width:0;}
+            .sidebar{order:-1;width:100%;min-width:0;}
+            .video-container{min-height:220px;}
+        }
+        @media (max-width: 600px) {
+            .container{padding:8px;}
+            .header{flex-direction:column;align-items:flex-start;padding:12px;}
+            .main-content{flex-direction:column;height:auto;}
+            .video-section{padding:8px;width:100%;min-width:0;}
+            .sidebar{padding:0 2px;width:100%;min-width:0;}
+            .video-container{min-height:180px;}
+            #localVideo{width:90px !important;height:68px !important;bottom:10px !important;left:10px !important;}
+            .video-controls{flex-wrap:wrap;gap:8px;padding:8px 6px;bottom:10px;}
+            .panel{margin-bottom:10px;}
+            .panel-content{padding:10px;}
+            .question-input{min-height:60px;}
+            .questions-list{max-height:200px;}
+        }
     </style>
 </head>
 <body>
@@ -125,6 +145,8 @@
                 <button class="control-btn btn-camera" id="btnCamera" title="Toggle Camera"><i class="fas fa-video"></i></button>
                 <button class="control-btn btn-screen" id="btnScreen" title="Share Screen"><i class="fas fa-desktop"></i></button>
                 <button class="control-btn btn-end" id="btnEnd" title="End Interview"><i class="fas fa-phone-slash"></i></button>
+                <!-- Fullscreen Button -->
+                <button class="control-btn" id="btnFullscreen" title="Fullscreen"><i class="fas fa-expand"></i></button>
             </div>
         </div>
 
@@ -225,6 +247,25 @@ socket.on('SignalingMessageBroadcast', (data) => {
     else if (data.type === 'ice-candidate') handleIce(data);
     else if (data.type === 'question') displayQuestion(data.text || '', data.question_id, data.sender_type);
     else if (data.type === 'answer' && data.text) displayAnswer(data.text, data.question_id, data.sender_type);
+});
+
+// Listen for force-end event from socket server
+socket.on('force-end', function(data) {
+    // Clean up media and connection on both sides
+    try {
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+        }
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+        }
+    } catch (e) {}
+    // Always redirect, even if already on end screen
+    if (window.location.href !== 'https://www.bitmaxgroup.com/') {
+        window.location.replace('https://www.bitmaxgroup.com/');
+    }
 });
 
 function sendSignal(msg) {
@@ -410,7 +451,12 @@ async function handleIce(data) {
     try {
         console.log('[WebRTC] Adding ICE candidate');
         if (peerConnection && data.candidate) {
-            await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+            // Only add ICE candidate if remote description is set
+            if (peerConnection.remoteDescription && peerConnection.remoteDescription.type) {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+            } else {
+                console.warn('[WebRTC] Skipped ICE candidate: remoteDescription not set yet');
+            }
         }
     } catch (error) {
         console.error('[WebRTC] Error adding ICE candidate:', error);
@@ -684,12 +730,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Accept': 'application/json'
             }
         });
+        // Notify all in room via socket.io (for instant force-end)
+        socket.emit('force-end', { room: 'interview.' + uniqueLink });
     } catch (e) {
         console.error('Failed to update interview status', e);
     }
-
-    alert('Interview ended.');
-    window.location.href = 'https://www.bitmaxgroup.com/';
+    // Clean up local media and connection immediately
+    try {
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+        }
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+        }
+    } catch (e) {}
+    // Always redirect, even if already on end screen
+    if (window.location.href !== 'https://www.bitmaxgroup.com/') {
+        window.location.replace('https://www.bitmaxgroup.com/');
+    }
 });
 
     })();
@@ -721,6 +781,23 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('An error occurred. Please try again.');
         });
     }
+
+    // Fullscreen logic
+document.getElementById('btnFullscreen')?.addEventListener('click', function() {
+    const videoSection = document.querySelector('.video-section');
+    if (!videoSection) return;
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+    } else {
+        if (videoSection.requestFullscreen) {
+            videoSection.requestFullscreen();
+        } else if (videoSection.webkitRequestFullscreen) { /* Safari */
+            videoSection.webkitRequestFullscreen();
+        } else if (videoSection.msRequestFullscreen) { /* IE11 */
+            videoSection.msRequestFullscreen();
+        }
+    }
+});
 </script>
 </body>
 </html>
