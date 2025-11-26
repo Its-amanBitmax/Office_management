@@ -71,11 +71,6 @@
                                 </option>
                             @endfor
                         </select>
-                        <select id="yearSelector" class="form-select form-select-sm" style="width: auto;">
-                            @for($y = date('Y') - 5; $y <= date('Y'); $y++)
-                                <option value="{{ $y }}" {{ (isset($year) ? $year : date('Y')) == $y ? 'selected' : '' }}>{{ $y }}</option>
-                            @endfor
-                        </select>
                         @if(auth('admin')->user()->is_super_admin ?? false)
                         <div class="btn-group" role="group">
                             <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
@@ -98,13 +93,13 @@
                         </div>
                         <div class="col-md-4">
                             <div class="border-end">
-                                <h4 class="text-success">₹{{ number_format($monthlyRemaining, 2) }}</h4>
-                                <p class="text-muted mb-0">Monthly Remaining</p>
+                                <h4 class="text-success">₹{{ number_format($budget->remaining_amount, 2) }}</h4>
+                                <p class="text-muted mb-0">Remaining</p>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <h4 class="text-danger">₹{{ number_format($monthlySpent, 2) }}</h4>
-                            <p class="text-muted mb-0">Monthly Spent</p>
+                            <h4 class="text-danger">₹{{ number_format($budget->budget_amount - $budget->remaining_amount, 2) }}</h4>
+                            <p class="text-muted mb-0">Spent</p>
                         </div>
                     </div>
                     @if($budget->remaining_amount <= 0)
@@ -250,23 +245,22 @@
     </div>
 </div>
 @endsection
+<script src="https://cdn.tailwindcss.com"></script>
 
 <script>
-document.getElementById('monthSelector').addEventListener('change', function() {
-    const selectedMonth = this.value;
-    const selectedYear = document.getElementById('yearSelector').value;
-    const currentUrl = new URL(window.location);
-    currentUrl.searchParams.set('month', selectedMonth);
-    currentUrl.searchParams.set('year', selectedYear);
-    window.location.href = currentUrl.toString();
-});
+document.addEventListener("DOMContentLoaded", function () {
+    const monthSelector = document.getElementById("monthSelector");
+    if (!monthSelector) return; // prevent JS error
 
-document.getElementById('yearSelector').addEventListener('change', function() {
-    const selectedYear = this.value;
-    const selectedMonth = document.getElementById('monthSelector').value;
-    const currentUrl = new URL(window.location);
-    currentUrl.searchParams.set('month', selectedMonth);
-    currentUrl.searchParams.set('year', selectedYear);
-    window.location.href = currentUrl.toString();
+    monthSelector.addEventListener("change", function () {
+        const selectedMonth = this.value;
+        const currentUrl = new URL(window.location.href);
+
+        currentUrl.searchParams.set("month", selectedMonth);
+        currentUrl.searchParams.set("year", "{{ $year ?? date('Y') }}");
+
+        window.location.href = currentUrl.toString();
+    });
 });
 </script>
+

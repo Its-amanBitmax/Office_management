@@ -70,6 +70,27 @@
                                     </span>
                                 </td>
                             </tr>
+                            <tr>
+    <th>Link Status:</th>
+    <td>
+        <span class="badge {{ $interview->link_status == '1' ? 'bg-success' : 'bg-danger' }}">
+            {{ $interview->link_status == '1' ? 'Active' : 'Inactive' }}
+        </span>
+
+        <form action="{{ route('interviews.toggleLinkStatus', $interview->id) }}"
+              method="POST"
+              class="d-inline ms-2">
+            @csrf
+            @method('PUT')
+
+            <button type="submit"
+                class="btn btn-sm {{ $interview->link_status == '1' ? 'btn-outline-danger' : 'btn-outline-success' }}">
+                {{ $interview->link_status == '1' ? 'Disable' : 'Enable' }}
+            </button>
+        </form>
+    </td>
+</tr>
+
                         </table>
                     </div>
                 </div>
@@ -84,14 +105,29 @@
                             </tr>
                             <tr>
                                 <th>Interview Link:</th>
-                                <td>
-                                    <a href="{{ route('interview.link', $interview->unique_link) }}" target="_blank" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-external-link-alt"></i> Open Interview Link
-                                    </a>
-                                    <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('{{ route('interview.link', $interview->unique_link) }}')">
-                                        <i class="fas fa-copy"></i> Copy Link
-                                    </button>
-                                </td>
+                              <td>
+    @if($interview->link_status == '1')
+        <a href="{{ route('interview.link', $interview->unique_link) }}"
+           target="_blank"
+           class="btn btn-sm btn-primary">
+            <i class="fas fa-external-link-alt"></i> Open Interview Link
+        </a>
+
+        <button class="btn btn-sm btn-outline-secondary ms-2"
+                onclick="copyToClipboard('{{ route('interview.link', $interview->unique_link) }}')">
+            <i class="fas fa-copy"></i> Copy Link
+        </button>
+    @else
+        <button class="btn btn-sm btn-secondary" disabled>
+            <i class="fas fa-lock"></i> Link Disabled
+        </button>
+
+        <button class="btn btn-sm btn-outline-secondary ms-2" disabled>
+            <i class="fas fa-copy"></i> Copy Disabled
+        </button>
+    @endif
+</td>
+
                             </tr>
                             <tr>
                                 <th>Interview Room:</th>

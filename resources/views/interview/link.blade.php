@@ -1,3 +1,63 @@
+@if($interview->link_status == '0')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interview Link Inactive</title>
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #eef2ff, #f8fafc);
+            font-family: 'Inter', sans-serif;
+        }
+        .expired-card {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            max-width: 420px;
+            width: 90%;
+        }
+        .expired-icon {
+            font-size: 60px;
+            color: #ef4444;
+            margin-bottom: 20px;
+        }
+        .expired-card h2 {
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        .expired-card p {
+            color: #64748b;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .expired-card a {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #4f46e5;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="expired-card">
+        <div class="expired-icon">⛔</div>
+        <h2>Interview Link Inactive</h2>
+        <p>
+            This interview link has been <strong>disabled or expired</strong>.
+            <br>Please contact the administrator for further assistance.
+        </p>
+        <a href="/">Back to Home</a>
+    </div>
+</body>
+</html>
+@else
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -761,3 +821,4 @@ function startInterview() {
 
 </body>
 </html>
+@endif

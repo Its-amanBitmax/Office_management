@@ -286,7 +286,12 @@ function sendSignal(msg) {
     
         const config = {
             iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' }
+                { urls: 'stun:stun.l.google.com:19302' },
+                {
+                    urls: 'turn:socket.bitmaxgroup.com:3478',
+                    username: 'webrtcuser',
+                    credential: 'StrongPass@123'
+                }
             ]
         };
     
@@ -657,20 +662,65 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        btnEnd.addEventListener('click', () => {
-            console.log('[Video Controls] End interview button clicked');
-            if (peerConnection) {
-                peerConnection.close();
-                peerConnection = null;
+      btnEnd.addEventListener('click', async () => {
+    console.log('[Video Controls] End interview button clicked');
+
+    // ✅ STOP MEDIA & CONNECTION
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+
+    // ✅ CALL BACKEND TO DISABLE LINK
+    try {
+        await fetch("{{ route('interview.end', $interview->unique_link) }}", {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
             }
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
-            }
-            alert('Interview ended.');
-            window.location.href = 'https://www.bitmaxgroup.com/';
         });
+    } catch (e) {
+        console.error('Failed to update interview status', e);
+    }
+
+    alert('Interview ended.');
+    window.location.href = 'https://www.bitmaxgroup.com/';
+});
+
     })();
+
+    // Add this function to handle the interviewer starting the interview
+    function startInterview() {
+        fetch("{{ route('interview.start', $interview->unique_link) }}", {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Optionally hide the modal or reload the page to update UI
+                const startModal = document.getElementById('startModal');
+                if (startModal) startModal.style.display = 'none';
+                location.reload();
+            } else {
+                alert('Failed to start interview. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error starting interview:', error);
+            alert('An error occurred. Please try again.');
+        });
+    }
 </script>
 </body>
 </html>

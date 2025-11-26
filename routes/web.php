@@ -6,6 +6,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\EmployeeCardController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\InterviewController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -121,6 +122,10 @@ Route::prefix('admin')->group(function () {
             'update' => 'attendance.update',
             'destroy' => 'attendance.destroy',
         ]);
+        Route::put(
+    '/interviews/{id}/toggle-link-status',
+    [InterviewController::class, 'toggleLinkStatus']
+)->name('interviews.toggleLinkStatus');
 
         // Salary Slips Management Routes
         Route::get('salary-slips/{salarySlip}/download-pdf', [\App\Http\Controllers\SalarySlipController::class, 'downloadPdf'])->name('salary-slips.download-pdf');
@@ -236,6 +241,10 @@ Route::get('interview/{unique_link}', [\App\Http\Controllers\InterviewController
 Route::post('interview/{unique_link}/verify', [\App\Http\Controllers\InterviewController::class, 'verifyCredentials'])->name('interview.verify');
 Route::post('interview/{unique_link}/start', [\App\Http\Controllers\InterviewController::class, 'startInterview'])->name('interview.start');
 Route::post('interview/log-error', [\App\Http\Controllers\InterviewController::class, 'logError'])->name('interview.log-error');
+Route::post(
+    'interview/{unique_link}/end',
+    [\App\Http\Controllers\InterviewController::class, 'endInterview']
+)->name('interview.end');
 
 // WebRTC Signaling Routes (API routes without web middleware)
 Route::post('interview/{unique_link}/signaling/send', [\App\Http\Controllers\InterviewController::class, 'sendSignalingMessage'])->name('interview.signaling.send')->withoutMiddleware(['web', 'csrf']);

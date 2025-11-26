@@ -23,12 +23,14 @@ class Interview extends Model
         'password',
         'results',
         'is_started',
+        'link_status', // ✅ ADD THIS
     ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
         'date' => 'date',
         'time' => 'datetime:H:i',
+        'link_status' => 'string', // ✅ enum('0','1') ke liye safe
     ];
 
     /**
@@ -43,7 +45,6 @@ class Interview extends Model
         try {
             return \Illuminate\Support\Facades\Crypt::decryptString($this->password);
         } catch (\Exception $e) {
-            // Return null if decryption fails (invalid payload)
             return null;
         }
     }

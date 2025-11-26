@@ -53,11 +53,6 @@ class ExpenseController extends Controller
 
         $budget = ExpenseBudget::getCurrentBudget();
 
-        // Check if there's enough budget
-        if ($budget->remaining_amount < $request->amount) {
-            return back()->withErrors(['amount' => 'Insufficient budget. Remaining budget: $' . number_format($budget->remaining_amount, 2)])->withInput();
-        }
-
         $expense = Expense::create([
             'title' => $request->title,
             'amount' => $request->amount,
@@ -66,8 +61,9 @@ class ExpenseController extends Controller
             'created_by' => Auth::guard('admin')->id(),
         ]);
 
-        // Deduct from budget
-        $budget->deductAmount($request->amount);
+        // Deduct from budget (allow negative remaining)
+        $budget->remaining_amount -= $request->amount;
+        $budget->save();
 
         // Log activity
         $this->logActivity('create', 'Expense', $expense->id, "Created expense: {$request->title} for ₹{$request->amount}");
@@ -93,18 +89,13 @@ class ExpenseController extends Controller
         $oldAmount = $expense->amount;
         $newAmount = $request->amount;
 
-        // Check if there's enough budget for the difference
-        if ($newAmount > $oldAmount) {
-            $difference = $newAmount - $oldAmount;
-            if ($budget->remaining_amount < $difference) {
-                return back()->withErrors(['amount' => 'Insufficient budget. Remaining budget: ₹' . number_format($budget->remaining_amount, 2)])->withInput();
-            }
-        }
-
+        // Remove budget check, allow negative remaining
         $expense->update($request->all());
 
-        // Adjust budget
-        $budget->adjustAmount($oldAmount, $newAmount);
+        // Adjust budget (allow negative)
+        $budget->remaining_amount += $oldAmount; // add back old
+        $budget->remaining_amount -= $newAmount; // subtract new
+        $budget->save();
 
         // Log activity
         $this->logActivity('update', 'Expense', $expense->id, "Updated expense: {$request->title} from ₹{$oldAmount} to ₹{$newAmount}");
@@ -119,8 +110,9 @@ class ExpenseController extends Controller
 
         $expense->delete();
 
-        // Add back to budget
-        $budget->addBackAmount($amount);
+        // Add back to budget (allow negative)
+        $budget->remaining_amount += $amount;
+        $budget->save();
 
         // Log activity
         $this->logActivity('delete', 'Expense', $expense->id, "Deleted expense: {$expense->title} for ₹{$amount}");

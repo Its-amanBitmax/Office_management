@@ -183,13 +183,14 @@ class InterviewController extends Controller
             }
 
             $request->validate([
-                'interview_code' => 'required|string', // Remove "in:" for flexibility
+                'interview_code' => 'required|string',
                 'password' => 'required|string',
             ]);
 
-            // Check if credentials match
             $decryptedPassword = $interview->decrypted_password;
             if ($request->interview_code === $interview->interview_code && $request->password === $decryptedPassword) {
+                // Set session flag for this interview link
+                session(['interview_verified_' . $unique_link => true]);
                 return response()->json([
                     'success' => true,
                     'message' => 'Credentials verified successfully! Interview access granted.',
@@ -236,14 +237,43 @@ class InterviewController extends Controller
      */
     public function showInterviewRoom($unique_link)
     {
+        \Log::info('Session flag:', ['key' => 'interview_verified_' . $unique_link, 'value' => session('interview_verified_' . $unique_link, false)]);
         $interview = Interview::where('unique_link', $unique_link)->first();
+        \Log::info('Interview status:', [
+            'is_started' => $interview ? $interview->is_started : null,
+            'link_status' => $interview ? $interview->link_status : null,
+        ]);
 
         if (!$interview) {
             abort(404, 'Interview not found.');
         }
 
+        // Bypass for debugging or admin (optional)
+        if (
+            request()->query('bypass') == '1'
+            // || auth()->check() && auth()->user()->isAdmin() // Uncomment if you have admin logic
+        ) {
+            session(['interview_verified_' . $unique_link => true]);
+        }
+
+        // Fallback: Allow access if credentials are passed in GET (not secure, only for debugging)
+        if (
+            request()->has('interview_code') &&
+            request()->has('password') &&
+            request()->input('interview_code') === $interview->interview_code &&
+            request()->input('password') === $interview->decrypted_password
+        ) {
+            session(['interview_verified_' . $unique_link => true]);
+        }
+
+        // Allow access if interview is started, even if session flag is missing
         if (!$interview->is_started) {
             return redirect()->route('interview.link', $unique_link)->with('error', 'Interview has not started yet.');
+        }
+
+        // Only check session flag if interview is not started
+        if (!$interview->is_started && !session('interview_verified_' . $unique_link, false)) {
+            return redirect()->route('interview.link', $unique_link)->with('error', 'Please verify your credentials to enter the interview room.');
         }
 
         \Log::info('Loading interview room for candidate: Interview ID ' . $interview->id . ', Unique Link: ' . $interview->unique_link);
@@ -442,4 +472,42 @@ class InterviewController extends Controller
             return response()->json(['error' => true], 500, [], JSON_UNESCAPED_SLASHES);
         }
     }
+     public function toggleLinkStatus($id)
+    {
+        $interview = Interview::findOrFail($id);
+
+        // Toggle logic (0 <-> 1)
+        $interview->link_status = $interview->link_status == '1' ? '0' : '1';
+        $interview->save();
+
+        return redirect()->back()->with('success', 'Link status updated successfully');
+    }
+
+    /**
+     * End the interview and deactivate the link.
+     */
+    public function endInterview($unique_link)
+    {
+        try {
+            $interview = Interview::where('unique_link', $unique_link)->first();
+
+            if (!$interview) {
+                return response()->json(['success' => false, 'message' => 'Interview not found.'], 404, [], JSON_UNESCAPED_SLASHES);
+            }
+
+            $interview->update([
+                'link_status' => '0',
+                'is_started' => 0
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Interview ended and link deactivated.'
+            ], 200, [], JSON_UNESCAPED_SLASHES);
+        } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json(['error' => true], 500, [], JSON_UNESCAPED_SLASHES);
+        }
+    }
 }
+
