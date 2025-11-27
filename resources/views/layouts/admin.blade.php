@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -622,7 +622,7 @@
 
         .chat-input:focus {
             border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
         }
 
         .chat-send {
@@ -651,37 +651,186 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Header -->
-    <header class="header">
-        <div class="header-left sidebar-shown">
+<header class="header">
+    <div class="header-left sidebar-shown">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <span class="company-name">
+            {{ auth('admin')->user()->company_name ?? 'Admin Panel' }}
+        </span>
+    </div>
 
-            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-           
-           <span class="company-name">{{ auth('admin')->user()->company_name ?? 'Admin Panel' }}</span>
+    <div class="user-info">
+
+        {{-- 🔍 SEARCH --}}
+        <div class="search-container">
+            <input type="text" class="search-input"
+                   placeholder="Search employees, tasks, admins, visitors..."
+                   id="global-search">
+            <i class="fas fa-search search-icon"></i>
+            <div class="search-results" id="search-results"></div>
         </div>
-        <div class="user-info">
-           <div class="search-container">
-                <input type="text" class="search-input" placeholder="Search employees, tasks, admins, visitors..." id="global-search">
-                <i class="fas fa-search search-icon"></i>
-                <div class="search-results" id="search-results"></div>
+
+        {{-- 🔔 NOTIFICATION ICON (ALL ADMINS) --}}
+        <div class="notification-icon"
+             onclick="toggleAdminNotificationDropdown()"
+             style="position: relative; margin: 0 1rem; cursor: pointer;">
+
+            <i class="fas fa-bell"
+               style="font-size:1.4rem; color:white; opacity:0.85;"></i>
+
+            <span id="admin-notification-count"
+                  style="display:none;
+                         position:absolute; top:-4px; right:-4px;
+                         background:#dc3545; color:white;
+                         border-radius:50%; font-size:0.7rem;
+                         padding:2px 6px; font-weight:bold;">
+            </span>
+
+            <div id="admin-notification-dropdown"
+                 style="display:none; position:absolute; right:0; top:36px;
+                        background:white; color:#333; min-width:320px;
+                        box-shadow:0 2px 8px rgba(0,0,0,0.15);
+                        border-radius:6px; z-index:2001;">
             </div>
-            
-            <div class="profile-avatar" onclick="openProfileModal()">
-                @if(auth('admin')->user() && auth('admin')->user()->profile_image)
-                    <img src="{{ asset('storage/profile_images/' . auth('admin')->user()->profile_image) }}" alt="Profile Image">
-                @else
-                    <div class="avatar-placeholder">
-                        {{ auth('admin')->user() ? strtoupper(substr(auth('admin')->user()->name, 0, 1)) : 'A' }}
+        </div>
+
+        {{-- 👤 PROFILE --}}
+        <div class="profile-avatar" onclick="openProfileModal()">
+            @if(auth('admin')->user()->profile_image)
+                <img src="{{ asset('storage/profile_images/' . auth('admin')->user()->profile_image) }}">
+            @else
+                <div class="avatar-placeholder">
+                    {{ strtoupper(substr(auth('admin')->user()->name,0,1)) }}
+                </div>
+            @endif
+        </div>
+
+        {{-- 🚪 LOGOUT --}}
+        <form method="POST" action="{{ route('admin.logout') }}">
+            @csrf
+            <button type="submit" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </form>
+    </div>
+    <audio id="notificationSound" preload="auto">
+    <source src="{{ asset('sound/notification.mp3') }}" type="audio/mpeg">
+</audio>
+
+</header>
+
+<script>
+let lastUnreadCount = 0;
+let canPlaySound = false;
+
+/* ✅ Browser sound unlock */
+document.addEventListener('click', () => {
+    canPlaySound = true;
+}, { once: true });
+
+function playNotificationSound() {
+    if (!canPlaySound) return;
+
+    const audio = document.getElementById('notificationSound');
+    if (!audio) return;
+
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+}
+
+/* ✅ Dropdown toggle */
+function toggleAdminNotificationDropdown() {
+    const el = document.getElementById('admin-notification-dropdown');
+    el.style.display = el.style.display === 'block' ? 'none' : 'block';
+}
+
+/* ✅ Fetch notifications */
+function fetchAdminNotifications() {
+
+    fetch("{{ route('admin.notifications.ajax') }}")
+        .then(res => res.json())
+        .then(data => {
+
+            const countEl = document.getElementById('admin-notification-count');
+            const dropdown = document.getElementById('admin-notification-dropdown');
+
+            /* 🔔 SOUND ONLY WHEN COUNT INCREASES */
+            if (data.unread_count > lastUnreadCount) {
+                playNotificationSound();
+            }
+            lastUnreadCount = data.unread_count;
+
+            /* ✅ Counter update */
+            if (data.unread_count > 0) {
+                countEl.innerText = data.unread_count;
+                countEl.style.display = 'inline-block';
+            } else {
+                countEl.style.display = 'none';
+            }
+
+            dropdown.innerHTML = '';
+
+            if (data.notifications.length === 0) {
+                dropdown.innerHTML = `
+                    <div style="padding:10px;text-align:center;">
+                        No notifications
+                    </div>`;
+                return;
+            }
+
+            data.notifications.forEach(n => {
+                dropdown.insertAdjacentHTML('beforeend', `
+                    <div class="notification-item"
+                         style="padding:10px;border-bottom:1px solid #eee;
+                                background:#f8f9fa;cursor:pointer;"
+                         onclick="markAdminNotificationRead(${n.id}, this)">
+                        <strong>${n.title}</strong><br>
+                        <span style="font-size:0.9em;">${n.message}</span>
+                        <div style="font-size:0.8em;color:#888;">
+                            ${new Date(n.created_at).toLocaleString()}
+                        </div>
                     </div>
-                @endif
-            </div>
-            <form method="POST" action="{{ route('admin.logout') }}" style="display: inline;">
-                @csrf
-                <button type="submit" class="logout-btn"> <i class="fas fa-sign-out-alt"></i></button>
-            </form>
-        </div>
-    </header>
+                `);
+            });
 
-    <!-- Sidebar -->
+            dropdown.insertAdjacentHTML('beforeend', `
+                <div style="text-align:center;padding:8px;">
+                    <a href="{{ route('admin.notifications.index') }}"
+                       style="font-size:0.95em;color:#007bff;">
+                        View All Notifications
+                    </a>
+                </div>
+            `);
+        });
+}
+
+/* ✅ Mark as read */
+function markAdminNotificationRead(id, el) {
+    fetch(`/admin/notifications/read/${id}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    }).then(() => {
+        el.remove();
+        fetchAdminNotifications();
+    });
+}
+
+/* ✅ Auto polling */
+fetchAdminNotifications();
+setInterval(fetchAdminNotifications, 5000);
+
+/* ✅ Close dropdown */
+document.addEventListener('click', function(e) {
+    const bell = document.querySelector('.notification-icon');
+    const dropdown = document.getElementById('admin-notification-dropdown');
+    if (dropdown && bell && !bell.contains(e.target)) {
+        dropdown.style.display = 'none';
+    }
+});
+</script>
+   <!-- Sidebar -->
     <aside class="sidebar show" id="sidebar">
         <div class="sidebar-header">
             @if(auth('admin')->user() && auth('admin')->user()->company_logo)
@@ -733,7 +882,9 @@
                         @if($admin->hasPermission('expenses'))
                         <li><a class="dropdown-item" href="{{ route('admin.expenses.index') }}"><i>💸</i> Expenses</a></li>
                         @endif
+                        @if($admin->hasPermission('interviews'))
                         <li><a class="dropdown-item" href="{{ route('admin.interviews.index') }}"><i>👥</i> Interviews</a></li>
+                        @endif
                    </ul>
                 </li>
                 @endif

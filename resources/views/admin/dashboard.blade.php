@@ -93,7 +93,7 @@
             <div class="profile-info">
                 <div style="display: flex; align-items: center; margin-bottom: 1rem;">
                     <div style="width: 50px; height: 50px; border-radius: 50%; margin-right: 1rem; overflow: hidden;">
-                        @if($admin->profile_image)
+                        @if($admin->profile_image && file_exists(public_path('storage/profile_images/' . $admin->profile_image)))
                             <img src="{{ asset('storage/profile_images/' . $admin->profile_image) }}" alt="Profile Image" style="width: 100%; height: 100%; object-fit: cover;">
                         @else
                             <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2rem;">

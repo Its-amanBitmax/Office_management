@@ -139,6 +139,11 @@ Route::prefix('admin')->group(function () {
             'update' => 'salary-slips.update',
             'destroy' => 'salary-slips.destroy',
         ]);
+        Route::post(
+    'salary-slips/{salarySlip}/send-to-documents',
+    [\App\Http\Controllers\SalarySlipController::class, 'sendToEmployeeDocuments']
+)->name('salary-slips.send-to-documents');
+
 
         // Visitors Management Routes
         Route::resource('visitors', \App\Http\Controllers\VisitorController::class)->names([
@@ -232,6 +237,15 @@ Route::prefix('admin')->group(function () {
         ]);
         Route::get('interviews/{interview}/room', [\App\Http\Controllers\InterviewController::class, 'showInterviewRoomAdmin'])->name('admin.interviews.room');
 
+        // Notifications Route
+        Route::get('/notifications', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('admin.notifications.index');
+        Route::post('/notifications/read/{id}', [\App\Http\Controllers\Admin\NotificationController::class, 'markAsRead']);
+        Route::post('/notifications/mark-all-read', [\App\Http\Controllers\Admin\NotificationController::class, 'markAllRead'])->name('admin.notifications.markAllRead');
+        Route::get('/notifications/ajax', [\App\Http\Controllers\Admin\NotificationController::class, 'ajax'])->name('admin.notifications.ajax');
+        Route::delete('notifications/{id}',
+    [\App\Http\Controllers\Admin\NotificationController::class, 'destroy']
+)->name('admin.notifications.destroy');
+
     });
 });
 
@@ -309,5 +323,58 @@ Route::prefix('employee')->group(function () {
             Route::get('/leave-requests/create', [\App\Http\Controllers\LeaveRequestController::class, 'employeeCreate'])->name('employee.leave-requests.create');
                     Route::get('/leave-requests/{leaveRequest}', [\App\Http\Controllers\LeaveRequestController::class, 'employeeShow'])->name('employee.leave-requests.show');
 
+        // Employee Notifications Routes
+        Route::middleware('employee')->group(function () {
+            Route::get('/notifications', function () {
+                $employee = auth('employee')->user();
+                if (!$employee) {
+                    abort(403);
+                }
+                $notifications = \App\Models\Notification::where('employee_id', $employee->id)
+                    ->latest()
+                    ->paginate(5);
+                return view('employee.notifications.index', compact('notifications'));
+            })->name('employee.notifications.index');
+
+            Route::post('/notifications/read/{id}', function ($id) {
+                $employee = auth('employee')->user();
+                if (!$employee) {
+                    return response()->json(['success' => false], 401);
+                }
+                \App\Models\Notification::where('id', $id)
+                    ->where('employee_id', $employee->id)
+                    ->update(['is_read' => true]);
+                return response()->json(['success' => true]);
+            });
+
+            Route::post('/notifications/read-all', function () {
+                \App\Models\Notification::where('employee_id', auth('employee')->id())
+                    ->update(['is_read' => true]);
+                return response()->json(['success' => true]);
+            })->name('employee.notifications.readAll');
+        });
+
+        // AJAX route outside middleware to avoid redirect to HTML
+        Route::get('/notifications/ajax', function () {
+            $employee = auth('employee')->user();
+            if (!$employee) {
+                return response()->json([
+                    'unread_count' => 0,
+                    'notifications' => []
+                ]);
+            }
+            $unreadCount = \App\Models\Notification::where('employee_id', $employee->id)
+                ->where('is_read', false)
+                ->count();
+            $notifications = \App\Models\Notification::where('employee_id', $employee->id)
+                ->where('is_read', false)
+                ->latest()
+                ->take(5)
+                ->get(['id', 'title', 'message', 'created_at']);
+            return response()->json([
+                'unread_count' => $unreadCount,
+                'notifications' => $notifications
+            ]);
+        })->name('employee.notifications.ajax');
 
 });
