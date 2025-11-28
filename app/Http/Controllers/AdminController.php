@@ -254,6 +254,7 @@ public function saveEvaluationPdf($id)
             'evaluation-report' => 'Evaluation Report',
             'interviews' => 'Interviews',
             'expenses' => 'Expenses',
+            'whatsapp' => 'WhatsApp Bot',
             'settings' => 'Settings',
             'logs' => 'Logs',
         ];
@@ -308,6 +309,7 @@ public function saveEvaluationPdf($id)
             'evaluation-report' => 'Evaluation Report',
             'interviews' => 'Interviews',
             'expenses' => 'Expenses',
+            'whatsapp' => 'WhatsApp Bot',
             'settings' => 'Settings',
             'logs' => 'Logs',
         ];

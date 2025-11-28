@@ -246,6 +246,26 @@ Route::prefix('admin')->group(function () {
     [\App\Http\Controllers\Admin\NotificationController::class, 'destroy']
 )->name('admin.notifications.destroy');
 
+        // WhatsApp Bot Routes
+        Route::middleware('admin:whatsapp')->group(function () {
+            Route::get('/whatsapp', [\App\Http\Controllers\WhatsAppController::class, 'index'])->name('admin.whatsapp.index');
+            Route::post('/whatsapp/send', [\App\Http\Controllers\WhatsAppController::class, 'sendMessage'])->name('admin.whatsapp.send');
+            Route::post('/whatsapp/send-group', [\App\Http\Controllers\WhatsAppController::class, 'sendGroupMessage'])->name('admin.whatsapp.send-group');
+            Route::post('/whatsapp/send-bulk', [\App\Http\Controllers\WhatsAppController::class, 'sendBulkMessage'])->name('admin.whatsapp.send-bulk');
+
+            // Media sending routes
+            Route::post('/whatsapp/send-media', [\App\Http\Controllers\WhatsAppController::class, 'sendMediaMessage'])->name('admin.whatsapp.send-media');
+            Route::post('/whatsapp/send-bulk-media', [\App\Http\Controllers\WhatsAppController::class, 'sendBulkMediaMessage'])->name('admin.whatsapp.send-bulk-media');
+            Route::post('/whatsapp/send-group-media', [\App\Http\Controllers\WhatsAppController::class, 'sendGroupMediaMessage'])->name('admin.whatsapp.send-group-media');
+
+            // AJAX routes for auto-refresh
+            Route::get('/whatsapp/status', [\App\Http\Controllers\WhatsAppController::class, 'getStatus'])->name('admin.whatsapp.status');
+            Route::get('/whatsapp/qr-code', [\App\Http\Controllers\WhatsAppController::class, 'getQrCodeAjax'])->name('admin.whatsapp.qr-code');
+            Route::get('/whatsapp/groups-data', [\App\Http\Controllers\WhatsAppController::class, 'getGroupsAjax'])->name('admin.whatsapp.groups-data');
+            Route::post('/whatsapp/start-bot', [\App\Http\Controllers\WhatsAppController::class, 'startBot'])->name('admin.whatsapp.start-bot');
+            Route::post('/whatsapp/delete-session', [\App\Http\Controllers\WhatsAppController::class, 'deleteSession'])->name('admin.whatsapp.delete-session');
+        });
+
     });
 });
 

@@ -13,6 +13,11 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+    'whatsapp' => [
+    'bot_url' => env('WHATSAPP_BOT_URL'),
+    'api_key' => env('WHATSAPP_API_KEY'),
+],
+
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),

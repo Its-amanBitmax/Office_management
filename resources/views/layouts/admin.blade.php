@@ -919,6 +919,14 @@ document.addEventListener('click', function(e) {
                 </li>
                 @endif
 
+                @if($admin && $admin->hasPermission('whatsapp'))
+                <li>
+                    <a href="{{ route('admin.whatsapp.index') }}" class="{{ request()->routeIs('admin.whatsapp.*') ? 'active' : '' }}">
+                         <i class="fab fa-whatsapp text-success me-2"></i>WhatsApp Bot
+                    </a>
+                </li>
+                @endif
+
                 @if($admin && $admin->hasPermission('activities'))
                 <li>
                     <a href="{{ route('activities.index') }}" class="{{ request()->routeIs('activities.*') ? 'active' : '' }}">
