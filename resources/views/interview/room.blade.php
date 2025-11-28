@@ -18,6 +18,7 @@
         body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;color:var(--gray-800);}
         .container{max-width:1400px;margin:0 auto;padding:20px;}
         .header{background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-radius:var(--border-radius);padding:20px;margin-bottom:20px;box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
+        .header-recording{margin-left:auto;margin-right:20px;}
         .header-left h1{font-size:24px;font-weight:700;color:var(--gray-900);margin-bottom:4px;}
         .header-left p{color:var(--gray-600);font-size:14px;}
         .debug-info{font-size:10px;color:var(--gray-500);margin-top:4px;}
@@ -36,6 +37,8 @@
         #remoteAudio{display:none;}
         .local-video-overlay{position:absolute;bottom:20px;left:20px;width:200px;height:150px;border-radius:8px;border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:10;cursor:pointer;}
         .local-video-overlay video{width:100%;height:100%;object-fit:cover;border-radius:5px;}
+        .local-video-overlay:fullscreen{background:#000;}
+        .local-video-overlay video:fullscreen{width:100vw;height:100vh;object-fit:contain;}
         .video-controls-toggle{position:absolute;top:20px;right:20px;width:40px;height:40px;border-radius:50%;background:var(--primary);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;z-index:15;}
         .video-controls{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:16px;padding:12px 20px;background:rgba(0,0,0,.5);border-radius:25px;backdrop-filter:blur(5px);z-index:15;}
         .video-controls.hidden{display:none !important;}
@@ -64,6 +67,11 @@
         .btn-send-answer{width:100%;padding:8px;background:var(--success);color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;margin-top:8px;font-size:12px;}
         .btn-send-answer:hover{background:#059669;}
         .answer-display{margin-top:8px;padding:8px;background:var(--gray-100);border-radius:6px;font-size:14px;color:var(--gray-700);}
+        .recording-buttons{display:flex;gap:8px;align-items:center;}
+        .btn-record-small{padding:6px 12px;font-size:12px;border:none;border-radius:6px;font-weight:600;cursor:pointer;}
+        .btn-record-small:hover{transform:translateY(-1px);}
+        .btn-start-record{background:#dc2626;color:#fff;}
+        .btn-stop-record{background:#16a34a;color:#fff;}
         .connection-status{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;font-size:12px;font-weight:600;margin-bottom:16px;}
         .status-connected{background:var(--success);color:#fff;}
         .status-connecting{background:var(--warning);color:#fff;}
@@ -117,6 +125,17 @@
             <p>{{ $interview->candidate_name }} - {{ $interview->date->format('M j, Y') }} at {{ $interview->time->format('g:i A') }}</p>
             <div class="debug-info">Room: {{ $interview->unique_link }} | User: {{ $is_interviewer ? 'Interviewer' : 'Candidate' }}</div>
         </div>
+
+        @if($is_interviewer ?? false)
+        <div class="header-recording" id="recordingPanel" style="display:none;">
+            <div class="recording-buttons">
+                <button class="btn-record-small btn-start-record" id="btnStartRecord">Start</button>
+                <button class="btn-record-small btn-stop-record hidden" id="btnStopRecord">Stop & Download</button>
+            </div>
+            <p id="recordStatus" style="margin-top:8px; color:#64748b; font-size:12px;">Ready</p>
+        </div>
+        @endif
+
         <div class="header-right">
             <div class="status-badge {{ $interview->is_started ? 'status-live' : 'status-waiting' }}">
                 {{ $interview->is_started ? 'Live' : 'Waiting' }}
@@ -201,16 +220,7 @@
 @endif
 
 <!-- RECORDING PANEL (Interviewer Only) -->
-@if($is_interviewer ?? false)
-<div class="panel" id="recordingPanel" style="display:none;">
-    <div class="panel-header">Recording</div>
-    <div class="panel-content">
-        <button class="btn-send" id="btnStartRecord" style="background:#dc2626;">Start Recording</button>
-        <button class="btn-send hidden" id="btnStopRecord" style="background:#16a34a;">Stop & Download</button>
-        <p id="recordStatus" style="margin-top:8px; color:#64748b;">Ready</p>
-    </div>
-</div>
-@endif
+
 
 <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
 <script>
@@ -223,6 +233,11 @@ let localStream = null;
 let peerConnection = null;
 let isMicOn = false;
 let isCamOn = false;
+let mediaRecorder = null;
+let recordedChunks = [];
+let isRecording = false;
+let isLocalFullscreen = false;
+let isScreenSharing = false;
 
 /* ==================== SOCKET.IO CLIENT ==================== */
 const socket = io("https://socket.bitmaxgroup.com", {
@@ -288,6 +303,9 @@ function sendSignal(msg) {
         if (localVideo) {
             localVideo.srcObject = localStream;
             localVideo.style.display = 'block';
+
+            // Add click handler for fullscreen toggle
+            localVideo.addEventListener('click', toggleLocalFullscreen);
         }
 
         // Debug audio tracks specifically
@@ -372,6 +390,14 @@ function sendSignal(msg) {
             if (peerConnection.connectionState === 'connected') {
                 connStatus.textContent = 'Connected';
                 connStatus.className = 'connection-status status-connected';
+
+                // Show recording panel for interviewer when connected
+                if (isInterviewer) {
+                    const recordingPanel = document.getElementById('recordingPanel');
+                    if (recordingPanel) {
+                        recordingPanel.style.display = 'block';
+                    }
+                }
             } else if (peerConnection.connectionState === 'connecting') {
                 connStatus.textContent = 'Connecting...';
                 connStatus.className = 'connection-status status-connecting';
@@ -681,25 +707,43 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('[Video Controls] Screen share button clicked');
             if (peerConnection) {
                 try {
-                    const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                    const screenTrack = screenStream.getVideoTracks()[0];
+                    if (!isScreenSharing) {
+                        // Start screen sharing
+                        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                        const screenTrack = screenStream.getVideoTracks()[0];
 
-                    const sender = peerConnection.getSenders().find(s => s.track.kind === 'video');
-                    if (sender) {
-                        await sender.replaceTrack(screenTrack);
-                        console.log('[Video Controls] Replaced video track with screen track');
-                    }
+                        // Replace track with screen track
+                        const sender = peerConnection.getSenders().find(s => s.track.kind === 'video');
+                        if (sender) {
+                            await sender.replaceTrack(screenTrack);
+                            console.log('[Video Controls] Replaced video track with screen track');
+                        }
 
-                    screenTrack.onended = async () => {
-                        console.log('[Video Controls] Screen sharing ended, reverting to camera');
-                        if (localStream) {
+                        screenTrack.onended = async () => {
+                            console.log('[Video Controls] Screen sharing ended, reverting to camera');
+                            if (localStream) {
+                                const cameraTrack = localStream.getVideoTracks()[0];
+                                if (sender && cameraTrack) {
+                                    await sender.replaceTrack(cameraTrack);
+                                    console.log('[Video Controls] Reverted to camera video track');
+                                }
+                            }
+                            isScreenSharing = false;
+                        };
+
+                        isScreenSharing = true;
+                    } else {
+                        // Stop screen sharing - revert to camera
+                        const sender = peerConnection.getSenders().find(s => s.track.kind === 'video');
+                        if (sender && localStream) {
                             const cameraTrack = localStream.getVideoTracks()[0];
-                            if (sender && cameraTrack) {
+                            if (cameraTrack) {
                                 await sender.replaceTrack(cameraTrack);
                                 console.log('[Video Controls] Reverted to camera video track');
                             }
                         }
-                    };
+                        isScreenSharing = false;
+                    }
                 } catch (err) {
                     console.error('[Video Controls] Failed to start screen sharing:', err);
                 }
@@ -798,6 +842,200 @@ document.getElementById('btnFullscreen')?.addEventListener('click', function() {
         }
     }
 });
+
+// Local video fullscreen toggle
+function toggleLocalFullscreen() {
+    const localVideoOverlay = document.querySelector('.local-video-overlay');
+    if (!localVideoOverlay) return;
+
+    if (!document.fullscreenElement) {
+        // Enter fullscreen
+        if (localVideoOverlay.requestFullscreen) {
+            localVideoOverlay.requestFullscreen();
+        } else if (localVideoOverlay.webkitRequestFullscreen) { /* Safari */
+            localVideoOverlay.webkitRequestFullscreen();
+        } else if (localVideoOverlay.msRequestFullscreen) { /* IE11 */
+            localVideoOverlay.msRequestFullscreen();
+        }
+        isLocalFullscreen = true;
+    } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+        isLocalFullscreen = false;
+    }
+}
+
+// Listen for fullscreen changes
+document.addEventListener('fullscreenchange', () => {
+    const localVideoOverlay = document.querySelector('.local-video-overlay');
+    if (!document.fullscreenElement && isLocalFullscreen) {
+        // User exited fullscreen (e.g., pressed ESC)
+        isLocalFullscreen = false;
+    }
+});
+
+/* ==================== RECORDING ==================== */
+function startRecording() {
+    if (isRecording) return;
+
+    console.log('[Recording] Starting recording...');
+
+    // Create a combined stream from both local and remote streams
+    const remoteVideo = document.getElementById('remoteVideo');
+    const localVideo = document.getElementById('localVideo');
+
+    if (!remoteVideo.srcObject || !localVideo.srcObject) {
+        alert('Both video streams must be active to start recording');
+        return;
+    }
+
+    // Create a canvas to combine both video streams
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 1920;
+    canvas.height = 1080;
+
+    // Create video elements for processing
+    const remoteVideoElement = document.createElement('video');
+    const localVideoElement = document.createElement('video');
+
+    remoteVideoElement.srcObject = remoteVideo.srcObject;
+    localVideoElement.srcObject = localVideo.srcObject;
+
+    remoteVideoElement.muted = true;
+    localVideoElement.muted = true;
+
+    // Wait for videos to be ready
+    Promise.all([
+        new Promise(resolve => { remoteVideoElement.onloadedmetadata = resolve; remoteVideoElement.play(); }),
+        new Promise(resolve => { localVideoElement.onloadedmetadata = resolve; localVideoElement.play(); })
+    ]).then(() => {
+        // Combine audio streams
+        const audioContext = new AudioContext();
+        const destination = audioContext.createMediaStreamDestination();
+
+        // Add remote audio
+        const remoteAudioSource = audioContext.createMediaStreamSource(remoteVideo.srcObject);
+        remoteAudioSource.connect(destination);
+
+        // Add local audio
+        const localAudioSource = audioContext.createMediaStreamSource(localVideo.srcObject);
+        localAudioSource.connect(destination);
+
+        // Draw combined video
+        function drawFrame() {
+            if (!isRecording) return;
+
+            // Draw remote video (full screen)
+            ctx.drawImage(remoteVideoElement, 0, 0, canvas.width, canvas.height);
+
+            // Draw local video (picture-in-picture)
+            const pipWidth = 320;
+            const pipHeight = 240;
+            const pipX = canvas.width - pipWidth - 20;
+            const pipY = canvas.height - pipHeight - 20;
+
+            ctx.drawImage(localVideoElement, pipX, pipY, pipWidth, pipHeight);
+
+            // Add border to PIP
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(pipX, pipY, pipWidth, pipHeight);
+
+            requestAnimationFrame(drawFrame);
+        }
+
+        // Create combined stream
+        const combinedStream = new MediaStream();
+
+        // Add video track from canvas
+        const videoStream = canvas.captureStream(30);
+        videoStream.getVideoTracks().forEach(track => combinedStream.addTrack(track));
+
+        // Add combined audio
+        destination.stream.getAudioTracks().forEach(track => combinedStream.addTrack(track));
+
+        // Start recording
+        mediaRecorder = new MediaRecorder(combinedStream, {
+            mimeType: 'video/webm;codecs=vp9,opus'
+        });
+
+        recordedChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
+        };
+
+        mediaRecorder.onstop = () => {
+            console.log('[Recording] Recording stopped');
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+
+            // Create download link
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `interview_${uniqueLink}_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            URL.revokeObjectURL(url);
+
+            // Reset recording state
+            isRecording = false;
+            recordedChunks = [];
+            mediaRecorder = null;
+
+            // Update UI
+            updateRecordingUI();
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        drawFrame();
+
+        console.log('[Recording] Recording started');
+        updateRecordingUI();
+    }).catch(error => {
+        console.error('[Recording] Error starting recording:', error);
+        alert('Failed to start recording. Please ensure both video streams are active.');
+    });
+}
+
+function stopRecording() {
+    if (!isRecording || !mediaRecorder) return;
+
+    console.log('[Recording] Stopping recording...');
+    mediaRecorder.stop();
+}
+
+function updateRecordingUI() {
+    const btnStartRecord = document.getElementById('btnStartRecord');
+    const btnStopRecord = document.getElementById('btnStopRecord');
+    const recordStatus = document.getElementById('recordStatus');
+
+    if (!btnStartRecord || !btnStopRecord || !recordStatus) return;
+
+    if (isRecording) {
+        btnStartRecord.classList.add('hidden');
+        btnStopRecord.classList.remove('hidden');
+        recordStatus.textContent = 'Recording...';
+        recordStatus.style.color = '#dc2626';
+    } else {
+        btnStartRecord.classList.remove('hidden');
+        btnStopRecord.classList.add('hidden');
+        recordStatus.textContent = 'Ready';
+        recordStatus.style.color = '#64748b';
+    }
+}
+
+// Recording button event handlers
+document.getElementById('btnStartRecord')?.addEventListener('click', startRecording);
+document.getElementById('btnStopRecord')?.addEventListener('click', stopRecording);
 </script>
 </body>
 </html>
