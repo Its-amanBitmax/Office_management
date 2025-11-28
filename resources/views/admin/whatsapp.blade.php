@@ -160,11 +160,10 @@
                             <label for="media_file" class="form-label fw-semibold">
                                 <i class="fas fa-file-upload me-1"></i>Attach Media/File (Optional)
                             </label>
-                            <input type="file" class="form-control" id="media_file" name="media_file"
-                                   accept="image/*,video/*,.pdf,.doc,.docx">
+                            <input type="file" class="form-control" id="media_file" name="media_file">
                             <div class="form-text">
                                 <small class="text-muted">
-                                    Supported: Images (JPG, PNG, GIF), Videos (MP4, MOV, AVI), Documents (PDF, DOC, DOCX) - Max 50MB
+                                    Any file type and size supported
                                 </small>
                             </div>
                         </div>
@@ -225,11 +224,10 @@
                             <label for="bulk_media_file" class="form-label fw-semibold">
                                 <i class="fas fa-file-upload me-1"></i>Attach Media/File (Optional)
                             </label>
-                            <input type="file" class="form-control" id="bulk_media_file" name="media_file"
-                                   accept="image/*,video/*,.pdf,.doc,.docx">
+                            <input type="file" class="form-control" id="bulk_media_file" name="media_file">
                             <div class="form-text">
                                 <small class="text-muted">
-                                    Supported: Images (JPG, PNG, GIF), Videos (MP4, MOV, AVI), Documents (PDF, DOC, DOCX) - Max 50MB
+                                    Any file type and size supported
                                 </small>
                             </div>
                         </div>
@@ -278,11 +276,10 @@
                             <label for="group_media_file" class="form-label fw-semibold">
                                 <i class="fas fa-file-upload me-1"></i>Attach Media/File (Optional)
                             </label>
-                            <input type="file" class="form-control" id="group_media_file" name="media_file"
-                                   accept="image/*,video/*,.pdf,.doc,.docx">
+                            <input type="file" class="form-control" id="group_media_file" name="media_file">
                             <div class="form-text">
                                 <small class="text-muted">
-                                    Supported: Images (JPG, PNG, GIF), Videos (MP4, MOV, AVI), Documents (PDF, DOC, DOCX) - Max 50MB
+                                    Any file type and size supported
                                 </small>
                             </div>
                         </div>
@@ -299,42 +296,54 @@
     <!-- Instructions Card -->
     <div class="row">
         <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-info-circle me-2 text-primary"></i>
-                        Setup Instructions
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-primary mb-3">
-                                <i class="fas fa-play-circle me-2"></i>
-                                Getting Started
-                            </h6>
-                            <ol class="mb-0">
-                                <li>Open terminal/command prompt</li>
-                                <li>Navigate to project directory: <code>cd whatsapp-bot</code></li>
-                                <li>Start the bot: <code>node index.js</code></li>
-                                <li>Scan the QR code with WhatsApp Web</li>
-                            </ol>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-success mb-3">
-                                <i class="fas fa-lightbulb me-2"></i>
-                                Usage Tips
-                            </h6>
-                            <ul class="mb-0">
-                                <li><strong>Individual:</strong> Select employee, message auto-fills phone number</li>
-                                <li><strong>Bulk:</strong> Hold Ctrl/Cmd to select multiple employees</li>
-                                <li><strong>Groups:</strong> Group IDs are auto-detected from connected WhatsApp</li>
-                                <li><strong>Status:</strong> Green badge = Connected, Yellow = Disconnected</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+           <div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-info-circle me-2 text-primary"></i>
+            Setup Instructions
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-primary mb-3">
+                    <i class="fas fa-play-circle me-2"></i>
+                    Getting Started
+                </h6>
+                <ol class="mb-0">
+                    <li>Open terminal/command prompt</li>
+                    <li>Navigate to project directory: <code>cd whatsapp-bot</code></li>
+                    <li>Start the bot: <code>node index.js</code></li>
+                    <li>Scan the QR code with WhatsApp Web</li>
+                </ol>
             </div>
+            <div class="col-md-6">
+                <h6 class="text-success mb-3">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    Usage Tips
+                </h6>
+                <ul class="mb-0">
+                    <li><strong>Individual:</strong> Select employee, message auto-fills phone number</li>
+                    <li><strong>Bulk:</strong> Hold Ctrl/Cmd to select multiple employees</li>
+                    <li><strong>Groups:</strong> Group IDs are auto-detected from connected WhatsApp</li>
+                    <li><strong>Status:</strong> Green badge = Connected, Yellow = Disconnected</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ✅ IMPORTANT NOTE -->
+        <hr>
+        <div class="alert alert-warning mb-0 mt-3">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Important Note:</strong>
+            Larger files may take more time to upload and send on WhatsApp.
+            For best performance, it is recommended to use
+            <strong>smaller or compressed files</strong>.
+            Very large media files (especially videos) may fail due to WhatsApp Web limitations.
+        </div>
+    </div>
+</div>
+
         </div>
     </div>
 </div>
@@ -671,6 +680,9 @@ function updateGroups() {
         .then(data => {
             const groupSelect = document.getElementById('group');
             if (groupSelect && Array.isArray(data)) {
+                // Store the currently selected value
+                const selectedValue = groupSelect.value;
+
                 // Clear existing options except the first one
                 while (groupSelect.options.length > 1) {
                     groupSelect.remove(1);
@@ -683,6 +695,11 @@ function updateGroups() {
                     option.textContent = group.name;
                     groupSelect.appendChild(option);
                 });
+
+                // Restore the selected value if it still exists in the options
+                if (selectedValue && groupSelect.querySelector(`option[value="${selectedValue}"]`)) {
+                    groupSelect.value = selectedValue;
+                }
             }
         })
         .catch(error => console.error('Error updating groups:', error));
@@ -693,7 +710,7 @@ function startAutoRefresh() {
     statusInterval = setInterval(updateConnectionStatus, 1000);
 
     // Update QR code every 1 second
-    qrInterval = setInterval(updateQrCode, 1000);
+    qrInterval = setInterval(updateQrCode, 5000);
 
     // Update groups every 1 second
     groupsInterval = setInterval(updateGroups, 1000);

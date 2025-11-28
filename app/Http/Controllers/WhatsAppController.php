@@ -17,9 +17,11 @@ class WhatsAppController extends Controller
 
     public function index()
     {
-        $employees = Employee::select('id', 'name', 'phone')
-            ->whereNotNull('phone')
-            ->get();
+       $employees = Employee::select('id', 'name', 'phone', 'status')
+    ->whereNotNull('phone')
+    ->where('status', 'active')
+    ->get();
+
 
         return view('admin.whatsapp', [
             'employees' => $employees,
@@ -92,7 +94,7 @@ class WhatsAppController extends Controller
         $request->validate([
             'number' => 'required|string',
             'message' => 'nullable|string',
-            'media_file' => 'nullable|file|mimes:jpeg,jpg,png,gif,mp4,mov,avi,pdf,doc,docx|max:51200',
+            'media_file' => 'nullable|file',
         ]);
 
         // If media file is present, use media sending method
@@ -122,7 +124,7 @@ class WhatsAppController extends Controller
         $request->validate([
             'groupId' => 'required|string',
             'message' => 'nullable|string',
-            'media_file' => 'nullable|file|mimes:jpeg,jpg,png,gif,mp4,mov,avi,pdf,doc,docx|max:51200',
+            'media_file' => 'nullable|file',
         ]);
 
         // If media file is present, use media sending method
@@ -152,7 +154,7 @@ class WhatsAppController extends Controller
         $request->validate([
             'phone_numbers' => 'required|string',
             'message' => 'nullable|string',
-            'media_file' => 'nullable|file|mimes:jpeg,jpg,png,gif,mp4,mov,avi,pdf,doc,docx|max:51200',
+            'media_file' => 'nullable|file',
         ]);
 
         // If media file is present, use media sending method
@@ -197,33 +199,29 @@ class WhatsAppController extends Controller
         $request->validate([
             'number' => 'required|string',
             'message' => 'nullable|string',
-            'media_file' => 'required|file|mimes:jpeg,jpg,png,gif,mp4,mov,avi,pdf,doc,docx|max:51200', // 50MB max
+            'media_file' => 'required|file|max:51200',
         ]);
 
         try {
             $file = $request->file('media_file');
-            $filePath = $file->store('temp/whatsapp', 'public');
-            $fileUrl = asset('storage/' . $filePath);
 
-            // Send media via bot API with file URL
-            $response = $this->bot()->post(
+            Http::withHeaders([
+                'x-api-key' => config('services.whatsapp.api_key'),
+            ])->attach(
+                'file',
+                fopen($file->getRealPath(), 'r'),
+                $file->getClientOriginalName()
+            )->post(
                 config('services.whatsapp.bot_url').'/send-media',
                 [
-                    'number' => $request->number,
-                    'fileUrl' => $fileUrl,
+                    'number'  => $request->number,
                     'caption' => $request->message ?? '',
                 ]
             );
 
-            // Clean up temp file
-            \Storage::disk('public')->delete($filePath);
-
             return back()->with('success', 'Media message sent successfully ✅');
+
         } catch (\Exception $e) {
-            // Clean up temp file on error
-            if (isset($filePath)) {
-                \Storage::disk('public')->delete($filePath);
-            }
             return back()->with('error', $e->getMessage());
         }
     }
@@ -233,7 +231,7 @@ class WhatsAppController extends Controller
         $request->validate([
             'phone_numbers' => 'required|string',
             'message' => 'nullable|string',
-            'media_file' => 'required|file|mimes:jpeg,jpg,png,gif,mp4,mov,avi,pdf,doc,docx|max:51200',
+            'media_file' => 'required|file',
         ]);
 
         $numbers = array_filter(array_map('trim', explode("\n", $request->phone_numbers)));
@@ -241,8 +239,6 @@ class WhatsAppController extends Controller
 
         try {
             $file = $request->file('media_file');
-            $filePath = $file->store('temp/whatsapp', 'public');
-            $fileUrl = asset('storage/' . $filePath);
 
             foreach ($numbers as $phone) {
                 if (!str_starts_with($phone, '91')) {
@@ -250,32 +246,32 @@ class WhatsAppController extends Controller
                 }
 
                 try {
-                    $this->bot()->post(
+                    Http::withHeaders([
+                        'x-api-key' => config('services.whatsapp.api_key'),
+                    ])->attach(
+                        'file',
+                        fopen($file->getRealPath(), 'r'),
+                        $file->getClientOriginalName()
+                    )->post(
                         config('services.whatsapp.bot_url').'/send-media',
                         [
-                            'number' => $phone,
-                            'fileUrl' => $fileUrl,
+                            'number'  => $phone,
                             'caption' => $request->message ?? '',
                         ]
                     );
+
                     $sent++;
                 } catch (\Exception $e) {
                     // skip failed numbers
                 }
             }
 
-            // Clean up temp file
-            \Storage::disk('public')->delete($filePath);
-
             return back()->with(
                 $sent ? 'success' : 'error',
-                "{$sent} media message(s) sent successfully"
+                "{$sent} media message(s) sent ✅"
             );
+
         } catch (\Exception $e) {
-            // Clean up temp file on error
-            if (isset($filePath)) {
-                \Storage::disk('public')->delete($filePath);
-            }
             return back()->with('error', $e->getMessage());
         }
     }
@@ -285,34 +281,48 @@ class WhatsAppController extends Controller
         $request->validate([
             'groupId' => 'required|string',
             'message' => 'nullable|string',
-            'media_file' => 'required|file|mimes:jpeg,jpg,png,gif,mp4,mov,avi,pdf,doc,docx|max:51200',
+            'media_file' => 'required|file',
         ]);
 
         try {
             $file = $request->file('media_file');
-            $filePath = $file->store('temp/whatsapp', 'public');
-            $fileUrl = asset('storage/' . $filePath);
 
-            // Send media via bot API with file URL (same endpoint as individual media)
-            $response = $this->bot()->post(
+            Http::withHeaders([
+                'x-api-key' => config('services.whatsapp.api_key'),
+            ])->attach(
+                'file',
+                fopen($file->getRealPath(), 'r'),
+                $file->getClientOriginalName()
+            )->post(
                 config('services.whatsapp.bot_url').'/send-media',
                 [
-                    'number' => $request->groupId, // Use groupId as number for whatsapp-web.js
-                    'fileUrl' => $fileUrl,
+                    'number'  => $request->groupId,
                     'caption' => $request->message ?? '',
                 ]
             );
 
-            // Clean up temp file
-            \Storage::disk('public')->delete($filePath);
+            return back()->with('success', 'Group media sent ✅');
 
-            return back()->with('success', 'Group media message sent successfully ✅');
         } catch (\Exception $e) {
-            // Clean up temp file on error
-            if (isset($filePath)) {
-                \Storage::disk('public')->delete($filePath);
-            }
             return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /* ---------------- START BOT ---------------- */
+
+    public function startBot()
+    {
+        try {
+            $this->bot()->post(config('services.whatsapp.bot_url').'/start');
+            return response()->json([
+                'success' => true,
+                'message' => 'WhatsApp bot started successfully ✅'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
         }
     }
 
