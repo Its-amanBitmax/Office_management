@@ -885,6 +885,7 @@ document.addEventListener('click', function(e) {
                         @if($admin->hasPermission('interviews'))
                         <li><a class="dropdown-item" href="{{ route('admin.interviews.index') }}"><i>👥</i> Interviews</a></li>
                         @endif
+                        <li><a class="dropdown-item" href="{{ route('hr-mis-reports.index') }}"><i>📊</i> HR MIS Reports</a></li>
                    </ul>
                 </li>
                 @endif

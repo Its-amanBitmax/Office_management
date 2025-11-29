@@ -238,6 +238,20 @@ Route::prefix('admin')->group(function () {
         ]);
         Route::get('interviews/{interview}/room', [\App\Http\Controllers\InterviewController::class, 'showInterviewRoomAdmin'])->name('admin.interviews.room');
 
+        // HR MIS Reports Management Routes
+        Route::middleware('admin:hr-mis-reports')->group(function () {
+            Route::resource('hr-mis-reports', \App\Http\Controllers\HrMisReportController::class)->names([
+                'index' => 'hr-mis-reports.index',
+                'create' => 'hr-mis-reports.create',
+                'store' => 'hr-mis-reports.store',
+                'show' => 'hr-mis-reports.show',
+                'edit' => 'hr-mis-reports.edit',
+                'update' => 'hr-mis-reports.update',
+                'destroy' => 'hr-mis-reports.destroy',
+            ]);
+            Route::get('hr-mis-reports/{id}/download-pdf', [\App\Http\Controllers\HrMisReportController::class, 'downloadPdf'])->name('hr-mis-reports.download-pdf');
+        });
+
         // Notifications Route
         Route::get('/notifications', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('admin.notifications.index');
         Route::post('/notifications/read/{id}', [\App\Http\Controllers\Admin\NotificationController::class, 'markAsRead']);

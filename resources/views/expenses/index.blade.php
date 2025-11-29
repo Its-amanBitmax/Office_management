@@ -15,7 +15,7 @@
         </a>
     </div>
 
-    @if(auth('admin')->user()->is_super_admin ?? false)
+    @if((auth('admin')->user()->is_super_admin ?? false) || auth('admin')->user()->id == 3)
     <!-- Monthly Report Export -->
     <div class="row mb-4">
         <div class="col-md-12">
@@ -71,7 +71,7 @@
                                 </option>
                             @endfor
                         </select>
-                        @if(auth('admin')->user()->is_super_admin ?? false)
+                        @if((auth('admin')->user()->is_super_admin ?? false) || auth('admin')->user()->id == 3)
                         <div class="btn-group" role="group">
                             <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
                                 <i class="fas fa-plus"></i> Add Budget
@@ -116,8 +116,8 @@
         </div>
     </div>
 
-    <!-- Budget Update Modal (for Super Admin) -->
-    @if(auth('admin')->user()->is_super_admin ?? false)
+    <!-- Budget Update Modal (for Super Admin and Sub Admin ID 3) -->
+    @if((auth('admin')->user()->is_super_admin ?? false) || auth('admin')->user()->id == 3)
     <!-- Add Budget Modal -->
     <div class="modal fade" id="addBudgetModal" tabindex="-1">
         <div class="modal-dialog">
