@@ -13,6 +13,9 @@
 
     <a href="{{ route('attendance.monthly') }}" class="btn btn-info">View Monthly Attendance</a>
     <a href="{{ route('admin.leave-requests.index') }}" class="btn btn-success">Manage Leave Requests</a>
+    <a href="{{ route('attendance.export-today-pdf', ['date' => $date ?? \Carbon\Carbon::today()->format('Y-m-d')]) }}" class="btn btn-danger" target="_blank">
+        <i class="fas fa-download"></i> Download PDF
+    </a>
 </div>
 
 @if(session('success'))

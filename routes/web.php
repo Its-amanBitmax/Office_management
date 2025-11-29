@@ -113,6 +113,7 @@ Route::prefix('admin')->group(function () {
         Route::get('attendance/export-monthly', [AttendanceController::class, 'exportMonthly'])->name('attendance.exportMonthly');
         Route::post('attendance/bulk-update', [AttendanceController::class, 'bulkUpdate'])->name('attendance.bulk-update');
         Route::get('attendance/report/{date?}', [AttendanceController::class, 'report'])->name('attendance.report');
+        Route::get('attendance/export-today-pdf', [AttendanceController::class, 'exportTodayPdf'])->name('attendance.export-today-pdf');
         Route::resource('attendance', AttendanceController::class)->names([
             'index' => 'attendance.index',
             'create' => 'attendance.create',

@@ -12,6 +12,7 @@ use DateTimeZone;
 use App\Traits\Loggable;
 use App\Exports\MonthlyAttendanceExport;
 use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AttendanceController extends Controller
 {
@@ -509,6 +510,37 @@ foreach ($admins as $adminUser) {
         }
 
         return Excel::download(new MonthlyAttendanceExport($request->employee_id, $month, $year), $fileName);
+    }
+
+    /**
+     * Export today's attendance data to PDF
+     */
+    public function exportTodayPdf(Request $request)
+    {
+        $date = $request->get('date', Carbon::today('Asia/Kolkata')->format('Y-m-d'));
+        $selectedDate = Carbon::parse($date, 'Asia/Kolkata');
+
+        // Get all active employees with their attendance for the selected date
+        $employees = Employee::where('status', 'active')->with(['attendance' => function($query) use ($date) {
+            $query->where('date', $date);
+        }])->get();
+
+        // Get attendance statistics for the selected date
+        $stats = [
+            'total_employees' => $employees->count(),
+            'present' => Attendance::where('date', $date)->where('status', 'Present')->count(),
+            'absent' => Attendance::where('date', $date)->where('status', 'Absent')->count(),
+            'leave' => Attendance::where('date', $date)->where('status', 'Leave')->count(),
+            'half_day' => Attendance::where('date', $date)->where('status', 'Half Day')->count(),
+            'holiday' => Attendance::where('date', $date)->where('status', 'Holiday')->count(),
+            'ncns' => Attendance::where('date', $date)->where('status', 'NCNS')->count(),
+            'lwp' => Attendance::where('date', $date)->where('status', 'LWP')->count(),
+        ];
+
+        $pdf = Pdf::loadView('admin.attendance.pdf', compact('employees', 'selectedDate', 'stats', 'date'));
+        $fileName = 'Attendance_' . $selectedDate->format('Y-m-d') . '.pdf';
+
+        return $pdf->download($fileName);
     }
 
     /**
