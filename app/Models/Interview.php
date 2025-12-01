@@ -23,7 +23,9 @@ class Interview extends Model
         'password',
         'results',
         'is_started',
-        'link_status', // ✅ ADD THIS
+        'link_status',
+        'round_count',
+        'round_details',
     ];
 
     protected $casts = [
@@ -31,6 +33,7 @@ class Interview extends Model
         'date' => 'date',
         'time' => 'datetime:H:i',
         'link_status' => 'string', // ✅ enum('0','1') ke liye safe
+        'round_details' => 'array',
     ];
 
     /**
@@ -47,5 +50,13 @@ class Interview extends Model
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    /**
+     * Get the rounds attribute (alias for round_details).
+     */
+    public function getRoundsAttribute()
+    {
+        return $this->round_details ?? [];
     }
 }

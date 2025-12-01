@@ -29,6 +29,8 @@
                         <th>Phone</th>
                         <th>Profile</th>
                         <th>Experience</th>
+                        <th>Date</th>
+                        <th>Time</th>
                         <th>Status</th>
                         <th>Results</th>
                         <th>Actions</th>
@@ -44,6 +46,8 @@
                             <td>{{ $interview->candidate_phone ?: 'N/A' }}</td>
                             <td>{{ Str::limit($interview->candidate_profile, 50) ?: 'N/A' }}</td>
                             <td>{{ Str::limit($interview->candidate_experience, 50) ?: 'N/A' }}</td>
+                            <td>{{ $interview->date->format('M d, Y') }}</td>
+                            <td>{{ $interview->time->format('h:i A') }}</td>
                             <td>
                                 <span class="badge
                                     @if($interview->status == 'scheduled') bg-primary
@@ -92,7 +96,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="11" class="text-center">No interviews found.</td>
+                            <td colspan="12" class="text-center">No interviews found.</td>
                         </tr>
                     @endforelse
                 </tbody>

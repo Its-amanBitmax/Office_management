@@ -177,6 +177,36 @@
 
                 <div class="row mt-4">
                     <div class="col-12">
+                        <h6 class="text-muted">Round Details</h6>
+                        @if($interview->rounds && count($interview->rounds) > 0)
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th width="10%">Round</th>
+                                            <th width="40%">Remarks</th>
+                                            <th width="30%">Conducted By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($interview->rounds as $round)
+                                            <tr>
+                                                <td>{{ $round['round_number'] ?? 'N/A' }}</td>
+                                                <td>{{ $round['remarks'] ?? 'N/A' }}</td>
+                                                <td>{{ $round['conducted_by'] ?? 'N/A' }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <p class="text-muted">No round details available.</p>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
                         <h6 class="text-muted">Timestamps</h6>
                         <table class="table table-sm">
                             <tr>

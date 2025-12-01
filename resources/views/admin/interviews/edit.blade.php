@@ -162,6 +162,39 @@
                         </div>
                     </div>
 
+                    
+
+                    <div class="mb-3">
+                        <label class="form-label">Round Details</label>
+                        <div id="rounds-container">
+                            @if($interview->rounds)
+                                @foreach($interview->rounds as $index => $round)
+                                    <div class="round-item border p-3 mb-3">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="form-label">Round {{ $round['round_number'] ?? ($index + 1) }}</label>
+                                                <input type="number" class="form-control" name="rounds[{{ $index }}][round_number]" value="{{ $round['round_number'] ?? ($index + 1) }}" min="1" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Remarks</label>
+                                                <textarea class="form-control" name="rounds[{{ $index }}][remarks]" rows="2" placeholder="Remarks for this round">{{ $round['remarks'] ?? '' }}</textarea>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Conducted By</label>
+                                                <input type="text" class="form-control" name="rounds[{{ $index }}][conducted_by]" value="{{ $round['conducted_by'] ?? '' }}" placeholder="Name of interviewer">
+                                            </div>
+                                            <div class="col-md-1 d-flex align-items-end">
+                                                <button type="button" class="btn btn-danger btn-sm remove-round-btn">Remove</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="add-round-btn">Add Round</button>
+                        <small class="form-text text-muted">Add details for each interview round including remarks and who conducted it</small>
+                    </div>
+
                     <div class="d-flex justify-content-between">
                         <a href="{{ route('admin.interviews.show', $interview) }}" class="btn btn-secondary">Cancel</a>
                         <button type="submit" class="btn btn-primary">Update Interview</button>
@@ -171,4 +204,49 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let roundIndex = {{ count($interview->rounds ?? []) }};
+    const roundsContainer = document.getElementById('rounds-container');
+    const addRoundBtn = document.getElementById('add-round-btn');
+
+    function createRoundElement(index, roundData = null) {
+        const roundDiv = document.createElement('div');
+        roundDiv.className = 'round-item border p-3 mb-3';
+        roundDiv.innerHTML = `
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">Round ${index + 1}</label>
+                    <input type="number" class="form-control" name="rounds[${index}][round_number]" value="${roundData ? roundData.round_number || (index + 1) : (index + 1)}" min="1" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Remarks</label>
+                    <textarea class="form-control" name="rounds[${index}][remarks]" rows="2" placeholder="Remarks for this round">${roundData ? roundData.remarks || '' : ''}</textarea>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Conducted By</label>
+                    <input type="text" class="form-control" name="rounds[${index}][conducted_by]" value="${roundData ? roundData.conducted_by || '' : ''}" placeholder="Name of interviewer">
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-danger btn-sm remove-round-btn">Remove</button>
+                </div>
+            </div>
+        `;
+        return roundDiv;
+    }
+
+    addRoundBtn.addEventListener('click', function() {
+        const roundElement = createRoundElement(roundIndex);
+        roundsContainer.appendChild(roundElement);
+        roundIndex++;
+    });
+
+    roundsContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-round-btn')) {
+            e.target.closest('.round-item').remove();
+        }
+    });
+});
+</script>
 @endsection

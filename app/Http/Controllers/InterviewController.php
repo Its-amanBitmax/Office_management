@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class InterviewController extends Controller
 {
@@ -47,6 +48,11 @@ public function store(Request $request)
         'interview_code' => 'nullable|string|max:255',
         'password' => 'nullable|string|max:255',
         'results' => ['nullable', Rule::in(['pending', 'selected', 'rejected'])],
+        'round_count' => 'nullable|integer|min:1',
+        'rounds' => 'nullable|array',
+        'rounds.*.round_number' => 'nullable|integer|min:1',
+        'rounds.*.remarks' => 'nullable|string',
+        'rounds.*.conducted_by' => 'nullable|string',
     ]);
 
     // ✅ Generate UUIDs
@@ -68,6 +74,10 @@ public function store(Request $request)
         $validated['candidate_resume_path'] =
             $request->file('candidate_resume_path')->store('resumes', 'public');
     }
+
+    // ✅ Map rounds to round_details
+    $validated['round_details'] = $validated['rounds'] ?? [];
+    unset($validated['rounds']);
 
     // ✅ Create interview
     $interview = Interview::create($validated);
@@ -143,6 +153,11 @@ public function store(Request $request)
             'interview_code' => 'nullable|string|max:255',
             'password' => 'nullable|string|max:255',
             'results' => ['nullable', Rule::in(['pending', 'selected', 'rejected'])],
+            'round_count' => 'nullable|integer|min:1',
+            'rounds' => 'nullable|array',
+            'rounds.*.round_number' => 'nullable|integer|min:1',
+            'rounds.*.remarks' => 'nullable|string',
+            'rounds.*.conducted_by' => 'nullable|string',
         ]);
 
         // Handle empty results as null
@@ -239,7 +254,7 @@ public function store(Request $request)
                 'message' => 'Invalid interview code or password.'
             ], 401, [], JSON_UNESCAPED_SLASHES);
         } catch (\Throwable $e) {
-            \Log::error($e);
+            Log::error($e);
             return response()->json(['error' => true], 500, [], JSON_UNESCAPED_SLASHES);
         }
     }
@@ -263,7 +278,7 @@ public function store(Request $request)
                 'message' => 'Interview started successfully.'
             ], 200, [], JSON_UNESCAPED_SLASHES);
         } catch (\Throwable $e) {
-            \Log::error($e);
+            Log::error($e);
             return response()->json(['error' => true], 500, [], JSON_UNESCAPED_SLASHES);
         }
     }
@@ -273,9 +288,9 @@ public function store(Request $request)
      */
     public function showInterviewRoom($unique_link)
     {
-        \Log::info('Session flag:', ['key' => 'interview_verified_' . $unique_link, 'value' => session('interview_verified_' . $unique_link, false)]);
+        Log::info('Session flag:', ['key' => 'interview_verified_' . $unique_link, 'value' => session('interview_verified_' . $unique_link, false)]);
         $interview = Interview::where('unique_link', $unique_link)->first();
-        \Log::info('Interview status:', [
+        Log::info('Interview status:', [
             'is_started' => $interview ? $interview->is_started : null,
             'link_status' => $interview ? $interview->link_status : null,
         ]);
@@ -312,7 +327,7 @@ public function store(Request $request)
             return redirect()->route('interview.link', $unique_link)->with('error', 'Please verify your credentials to enter the interview room.');
         }
 
-        \Log::info('Loading interview room for candidate: Interview ID ' . $interview->id . ', Unique Link: ' . $interview->unique_link);
+        Log::info('Loading interview room for candidate: Interview ID ' . $interview->id . ', Unique Link: ' . $interview->unique_link);
 
         return view('interview.room', compact('interview') + ['is_interviewer' => false, 'is_candidate' => true]);
     }
@@ -322,7 +337,7 @@ public function store(Request $request)
      */
     public function showInterviewRoomAdmin(Interview $interview)
     {
-        \Log::info('Loading interview room for interviewer: Interview ID ' . $interview->id);
+        Log::info('Loading interview room for interviewer: Interview ID ' . $interview->id);
 
         return view('interview.room', compact('interview') + ['is_interviewer' => true, 'is_candidate' => false]);
     }
@@ -341,7 +356,7 @@ public function store(Request $request)
                 'error' => 'nullable|string',
             ]);
 
-            \Log::error('JavaScript Error: ' . $request->message, [
+            Log::error('JavaScript Error: ' . $request->message, [
                 'filename' => $request->filename,
                 'lineno' => $request->lineno,
                 'colno' => $request->colno,
@@ -352,7 +367,7 @@ public function store(Request $request)
 
             return response()->json(['success' => true], 200, [], JSON_UNESCAPED_SLASHES);
         } catch (\Throwable $e) {
-            \Log::error($e);
+            Log::error($e);
             return response()->json(['error' => true], 500, [], JSON_UNESCAPED_SLASHES);
         }
     }
@@ -397,7 +412,7 @@ public function store(Request $request)
                 'message_id' => $msg->id
             ], 200, [], JSON_UNESCAPED_SLASHES);
         } catch (\Throwable $e) {
-            \Log::error($e);
+            Log::error($e);
             return response()->json(['error' => true, 'message' => $e->getMessage()], 500, [], JSON_UNESCAPED_SLASHES);
         }
     }
@@ -464,7 +479,7 @@ public function store(Request $request)
                     ];
 
                     if ($message->type === 'offer' || $message->type === 'answer') {
-                        \Log::info('Sending SDP length=' . strlen($message->sdp));
+                        Log::info('Sending SDP length=' . strlen($message->sdp));
                         $response['sdp'] = $message->sdp;
                     } elseif ($message->type === 'ice-candidate') {
                         $response['ice_candidate'] = $message->ice_candidate;
@@ -477,7 +492,7 @@ public function store(Request $request)
                 }),
             ], 200, [], JSON_UNESCAPED_SLASHES);
         } catch (\Throwable $e) {
-            \Log::error($e);
+            Log::error($e);
             return response()->json(['error' => true], 500, [], JSON_UNESCAPED_SLASHES);
         }
     }
@@ -504,7 +519,7 @@ public function store(Request $request)
                 'message' => 'Signaling messages cleared successfully.'
             ], 200, [], JSON_UNESCAPED_SLASHES);
         } catch (\Throwable $e) {
-            \Log::error($e);
+            Log::error($e);
             return response()->json(['error' => true], 500, [], JSON_UNESCAPED_SLASHES);
         }
     }
@@ -548,7 +563,7 @@ public function store(Request $request)
                     ]
                 ]);
             } catch (\Throwable $e) {
-                \Log::warning('Could not notify socket server for force end: ' . $e->getMessage());
+                Log::warning('Could not notify socket server for force end: ' . $e->getMessage());
             }
 
             return response()->json([
@@ -556,7 +571,7 @@ public function store(Request $request)
                 'message' => 'Interview ended and link deactivated.'
             ], 200, [], JSON_UNESCAPED_SLASHES);
         } catch (\Throwable $e) {
-            \Log::error($e);
+            Log::error($e);
             return response()->json(['error' => true], 500, [], JSON_UNESCAPED_SLASHES);
         }
     }
