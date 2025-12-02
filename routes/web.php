@@ -7,6 +7,8 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\EmployeeCardController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InterviewController;
+use Illuminate\Support\Facades\Mail;
+
 Route::get('/', function () {
     return view('welcome');
 });
@@ -18,6 +20,33 @@ Route::get('/terms-of-service', function () {
 Route::get('/privacy-policy', function () {
     return view('privacy-policy');
 })->name('privacy');
+
+Route::get('/test-hr-mail', function () {
+
+    Mail::mailer('hr_smtp')->raw(
+        'HR Mail Test Successful ✅ (Admin CC included)',
+        function ($msg) {
+
+            // ✅ HR FROM (IMPORTANT)
+            $msg->from(
+                config('mail.hr_from.address'),
+                config('mail.hr_from.name')
+            );
+
+            // ✅ Candidate / Receiver
+            $msg->to('aman@bitmaxgroup.com');
+
+            // ✅ Admin CC
+            $msg->cc([
+                'abhishek@bitmaxgroup.com', // Admin
+            ]);
+
+            $msg->subject('HR SMTP Test with Admin CC');
+        }
+    );
+
+    return 'HR Mail Sent with Admin CC';
+});
 
 
 Route::prefix('admin')->group(function () {

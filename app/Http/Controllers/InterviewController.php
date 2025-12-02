@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use App\Mail\InterviewInviteMail;
+use Illuminate\Support\Facades\Mail;
+use App\Models\Admin;
+use App\Models\Notification;
+
 
 class InterviewController extends Controller
 {
@@ -33,6 +38,8 @@ class InterviewController extends Controller
     /**
      * Store a newly created interview in storage.
      */
+
+
 public function store(Request $request)
 {
     $validated = $request->validate([
@@ -56,8 +63,8 @@ public function store(Request $request)
     ]);
 
     // ✅ Generate UUIDs
-    $validated['unique_id'] = Str::uuid();
-    $validated['unique_link'] = Str::uuid();
+    $validated['unique_id']   = (string) Str::uuid();
+    $validated['unique_link'] = (string) Str::uuid();
 
     // ✅ Empty results → null
     if (empty($validated['results'])) {
@@ -83,15 +90,27 @@ public function store(Request $request)
     $interview = Interview::create($validated);
 
     /* ===============================
+       🔔 SEND EMAIL (HR → Candidate, CC → Admins)
+    ================================= */
+
+    try {
+        Mail::mailer('hr_smtp')
+            ->to($interview->candidate_email)   // Candidate
+            ->cc(env('ADMIN_MAIL_USERNAME'))             // Admin CC
+            ->send(new InterviewInviteMail($interview));
+
+    } catch (\Exception $e) {
+        Log::error('Interview invite mail failed: ' . $e->getMessage());
+    }
+
+    /* ===============================
        🔔 NOTIFICATIONS (SKIP SELF)
     ================================= */
 
-    // Logged-in admin / sub-admin
     $actor = auth('admin')->user();
     $actorName = $actor ? $actor->name : 'Admin';
 
-    // Super Admin + Sub Admins with interview permission
-    $admins = \App\Models\Admin::all()->filter(function ($admin) use ($actor) {
+    $admins = Admin::all()->filter(function ($admin) use ($actor) {
 
         // ❌ Skip creator
         if ($actor && $admin->id === $actor->id) {
@@ -103,11 +122,11 @@ public function store(Request $request)
     });
 
     foreach ($admins as $adminUser) {
-        \App\Models\Notification::create([
+        Notification::create([
             'admin_id' => $adminUser->id,
-            'title' => 'New Interview Scheduled',
-            'message' => "{$actorName} scheduled an interview for {$interview->candidate_name} on {$interview->date} at {$interview->time}.",
-            'is_read' => false,
+            'title'    => 'New Interview Scheduled',
+            'message'  => "{$actorName} scheduled an interview for {$interview->candidate_name} on {$interview->date} at {$interview->time}.",
+            'is_read'  => false,
         ]);
     }
 
@@ -115,7 +134,7 @@ public function store(Request $request)
 
     return redirect()
         ->route('admin.interviews.index')
-        ->with('success', 'Interview created successfully.');
+        ->with('success', 'Interview created and email sent successfully.');
 }
 
 
