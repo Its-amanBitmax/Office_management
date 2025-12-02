@@ -60,6 +60,8 @@ Route::prefix('admin')->group(function () {
             ]);
         });
 
+
+        
         // Admin Reports Routes
         Route::middleware('admin:reports')->group(function () {
             Route::get('reports', [\App\Http\Controllers\AdminReportController::class, 'index'])->name('admin.reports.index');
@@ -411,5 +413,13 @@ Route::prefix('employee')->group(function () {
                 'notifications' => $notifications
             ]);
         })->name('employee.notifications.ajax');
+
+        Route::middleware(['auth:employee'])->group(function () {
+    Route::get('attendance/mark', [AttendanceController::class, 'mark'])
+        ->name('employee.attendance.mark');
+
+    Route::post('attendance/submit', [AttendanceController::class, 'submit'])
+        ->name('employee.attendance.submit');
+});
 
 });

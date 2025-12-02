@@ -8,11 +8,14 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use DateTimeZone;
 use App\Traits\Loggable;
 use App\Exports\MonthlyAttendanceExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\QueryException;
+
 
 class AttendanceController extends Controller
 {
@@ -185,10 +188,23 @@ foreach ($admins as $adminUser) {
     /**
      * Display the specified resource.
      */
-    public function show(Attendance $attendance)
-    {
-        return view('admin.attendance.show', compact('attendance'));
-    }
+   public function show($id)
+{
+    $attendance = Attendance::with('employee')->findOrFail($id);
+
+    return response()->json([
+        'success' => true,
+        'employee' => $attendance->employee->name,
+        'status' => $attendance->status,
+        'marked_time' => $attendance->marked_time,
+        'marked_by' => $attendance->marked_by_type,
+        'ip' => $attendance->ip_address,
+        'image' => $attendance->image
+            ? asset('storage/'.$attendance->image)
+            : null,
+    ]);
+}
+
 
     /**
      * Show the form for editing the specified resource.
@@ -596,5 +612,143 @@ foreach ($admins as $adminUser) {
         'total_deductions' => $totalDeductions,
     ];
 }
+
+
+
+
+
+
+public function mark(Request $request)
+{
+    // ✅ Office WiFi IPv4 ONLY
+    $officeIps = [
+        '103.154.247.10',
+    ];
+
+    // ✅ Detect real client IP
+    $userIp = $request->header('CF-Connecting-IP')
+            ?? $request->header('X-Forwarded-For')
+            ?? $request->ip();
+
+    // ✅ If proxy sends multiple IPs, take first
+    $userIp = trim(explode(',', $userIp)[0]);
+
+    // ✅ Log for debugging
+    Log::info('Attendance IP Check', [
+        'ip' => $userIp,
+        'expects_json' => $request->expectsJson(),
+        'agent' => $request->userAgent(),
+    ]);
+
+    /* ---------------------------------
+       🔒 SECURITY CHECKS
+    --------------------------------- */
+
+    // 🚫 Block IPv6 (mostly mobile personal networks)
+    if (filter_var($userIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+        return $this->denyAttendance($request);
+    }
+
+    // 🚫 Block non-office IPv4
+    if (!in_array($userIp, $officeIps, true)) {
+        return $this->denyAttendance($request);
+    }
+
+    /* ---------------------------------
+       ✅ ALLOWED
+    --------------------------------- */
+
+    // ✅ AJAX → only permission check
+    if ($request->expectsJson()) {
+        return response()->json([
+            'success' => true,
+            'message' => 'Attendance allowed'
+        ], 200);
+    }
+
+    // ✅ Normal browser → open camera page
+    return view('employee.attendance.mark');
+}
+
+/**
+ * ❌ Common deny response (AJAX + normal)
+ */
+private function denyAttendance(Request $request)
+{
+    if ($request->expectsJson()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Attendance can only be marked from Office WiFi'
+        ], 403);
+    }
+
+    abort(403, 'Attendance can only be marked from Office WiFi');
+}
+
+
+
+
+public function submit(Request $request)
+{
+    $request->validate([
+        'image' => 'required|string',
+    ]);
+
+    $employeeId = auth('employee')->id();
+    $today = now()->toDateString();
+
+    // ✅ Decide status by server time
+    $now = Carbon::now('Asia/Kolkata');
+    $halfDayTime = Carbon::createFromTime(9, 30, 0, 'Asia/Kolkata');
+    $status = $now->greaterThan($halfDayTime) ? 'Half Day' : 'Present';
+
+    /* -----------------------------
+       IMAGE HANDLE
+    ------------------------------ */
+    $imageData = $request->image;
+
+    if (!preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+        return back()->with('error', 'Invalid image format');
+    }
+
+    $image = base64_decode(substr($imageData, strpos($imageData, ',') + 1));
+    if ($image === false) {
+        return back()->with('error', 'Image decoding failed');
+    }
+
+    $extension = strtolower($type[1]);
+    if (!in_array($extension, ['jpg', 'jpeg', 'png'])) {
+        return back()->with('error', 'Invalid image type');
+    }
+
+    $fileName = 'attendance_' . $employeeId . '_' . now()->timestamp . '.' . $extension;
+    $path = 'attendance/' . $fileName;
+    Storage::disk('public')->put($path, $image);
+
+    /* --------------------------------
+       ✅ INSERT OR UPDATE (KEY FIX)
+    -------------------------------- */
+
+    Attendance::updateOrCreate(
+        [
+            'employee_id' => $employeeId,
+            'date'        => $today,      // ✅ unique key
+        ],
+        [
+            'status'        => $status,
+            'marked_time'   => $now->format('H:i:s'),
+            'ip_address'    => $request->ip(),
+            'image'         => $path,
+            'marked_by_type'=> 'Employee',
+        ]
+    );
+
+    return redirect()->route('employee.attendance')
+        ->with('success', 'Attendance saved as ' . $status);
+}
+
+
+
+
 
 }

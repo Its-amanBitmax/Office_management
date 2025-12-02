@@ -83,17 +83,24 @@
                     @endif
                 </td> --}}
                 <td>
-                    @if($attendance)
-                        <a href="{{ route('attendance.edit', $attendance->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                        <form action="{{ route('attendance.destroy', $attendance->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to delete this attendance record?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                        </form>
-                    @else
-                        <a href="{{ route('attendance.create') }}" class="btn btn-sm btn-success">Add</a>
-                    @endif
-                </td>
+    @if($attendance)
+        <button class="btn btn-sm btn-info"
+                onclick="openAttendanceModal({{ $attendance->id }})">
+            View
+        </button>
+
+        <a href="{{ route('attendance.edit', $attendance->id) }}" class="btn btn-sm btn-warning">Edit</a>
+
+        <form action="{{ route('attendance.destroy', $attendance->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to delete this attendance record?');">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+        </form>
+    @else
+        <a href="{{ route('attendance.create') }}" class="btn btn-sm btn-success">Add</a>
+    @endif
+</td>
+
             </tr>
         @endforeach
     </tbody>
@@ -107,6 +114,27 @@
     <input type="hidden" name="status" id="form-status">
     <input type="hidden" name="remarks" id="form-remarks">
 </form>
+<!-- Attendance View Modal -->
+<div class="modal fade" id="attendanceViewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Attendance Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body" id="attendance-modal-content">
+                <div class="text-center">
+                    <div class="spinner-border text-primary"></div>
+                    <p class="mt-2">Loading attendance...</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 
 <script>
 function markAttendance(employeeId, status, date) {
@@ -256,5 +284,55 @@ function showAlert(message, type) {
         alertDiv.remove();
     }, 3000);
 }
+
+function openAttendanceModal(attendanceId)
+{
+    const modalContent = document.getElementById('attendance-modal-content');
+    modalContent.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2">Loading attendance...</p>
+        </div>
+    `;
+
+    const modal = new bootstrap.Modal(
+        document.getElementById('attendanceViewModal')
+    );
+    modal.show();
+
+    fetch(`/management/admin/attendance/${attendanceId}`, {
+        headers: {
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) {
+            modalContent.innerHTML = `<p class="text-danger">Unable to load attendance</p>`;
+            return;
+        }
+
+        modalContent.innerHTML = `
+            <table class="table table-bordered">
+                <tr><th>Employee</th><td>${data.employee}</td></tr>
+                <tr><th>Status</th><td>${data.status}</td></tr>
+                <tr><th>Marked Time</th><td>${data.marked_time}</td></tr>
+                <tr><th>Marked By</th><td>${data.marked_by}</td></tr>
+                <tr><th>IP Address</th><td>${data.ip}</td></tr>
+            </table>
+
+            ${data.image ? `
+                <div class="mt-3 text-center">
+                    <h6>Captured Image</h6>
+                    <img src="${data.image}" class="img-fluid rounded" style="max-height:400px">
+                </div>
+            ` : '<p class="text-muted">No image available</p>'}
+        `;
+    })
+    .catch(() => {
+        modalContent.innerHTML = `<p class="text-danger">Error loading attendance</p>`;
+    });
+}
+
 </script>
 @endsection
