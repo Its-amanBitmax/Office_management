@@ -21,32 +21,32 @@ Route::get('/privacy-policy', function () {
     return view('privacy-policy');
 })->name('privacy');
 
-Route::get('/test-hr-mail', function () {
+// Route::get('/test-hr-mail', function () {
 
-    Mail::mailer('hr_smtp')->raw(
-        'HR Mail Test Successful ✅ (Admin CC included)',
-        function ($msg) {
+//     Mail::mailer('hr_smtp')->raw(
+//         'HR Mail Test Successful ✅ (Admin CC included)',
+//         function ($msg) {
 
-            // ✅ HR FROM (IMPORTANT)
-            $msg->from(
-                config('mail.hr_from.address'),
-                config('mail.hr_from.name')
-            );
+//             // ✅ HR FROM (IMPORTANT)
+//             $msg->from(
+//                 config('mail.hr_from.address'),
+//                 config('mail.hr_from.name')
+//             );
 
-            // ✅ Candidate / Receiver
-            $msg->to('aman@bitmaxgroup.com');
+//             // ✅ Candidate / Receiver
+//             $msg->to('aman@bitmaxgroup.com');
 
-            // ✅ Admin CC
-            $msg->cc([
-                'abhishek@bitmaxgroup.com', // Admin
-            ]);
+//             // ✅ Admin CC
+//             $msg->cc([
+//                 'abhishek@bitmaxgroup.com', // Admin
+//             ]);
 
-            $msg->subject('HR SMTP Test with Admin CC');
-        }
-    );
+//             $msg->subject('HR SMTP Test with Admin CC');
+//         }
+//     );
 
-    return 'HR Mail Sent with Admin CC';
-});
+//     return 'HR Mail Sent with Admin CC';
+// });
 
 
 Route::prefix('admin')->group(function () {
