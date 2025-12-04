@@ -94,6 +94,7 @@ class WhatsAppController extends Controller
         $request->validate([
             'number' => 'required|string',
             'message' => 'nullable|string',
+            'caption' => 'nullable|string',
             'media_file' => 'nullable|file',
         ]);
 
@@ -208,7 +209,7 @@ class WhatsAppController extends Controller
             Http::withHeaders([
                 'x-api-key' => config('services.whatsapp.api_key'),
             ])->attach(
-                'file',
+                'media',
                 fopen($file->getRealPath(), 'r'),
                 $file->getClientOriginalName()
             )->post(
@@ -249,7 +250,7 @@ class WhatsAppController extends Controller
                     Http::withHeaders([
                         'x-api-key' => config('services.whatsapp.api_key'),
                     ])->attach(
-                        'file',
+                        'media',
                         fopen($file->getRealPath(), 'r'),
                         $file->getClientOriginalName()
                     )->post(

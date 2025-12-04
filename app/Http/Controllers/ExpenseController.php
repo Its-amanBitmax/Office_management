@@ -98,7 +98,7 @@ public function store(Request $request)
         \App\Models\Notification::create([
             'admin_id' => $adminUser->id,
             'title' => 'New Expense Added',
-            'message' => "{$actorName} added an expense '{$expense->title}' of ₹{$expense->amount} under {$expense->category}.",
+            'message' => "{$actorName} added an expense '{$expense->title}' of Rs.{$expense->amount} under {$expense->category}.",
             'is_read' => false,
         ]);
     }

@@ -14,6 +14,7 @@ use App\Mail\InterviewInviteMail;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Admin;
 use App\Models\Notification;
+use Illuminate\Support\Facades\Http;
 
 
 class InterviewController extends Controller
@@ -104,6 +105,39 @@ public function store(Request $request)
     }
 
     /* ===============================
+   📲 SEND WHATSAPP MESSAGE TO CANDIDATE
+================================= */
+
+try {
+
+    if (!empty($interview->candidate_phone)) {
+
+        $phone = preg_replace('/\D/', '', $interview->candidate_phone);
+
+        // India code add agar nahi hai
+        if (!str_starts_with($phone, '91')) {
+            $phone = '91' . $phone;
+        }
+
+        $whatsAppMessage = $this->buildInterviewWhatsAppMessage($interview);
+
+        Http::withHeaders([
+            'x-api-key' => 'SECRET123' ,
+        ])->post(
+            'https://bot.bitmaxgroup.com/send',
+            [
+                'number'  => $phone,
+                'message' => $whatsAppMessage,
+            ]
+        );
+    }
+
+} catch (\Exception $e) {
+    Log::error('WhatsApp interview message failed: ' . $e->getMessage());
+}
+
+
+    /* ===============================
        🔔 NOTIFICATIONS (SKIP SELF)
     ================================= */
 
@@ -135,6 +169,26 @@ public function store(Request $request)
     return redirect()
         ->route('admin.interviews.index')
         ->with('success', 'Interview created and email sent successfully.');
+}
+private function buildInterviewWhatsAppMessage($interview)
+{
+    $dateTime = \Carbon\Carbon::parse($interview->date)
+        ->format('d M Y') . ' at ' . $interview->time;
+
+    $interviewLink = 'https://www.bitmaxgroup.com/management/interview/' . $interview->unique_link;
+
+    return
+        "Dear Candidate,\n\n" .
+        "You have been shortlisted for the Virtual Interview process.\n\n" .
+        "*Position:* {$interview->candidate_profile}\n" .
+        "*Interview Mode:* Online\n" .
+        "*Date & Time:* {$dateTime}\n" .
+        "*Location / Link:* {$interviewLink}\n\n" .
+        "Please confirm your availability by replying to this message.\n\n" .
+        "Regards,\n" .
+        "Sakshi Sharma\n" .
+        "Senior HR Executive\n" .
+        "9211318269";
 }
 
 
