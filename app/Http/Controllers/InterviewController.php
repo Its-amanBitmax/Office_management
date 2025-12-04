@@ -131,7 +131,7 @@ try {
             ]
         );
     }
-
+what
 } catch (\Exception $e) {
     Log::error('WhatsApp interview message failed: ' . $e->getMessage());
 }

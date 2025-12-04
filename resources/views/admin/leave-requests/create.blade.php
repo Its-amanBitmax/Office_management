@@ -28,23 +28,45 @@
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
+<div class="mb-3">
+    <label for="leave_type" class="form-label">
+        Leave Type <span class="text-danger">*</span>
+    </label>
 
-                    <div class="mb-3">
-                        <label for="leave_type" class="form-label">Leave Type <span class="text-danger">*</span></label>
-                        <select name="leave_type" id="leave_type" class="form-select" required>
-                            <option value="">Select Leave Type</option>
-                            <option value="sick" {{ old('leave_type') == 'sick' ? 'selected' : '' }}>Sick Leave</option>
-                            <option value="casual" {{ old('leave_type') == 'casual' ? 'selected' : '' }}>Casual Leave</option>
-                            <option value="annual" {{ old('leave_type') == 'annual' ? 'selected' : '' }}>Annual Leave</option>
-                            <option value="maternity" {{ old('leave_type') == 'maternity' ? 'selected' : '' }}>Maternity Leave</option>
-                            <option value="paternity" {{ old('leave_type') == 'paternity' ? 'selected' : '' }}>Paternity Leave</option>
-                            <option value="emergency" {{ old('leave_type') == 'emergency' ? 'selected' : '' }}>Emergency Leave</option>
-                            <option value="other" {{ old('leave_type') == 'other' ? 'selected' : '' }}>Other</option>
-                        </select>
-                        @error('leave_type')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
+    <select name="leave_type" id="leave_type" class="form-select" required>
+        <option value="">Select Leave Type</option>
+        <option value="sick" {{ old('leave_type') == 'sick' ? 'selected' : '' }}>Sick Leave</option>
+        <option value="casual" {{ old('leave_type') == 'casual' ? 'selected' : '' }}>Casual Leave</option>
+        <option value="annual" {{ old('leave_type') == 'annual' ? 'selected' : '' }}>Annual Leave</option>
+        <option value="maternity" {{ old('leave_type') == 'maternity' ? 'selected' : '' }}>Maternity Leave</option>
+        <option value="paternity" {{ old('leave_type') == 'paternity' ? 'selected' : '' }}>Paternity Leave</option>
+        <option value="emergency" {{ old('leave_type') == 'emergency' ? 'selected' : '' }}>Emergency Leave</option>
+        <option value="other" {{ old('leave_type') == 'other' ? 'selected' : '' }}>Other</option>
+    </select>
+
+    @error('leave_type')
+        <div class="text-danger">{{ $message }}</div>
+    @enderror
+</div>
+
+<!-- ✅ OTHER INPUT -->
+<div class="mb-3 {{ old('leave_type') == 'other' ? '' : 'd-none' }}" id="other_leave_wrapper">
+    <label for="other_leave" class="form-label">
+        Specify Leave Type <span class="text-danger">*</span>
+    </label>
+
+    <input type="text"
+           name="other_leave"
+           id="other_leave"
+           class="form-control"
+           value="{{ old('other_leave') }}"
+           placeholder="Enter leave type">
+
+    @error('other_leave')
+        <div class="text-danger">{{ $message }}</div>
+    @enderror
+</div>
+
 
                     <div class="row">
                         <div class="col-md-6">

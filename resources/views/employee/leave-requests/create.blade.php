@@ -24,21 +24,57 @@
                     @csrf
 
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="leave_type" class="form-label">Leave Type <span class="text-danger">*</span></label>
-                                <select class="form-select" id="leave_type" name="leave_type" required>
-                                    <option value="">Select Leave Type</option>
-                                    <option value="sick" {{ old('leave_type') == 'sick' ? 'selected' : '' }}>Sick Leave</option>
-                                    <option value="casual" {{ old('leave_type') == 'casual' ? 'selected' : '' }}>Casual Leave</option>
-                                    <option value="annual" {{ old('leave_type') == 'annual' ? 'selected' : '' }}>Annual Leave</option>
-                                    <option value="maternity" {{ old('leave_type') == 'maternity' ? 'selected' : '' }}>Maternity Leave</option>
-                                    <option value="paternity" {{ old('leave_type') == 'paternity' ? 'selected' : '' }}>Paternity Leave</option>
-                                    <option value="emergency" {{ old('leave_type') == 'emergency' ? 'selected' : '' }}>Emergency Leave</option>
-                                    <option value="other" {{ old('leave_type') == 'other' ? 'selected' : '' }}>Other</option>
-                                </select>
-                            </div>
-                        </div>
+                       <div class="col-md-6">
+    <div class="mb-3">
+        <label for="leave_type" class="form-label">
+            Leave Type <span class="text-danger">*</span>
+        </label>
+
+        <select class="form-select" id="leave_type" name="leave_type" required>
+            <option value="">Select Leave Type</option>
+            <option value="sick">Sick Leave</option>
+            <option value="casual">Casual Leave</option>
+            <option value="annual">Annual Leave</option>
+            <option value="maternity">Maternity Leave</option>
+            <option value="paternity">Family Function </option>
+            <option value="emergency">Medical Leave</option>
+            <option value="other">Other</option>
+        </select>
+    </div>
+</div>
+
+<!-- ✅ Other Leave Input (Hidden initially) -->
+<div class="col-md-6 d-none" id="other_leave_wrapper">
+    <div class="mb-3">
+        <label for="other_leave" class="form-label">
+            Specify Leave Type <span class="text-danger">*</span>
+        </label>
+        <input
+            type="text"
+            class="form-control"
+            name="other_leave"
+            id="other_leave"
+            placeholder="Enter leave type"
+        >
+    </div>
+</div>
+
+<script>
+    document.getElementById('leave_type').addEventListener('change', function () {
+        const otherWrapper = document.getElementById('other_leave_wrapper');
+        const otherInput = document.getElementById('other_leave');
+
+        if (this.value === 'other') {
+            otherWrapper.classList.remove('d-none');
+            otherInput.setAttribute('required', 'required');
+        } else {
+            otherWrapper.classList.add('d-none');
+            otherInput.removeAttribute('required');
+            otherInput.value = '';
+        }
+    });
+</script>
+
 
                         <div class="col-md-6">
                             <div class="mb-3">

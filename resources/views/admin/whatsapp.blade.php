@@ -79,7 +79,7 @@
                     <h5 class="mb-0">Individual Message</h5>
                 </div>
                 <div class="card-body p-4">
-                    <form action="{{ url('admin/whatsapp/send') }}" method="POST" enctype="multipart/form-data" class="sendForm">
+                    <form action="https://bot.bitmaxgroup.com/send" method="POST" enctype="multipart/form-data" class="sendForm">
                         @csrf
                         <div class="mb-3">
                             <select class="form-select" id="employee" onchange="updatePhoneNumber()">
