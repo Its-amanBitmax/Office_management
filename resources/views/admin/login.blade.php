@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Login</title>
+  <link rel="icon" href="{{ $logo ?? asset('images/logo.png') }}" type="image/png">
   <style>
     /* Reset and Base */
 * {
@@ -203,13 +204,13 @@ body {
     <!-- Left Panel -->
     <div class="left-panel">
       <div class="logo">
-        <img src="https://bitmaxgroup.com/assets/logo/logo.png" alt="Bitmax Logo">
+        <img src="{{ $logo ?? asset('images/logo.png') }}" alt="Company Logo">
       </div>
       <h1>Welcome to CRM</h1>
       <p>
-       Bitmax CRM — Secure, Fast & Simple. Manage employees, sales & support in one place.
+       Office CRM — Secure, Fast & Simple. Manage employees, sales & support in one place.
       </p>
-      <div class="footer-text">Bitmax Technology Private limited</div>
+      <div class="footer-text">{{ $company_name ?? 'Bitmax Technology Private limited' }}</div>
     </div>
 
     <!-- Right Panel (Login Form) -->
@@ -217,7 +218,7 @@ body {
       <form class="login-form" method="POST" action="{{ route('admin.login') }}">
         @csrf
         <h2>Login</h2>
-        <p class="sub-text">Welcome! to Bitmax CRM .</p>
+        <p class="sub-text">Welcome! to office CRM .</p>
 
         <label for="email">Email</label>
         <input type="email" id="email" name="email" value="" required autofocus />

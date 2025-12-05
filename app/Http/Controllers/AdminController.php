@@ -23,7 +23,21 @@ class AdminController extends Controller
 
     public function showLoginForm()
     {
-        return view('admin.login');
+        // Get dynamic logo and company name for login page
+        $logo = '';
+        $company_name = 'Bitmax Group'; // Default
+        $admin = Admin::where('role', 'super_admin')->first() ?? Admin::first();
+        if ($admin) {
+            if ($admin->company_logo && Storage::disk('public')->exists('company_logos/' . $admin->company_logo)) {
+                $logo = asset('storage/company_logos/' . $admin->company_logo);
+            } else {
+                // Use static logo
+                $logo = asset('images/logo.png');
+            }
+            $company_name = $admin->company_name ?? 'Bitmax Group';
+        }
+
+        return view('admin.login', compact('logo', 'company_name'));
     }
 
 public function saveEvaluationPdf($id)

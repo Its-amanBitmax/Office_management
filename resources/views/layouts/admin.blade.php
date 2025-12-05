@@ -6,6 +6,16 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <title>@yield('title', 'Admin Dashboard') - {{ config('app.name', 'Laravel') }}</title>
+     @php
+        $admin = auth('admin')->user(); // company logo ke liye
+        $logo = '';
+        if ($admin && $admin->company_logo && \Illuminate\Support\Facades\Storage::disk('public')->exists('company_logos/' . $admin->company_logo)) {
+            $logo = asset('storage/company_logos/' . $admin->company_logo);
+        } else {
+            $logo = asset('favicon.ico');
+        }
+    @endphp
+    <link rel="icon" href="{{ $logo }}" type="image/x-icon">
 
     <!-- Bootstrap 5 CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" 
@@ -841,7 +851,6 @@ document.addEventListener('click', function(e) {
         <nav>
             <ul class="sidebar-menu">
                 @php
-                    $admin = auth('admin')->user();
                     $accessibleModules = $admin ? $admin->getAccessibleModules() : [];
                 @endphp
 

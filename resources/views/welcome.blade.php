@@ -3,29 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Office CRM Welcome</title>
+    <title>{{ $company_name ?? 'Office CRM' }} Welcome</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="icon" href="{{ $logo ?? asset('favicon.ico') }}" type="image/x-icon">
+
     <style>
-        body {
-            font-family: 'Roboto', Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #007bff, #00ddeb);
-            color: #333;
-        }
-        .container {
-            text-align: center;
-            background-color: #ffffff;
-            padding: 50px;
-            border-radius: 15px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-            max-width: 400px;
-            width: 90%;
-            animation: fadeIn 1s ease-in-out;
-        }
+      body {
+    font-family: 'Roboto', Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    color: #333;
+
+    /* ✅ Image + gradient together */
+    background:
+        linear-gradient(135deg, rgba(0,123,255,0.6), rgba(0,221,235,0.6)),
+        url('https://www.bitmaxgroup.com/management/public/images/bg-welcome.png');
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+       .container {
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 50px;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    max-width: 400px;
+    width: 90%;
+    animation: fadeIn 1s ease-in-out;
+}
+
         @keyframes fadeIn {
             0% { opacity: 0; transform: translateY(-20px); }
             100% { opacity: 1; transform: translateY(0); }
@@ -93,6 +104,7 @@
             Office CRM
         </h1>
         <p class="greeting">Welcome! Please select your role to continue.</p>
+        
         <div class="role-selection">
             <button onclick="redirectToLogin('admin')">
                 <span class="material-symbols-outlined">admin_panel_settings</span>

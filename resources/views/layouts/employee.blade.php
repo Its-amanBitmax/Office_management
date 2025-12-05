@@ -6,6 +6,17 @@
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <title>@yield('title', 'Employee Dashboard') - {{ config('app.name', 'Laravel') }}</title>
 
+    @php
+        $admin = \App\Models\Admin::first(); // company logo / name ke liye
+        $logo = '';
+        if ($admin && $admin->company_logo && \Illuminate\Support\Facades\Storage::disk('public')->exists('company_logos/' . $admin->company_logo)) {
+            $logo = asset('storage/company_logos/' . $admin->company_logo);
+        } else {
+            $logo = asset('favicon.ico');
+        }
+    @endphp
+    <link rel="icon" href="{{ $logo }}" type="image/x-icon">
+
     <!-- Bootstrap 5 CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous" />
@@ -488,7 +499,7 @@
     <div class="header-left sidebar-shown">
         <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
         <span class="company-name">
-            {{ config('app.name', 'Employee Panel') }}
+            {{ $admin->company_name ?? 'Employee Panel' }}
         </span>
     </div>
 
@@ -496,9 +507,6 @@
     <div class="user-info">
 
         {{-- 🔔 EMPLOYEE NOTIFICATION --}}
-        @php
-    $admin = \App\Models\Admin::first(); // company logo / name ke liye
-@endphp
 
         @if(auth('employee')->check())
         <div class="notification-icon"

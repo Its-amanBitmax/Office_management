@@ -10,7 +10,21 @@ use App\Http\Controllers\InterviewController;
 use Illuminate\Support\Facades\Mail;
 
 Route::get('/', function () {
-    return view('welcome');
+    // Get dynamic logo and company name for welcome page
+    $logo = '';
+    $company_name = 'Office CRM'; // Default
+    $admin = \App\Models\Admin::where('role', 'super_admin')->first() ?? \App\Models\Admin::first();
+    if ($admin) {
+        if ($admin->company_logo && \Illuminate\Support\Facades\Storage::disk('public')->exists('company_logos/' . $admin->company_logo)) {
+            $logo = asset('storage/company_logos/' . $admin->company_logo);
+        } else {
+            // Use static logo
+            $logo = asset('images/logo.png');
+        }
+        $company_name = $admin->company_name ?? 'Office CRM';
+    }
+
+    return view('welcome', compact('logo', 'company_name'));
 });
 
 Route::get('/terms-of-service', function () {

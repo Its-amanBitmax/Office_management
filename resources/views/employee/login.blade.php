@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Employee Login - {{ config('app.name', 'Laravel') }}</title>
-
+  <link rel="icon" href="{{ $logo ?? asset('images/logo.png') }}" type="image/png">
     <style>
         /* Reset and Base */
         * {
@@ -216,21 +216,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <video id="background-video" autoplay muted loop>
+    {{-- <video id="background-video" autoplay muted loop>
         <source src="{{ asset('InShot_20250624_142253030 (online-video-cutter.com).mp4') }}" type="video/mp4">
         Your browser does not support the video tag.
-    </video>
+    </video> --}}
     <div class="container">
         <!-- Left Panel -->
         <div class="left-panel">
             <div class="logo">
-                <img src="https://bitmaxgroup.com/assets/logo/logo.png" alt="Bitmax Logo">
+                <img src="{{ $logo ?? asset('images/logo.png') }}" alt="Company Logo">
             </div>
             <h1>Welcome to CRM</h1>
             <p>
-                Bitmax CRM — Secure, Fast & Simple. Manage employees, sales & support in one place.
+                Office CRM — Secure, Fast & Simple. Manage employees, sales & support in one place.
             </p>
-            <div class="footer-text">Bitmax Technology Private Limited</div>
+            <div class="footer-text">{{ $company_name ?? 'Bitmax Technology Private Limited' }}</div>
         </div>
 
         <!-- Right Panel (Login Form) -->
