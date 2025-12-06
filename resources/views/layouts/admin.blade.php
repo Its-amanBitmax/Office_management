@@ -886,7 +886,7 @@ document.addEventListener('click', function(e) {
                         <li><a class="dropdown-item" href="{{ route('salary-slips.index') }}"><i>💰</i> Salary Slips</a></li>
                         @endif
                         @if($admin->hasPermission('Employee Card'))
-                        <li><a class="dropdown-item" href="{{ route('employee.card.index') }}"><i>🪪</i> Employee Card</a></li>
+                        <li><a class="dropdown-item" href="{{ route('employee.card.index') }}"><i class="fa-regular fa-id-card"></i> Employee Card</a></li>
                         @endif
                         @if($admin->hasPermission('expenses'))
                         <li><a class="dropdown-item" href="{{ route('admin.expenses.index') }}"><i>💸</i> Expenses</a></li>
@@ -944,6 +944,20 @@ document.addEventListener('click', function(e) {
                     </a>
                 </li>
                 @endif
+
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" id="business-development-dropdown-toggle" onclick="toggleDropdown('business-development')" aria-expanded="false">
+                        <i class="fa-solid fa-chart-line"></i> Business Development
+                    </a>
+                    <ul class="dropdown-menu" id="business-development-dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.leads.index') }}"><i>👥</i> Leads</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.interactions.index') }}"><i>📞</i> Interactions</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.proposals.index') }}"><i>📄</i> Proposals</a></li>
+                        @if($admin && $admin->hasPermission('executives'))
+                        <li><a class="dropdown-item" href="{{ route('admin.executives.index') }}"><i>👨‍💼</i> Executives</a></li>
+                        @endif
+                    </ul>
+                </li>
 
                 @if($admin && $admin->hasPermission('reports'))
                 <li>
@@ -1114,7 +1128,7 @@ document.addEventListener('click', function(e) {
 
         // Initialize dropdown states on page load
         function initializeDropdowns() {
-            const dropdowns = ['hrm','front-desk','performance'];
+            const dropdowns = ['hrm','front-desk','business-development','performance'];
 
             dropdowns.forEach(function(dropdownId) {
                 const toggle = document.getElementById(dropdownId + '-dropdown-toggle');
@@ -1288,6 +1302,18 @@ document.addEventListener('click', function(e) {
         document.addEventListener('click', function(e) {
             if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
                 searchResults.style.display = 'none';
+            }
+        });
+
+        // Close dropdown when clicking on dropdown item
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('dropdown-item')) {
+                const dropdownId = e.target.closest('.dropdown').querySelector('.dropdown-toggle').id.replace('-dropdown-toggle', '');
+                const menu = document.getElementById(dropdownId + '-dropdown-menu');
+                const toggle = document.getElementById(dropdownId + '-dropdown-toggle');
+                menu.style.display = 'none';
+                toggle.setAttribute('aria-expanded', 'false');
+                localStorage.setItem(dropdownId + '-dropdown-state', 'closed');
             }
         });
     </script>

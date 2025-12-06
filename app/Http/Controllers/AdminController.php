@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -20,6 +21,7 @@ use App\Traits\Loggable;
 class AdminController extends Controller
 {
     use Loggable;
+    
 
     public function showLoginForm()
     {
@@ -141,7 +143,44 @@ public function saveEvaluationPdf($id)
 
         $recentEmployees = $admin->hasPermission('employees') ? \App\Models\Employee::orderBy('created_at', 'desc')->take(5)->get() : collect();
 
-        return view('admin.dashboard', compact('admin', 'tasks', 'totalUsers', 'activeTasks', 'incompleteTasks', 'pendingReviews', 'totalSalaryExpenses', 'systemAlerts', 'recentEmployees'));
+        // Executive performance stats (approved leads and proposals)
+        $executiveStats = [];
+        if ($admin->hasPermission('leads') || $admin->hasPermission('proposals')) {
+            $executives = Admin::where('role', 'sub_admin')->get();
+
+            foreach ($executives as $executive) {
+                $approvedLeads = 0;
+                $approvedProposals = 0;
+
+                if ($admin->hasPermission('leads')) {
+                    $approvedLeads = \App\Models\Lead::where('assigned_to', $executive->id)
+                        ->where('status', 'Approved')
+                        ->count();
+                }
+
+                if ($admin->hasPermission('proposals')) {
+                    $approvedProposals = \App\Models\Proposal::where('created_by', $executive->id)
+                        ->where('status', 'Approved')
+                        ->count();
+                }
+
+                if ($approvedLeads > 0 || $approvedProposals > 0) {
+                    $executiveStats[] = [
+                        'executive' => $executive,
+                        'approved_leads' => $approvedLeads,
+                        'approved_proposals' => $approvedProposals,
+                        'total_approvals' => $approvedLeads + $approvedProposals
+                    ];
+                }
+            }
+
+            // Sort by total approvals descending
+            usort($executiveStats, function($a, $b) {
+                return $b['total_approvals'] <=> $a['total_approvals'];
+            });
+        }
+
+        return view('admin.dashboard', compact('admin', 'tasks', 'totalUsers', 'activeTasks', 'incompleteTasks', 'pendingReviews', 'totalSalaryExpenses', 'systemAlerts', 'recentEmployees', 'executiveStats'));
     }
 
     public function profile()
@@ -269,6 +308,10 @@ public function saveEvaluationPdf($id)
             'evaluation-report' => 'Evaluation Report',
             'interviews' => 'Interviews',
             'expenses' => 'Expenses',
+            'leads' => 'Leads',
+            'interactions' => 'Interactions',
+            'proposals' => 'Proposals',
+            'executives' => 'Executives',
             'whatsapp' => 'WhatsApp Bot',
             'settings' => 'Settings',
             'logs' => 'Logs',
@@ -325,6 +368,10 @@ public function saveEvaluationPdf($id)
             'evaluation-report' => 'Evaluation Report',
             'interviews' => 'Interviews',
             'expenses' => 'Expenses',
+            'leads' => 'Leads',
+            'interactions' => 'Interactions',
+            'proposals' => 'Proposals',
+            'executives' => 'Executives',
             'whatsapp' => 'WhatsApp Bot',
             'settings' => 'Settings',
             'logs' => 'Logs',
@@ -391,6 +438,12 @@ public function saveEvaluationPdf($id)
             'performance' => 'Performance',
             'evaluation-report' => 'Evaluation Report',
             'interviews' => 'Interviews',
+            'expenses' => 'Expenses',
+            'leads' => 'Leads',
+            'interactions' => 'Interactions',
+            'proposals' => 'Proposals',
+            'executives' => 'Executives',
+            'whatsapp' => 'WhatsApp Bot',
             'settings' => 'Settings',
             'logs' => 'Logs',
         ];
@@ -908,7 +961,7 @@ public function saveEvaluationPdf($id)
     public function storeEvaluationReport(Request $request)
     {
         // Debug: Log that the method was called
-        \Log::info('storeEvaluationReport called', $request->all());
+        Log::info('storeEvaluationReport called', $request->all());
 
         $admin = Auth::guard('admin')->user();
 
@@ -978,9 +1031,9 @@ public function saveEvaluationPdf($id)
                 'hr_id' => $admin->id, // Assuming current admin is HR
                 'final_approver_id' => $admin->id,
             ]);
-            \Log::info('EvaluationReport created', ['id' => $evaluationReport->id]);
+            Log::info('EvaluationReport created', ['id' => $evaluationReport->id]);
         } catch (\Exception $e) {
-            \Log::error('Failed to create EvaluationReport', ['error' => $e->getMessage()]);
+            Log::error('Failed to create EvaluationReport', ['error' => $e->getMessage()]);
             return redirect()->back()->with('error', 'Failed to save evaluation report: ' . $e->getMessage());
         }
         // Calculate manager total (sum of ratings * (6 / 5), out of 30)
@@ -1010,9 +1063,9 @@ public function saveEvaluationPdf($id)
                 'manager_total' => $managerTotal,
                 'manager_comments' => $request->manager_comments,
             ]);
-            \Log::info('EvaluationManager created', ['report_id' => $evaluationReport->id]);
+            Log::info('EvaluationManager created', ['report_id' => $evaluationReport->id]);
         } catch (\Exception $e) {
-            \Log::error('Failed to create EvaluationManager', ['error' => $e->getMessage()]);
+            Log::error('Failed to create EvaluationManager', ['error' => $e->getMessage()]);
         }
         // Calculate HR total (sum of ratings * (4 / 5), out of 20)
         $hrRatings = [
@@ -1039,9 +1092,9 @@ public function saveEvaluationPdf($id)
                 'hr_total' => $hrTotal,
                 'hr_comments' => $request->hr_comments,
             ]);
-            \Log::info('EvaluationHr created', ['report_id' => $evaluationReport->id]);
+            Log::info('EvaluationHr created', ['report_id' => $evaluationReport->id]);
         } catch (\Exception $e) {
-            \Log::error('Failed to create EvaluationHr', ['error' => $e->getMessage()]);
+            Log::error('Failed to create EvaluationHr', ['error' => $e->getMessage()]);
         }
 
         // Calculate overall rating (sum of sliders, out of 100)
@@ -1074,9 +1127,9 @@ public function saveEvaluationPdf($id)
                 'performance_grade' => $performanceGrade,
                 'final_feedback' => $request->final_feedback,
             ]);
-            \Log::info('EvaluationOverall created', ['report_id' => $evaluationReport->id]);
+            Log::info('EvaluationOverall created', ['report_id' => $evaluationReport->id]);
         } catch (\Exception $e) {
-            \Log::error('Failed to create EvaluationOverall', ['error' => $e->getMessage()]);
+            Log::error('Failed to create EvaluationOverall', ['error' => $e->getMessage()]);
         }
 
         // Update the main report with overall score and grade
@@ -1118,7 +1171,7 @@ foreach ($admins as $adminUser) {
 /* =============================== */
 
 
-        \Log::info('Evaluation report created successfully', ['report_id' => $evaluationReport->id]);
+        Log::info('Evaluation report created successfully', ['report_id' => $evaluationReport->id]);
 
         return redirect()->route('admin.evaluation-report')->with('success', 'Evaluation report submitted successfully!');
     }
@@ -1783,7 +1836,7 @@ public function search(Request $request)
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Draft save failed', ['error' => $e->getMessage()]);
+            Log::error('Draft save failed', ['error' => $e->getMessage()]);
             return response()->json(['error' => 'Failed to save draft'], 500);
         }
     }

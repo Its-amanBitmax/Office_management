@@ -1,9 +1,12 @@
-# TODO: Fix MulterError in WhatsApp Bot
+# Interactions Module Implementation
 
-## Steps to Complete
-- [x] Change multer setup to use upload.any() instead of upload.single('media') in all routes
-- [x] Update /send route handler to use req.files[0] instead of req.file
-- [x] Update /send-bulk route handler to use req.files[0] instead of req.file
-- [x] Update /send-group route handler to use req.files[0] instead of req.file
-- [x] Update /send-media route handler to use req.files[0] instead of req.file
-- [x] Ensure file cleanup works with req.files[0].path in all handlers
+## Tasks
+- [ ] Create migration for interactions table with specified columns
+- [ ] Create Interaction model
+- [ ] Create InteractionsController with CRUD operations
+- [ ] Add routes for interactions
+- [ ] Create views for interactions (index, create, edit, show)
+- [ ] Update lead show page to display interactions
+- [ ] Update sidebar to include interactions under leads
+- [ ] Run migration
+- [ ] Test CRUD operations

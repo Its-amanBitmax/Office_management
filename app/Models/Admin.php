@@ -122,4 +122,28 @@ class Admin extends Authenticatable
 
         return $this->permissions ?? [];
     }
+
+    /**
+     * Get the leads assigned to this admin
+     */
+    public function leads()
+    {
+        return $this->hasMany(\App\Models\Lead::class, 'assigned_to');
+    }
+
+    /**
+     * Get the proposals created by this admin
+     */
+    public function proposals()
+    {
+        return $this->hasMany(\App\Models\Proposal::class, 'created_by');
+    }
+
+    /**
+     * Get the interactions created by this admin
+     */
+    public function interactions()
+    {
+        return $this->hasMany(\App\Models\Interaction::class, 'created_by');
+    }
 }

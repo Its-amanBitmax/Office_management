@@ -326,6 +326,45 @@ Route::prefix('admin')->group(function () {
             Route::post('/whatsapp/delete-session', [\App\Http\Controllers\WhatsAppController::class, 'deleteSession'])->name('admin.whatsapp.delete-session');
         });
 
+        // Leads Management Routes
+        Route::resource('leads', \App\Http\Controllers\Admin\LeadsController::class)->names([
+            'index' => 'admin.leads.index',
+            'create' => 'admin.leads.create',
+            'store' => 'admin.leads.store',
+            'show' => 'admin.leads.show',
+            'edit' => 'admin.leads.edit',
+            'update' => 'admin.leads.update',
+            'destroy' => 'admin.leads.destroy',
+        ]);
+
+        // Interactions Management Routes
+        Route::resource('interactions', \App\Http\Controllers\Admin\InteractionsController::class)->names([
+            'index' => 'admin.interactions.index',
+            'create' => 'admin.interactions.create',
+            'store' => 'admin.interactions.store',
+            'show' => 'admin.interactions.show',
+            'edit' => 'admin.interactions.edit',
+            'update' => 'admin.interactions.update',
+            'destroy' => 'admin.interactions.destroy',
+        ]);
+
+        // Proposals Management Routes
+        Route::resource('proposals', \App\Http\Controllers\Admin\ProposalsController::class)->names([
+            'index' => 'admin.proposals.index',
+            'create' => 'admin.proposals.create',
+            'store' => 'admin.proposals.store',
+            'show' => 'admin.proposals.show',
+            'edit' => 'admin.proposals.edit',
+            'update' => 'admin.proposals.update',
+            'destroy' => 'admin.proposals.destroy',
+        ]);
+
+        // Executives Management Routes
+        Route::resource('executives', \App\Http\Controllers\Admin\ExecutiveController::class)->names([
+            'index' => 'admin.executives.index',
+            'show' => 'admin.executives.show',
+        ]);
+
     });
 });
 
