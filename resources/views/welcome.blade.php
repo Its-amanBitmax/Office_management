@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>WorkPulse – All-in-One Workplace Platform</title>
+  <title>Office CRM – All-in-One Workplace Platform</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
@@ -361,7 +361,7 @@
         “The best workplaces run on trust, clarity, and the right tools.<br>
         We provide the tools. You build the culture.”
       </div>
-      <div class="quote-author">— WorkPulse Team</div>
+      <div class="quote-author">— CRM Team</div>
     </section>
 
     <!-- WhatsApp Floating Button with Auto Message -->
@@ -398,12 +398,11 @@
       <div class="footer-links">
         <a href="#home">Home</a>
         <a href="#features">Features</a>
-       
         <a href="#quote">Quote</a>
        
       </div>
       <div class="copyright">
-        © 2025 WorkPulse Technologies Pvt Ltd. Made in India
+        © 2025 Copyright
       </div>
     </footer>
   </main>
