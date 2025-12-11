@@ -23,8 +23,11 @@ class NotificationController extends Controller
 
     public function markAsRead($id)
     {
+        // Parse ID to handle cases like "630:1" by taking the first part
+        $parsedId = is_numeric($id) ? (int) $id : (int) explode(':', $id)[0];
+
         $admin = auth('admin')->user();
-        $notification = \App\Models\Notification::where('id', $id)
+        $notification = \App\Models\Notification::where('id', $parsedId)
             ->where('admin_id', $admin->id)
             ->where('is_read', false)
             ->first();

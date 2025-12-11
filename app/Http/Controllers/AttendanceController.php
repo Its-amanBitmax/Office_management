@@ -615,50 +615,63 @@ foreach ($admins as $adminUser) {
 
 
 
+public function syncOfficeIp(Request $request)
+{
+    // ✅ Only admin allowed
 
+
+
+    $userIp = $request->header('CF-Connecting-IP')
+        ?? $request->header('X-Forwarded-For')
+        ?? $request->ip();
+
+    $userIp = trim(explode(',', $userIp)[0]);
+
+    // 🚫 Block IPv6
+    if (filter_var($userIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+        return back()->with('error', 'IPv6 not allowed');
+    }
+
+    $today = now()->toDateString();
+
+    DB::table('office_ips')->updateOrInsert(
+        ['date' => $today],
+        ['ip' => $userIp,]
+    );
+
+    return back()->with('success', "Office IP synced: $userIp");
+}
 
 
 public function mark(Request $request)
 {
-    // ✅ Office WiFi IPv4 ONLY
-    $officeIps = [
-        '103.154.247.10',
-    ];
-
-    // ✅ Detect real client IP
     $userIp = $request->header('CF-Connecting-IP')
-            ?? $request->header('X-Forwarded-For')
-            ?? $request->ip();
+        ?? $request->header('X-Forwarded-For')
+        ?? $request->ip();
 
-    // ✅ If proxy sends multiple IPs, take first
     $userIp = trim(explode(',', $userIp)[0]);
 
-    // ✅ Log for debugging
-    Log::info('Attendance IP Check', [
-        'ip' => $userIp,
-        'expects_json' => $request->expectsJson(),
-        'agent' => $request->userAgent(),
-    ]);
+    // ✅ Get today's synced office IP
+    $officeIp = DB::table('office_ips')
+        ->where('date', now()->toDateString())
+        ->first();
 
-    /* ---------------------------------
-       🔒 SECURITY CHECKS
-    --------------------------------- */
+    // ❌ Not synced OR IP mismatch
+    if (!$officeIp || $officeIp->ip !== $userIp) {
 
-    // 🚫 Block IPv6 (mostly mobile personal networks)
-    if (filter_var($userIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+        // ✅ AJAX / JS request
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Attendance not allowed'
+            ], 403);
+        }
+
+        // ✅ Normal browser
         return $this->denyAttendance($request);
     }
 
-    // 🚫 Block non-office IPv4
-    if (!in_array($userIp, $officeIps, true)) {
-        return $this->denyAttendance($request);
-    }
-
-    /* ---------------------------------
-       ✅ ALLOWED
-    --------------------------------- */
-
-    // ✅ AJAX → only permission check
+    // ✅ ALLOWED
     if ($request->expectsJson()) {
         return response()->json([
             'success' => true,
@@ -666,7 +679,7 @@ public function mark(Request $request)
         ], 200);
     }
 
-    // ✅ Normal browser → open camera page
+    // ✅ Normal page load
     return view('employee.attendance.mark');
 }
 

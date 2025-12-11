@@ -299,7 +299,7 @@ Route::prefix('admin')->group(function () {
 
         // Notifications Route
         Route::get('/notifications', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('admin.notifications.index');
-        Route::post('/notifications/read/{id}', [\App\Http\Controllers\Admin\NotificationController::class, 'markAsRead']);
+        Route::match(['GET', 'POST'], '/notifications/read/{id}', [\App\Http\Controllers\Admin\NotificationController::class, 'markAsRead']);
         Route::post('/notifications/mark-all-read', [\App\Http\Controllers\Admin\NotificationController::class, 'markAllRead'])->name('admin.notifications.markAllRead');
         Route::get('/notifications/ajax', [\App\Http\Controllers\Admin\NotificationController::class, 'ajax'])->name('admin.notifications.ajax');
         Route::delete('notifications/{id}',

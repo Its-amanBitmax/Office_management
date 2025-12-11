@@ -141,20 +141,19 @@
                                 <td>{{ $data['day_name'] }}</td>
                                 <td>
                                     @php
-                                        $status = trim($data['status']);
-                                        $badgeClass = match(strtolower($status)) {
-                                            'present' => 'bg-success text-white',
-                                            'absent' => 'bg-danger text-white',
-                                            'leave' => 'bg-warning text-dark',
-                                            'half day' => 'bg-info text-dark',
-                                            'holiday' => 'bg-secondary text-white',
-                                            'ncns' => 'bg-danger text-white',
-                                            'lwp' => 'bg-warning text-dark',
+                                        $badgeClass = match($data['status']) {
+                                            'Present' => 'bg-success text-white',
+                                            'Absent' => 'bg-danger text-white',
+                                            'Leave' => 'bg-warning text-dark',
+                                            'Half Day' => 'bg-info text-dark',
+                                            'Holiday' => 'bg-secondary text-white',
+                                            'NCNS' => 'bg-danger text-white',
+                                            'LWP' => 'bg-warning text-dark',
                                             default => 'bg-light text-dark'
                                         };
                                     @endphp
                                     <span class="badge {{ $badgeClass }}">
-                                        {{ $status }}
+                                        {{ $data['status'] }}
                                     </span>
                                 </td>
                                 <td>{{ $data['marked_at'] ?? '-' }}</td>

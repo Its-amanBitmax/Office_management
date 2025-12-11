@@ -61,7 +61,7 @@ navigator.mediaDevices.getUserMedia({ video: true })
         document.getElementById('video').srcObject = stream;
     })
     .catch(() => {
-        alert('Camera access denied');
+        
     });
 
 /* -----------------------------
@@ -92,8 +92,14 @@ function takeSnapshot() {
     document.getElementById('image').value =
         canvas.toDataURL('image/png');
 
-    alert('Photo captured successfully ✅');
-}
+    document.getElementById('status-preview').classList.remove('alert-info');
+document.getElementById('status-preview').classList.add('alert-success');
+document.getElementById('status-preview').innerHTML =
+    '<i class="fas fa-check-circle me-1"></i> Photo captured successfully';
+
+} 
+
+
 
 /* -----------------------------
    Final validation
