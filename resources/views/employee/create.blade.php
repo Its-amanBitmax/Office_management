@@ -128,6 +128,8 @@
                                         <option value="">Select Status</option>
                                         <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option>
                                         <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                        <option value="terminated" {{ old('status') == 'terminated' ? 'selected' : '' }}>Terminated</option>
+                                        <option value="resigned" {{ old('status') == 'resigned' ? 'selected' : '' }}>Resigned</option>
                                     </select>
                                     @error('status')
                                         <div class="invalid-feedback">{{ $message }}</div>

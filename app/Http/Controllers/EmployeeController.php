@@ -54,7 +54,7 @@ class EmployeeController extends Controller
             'hire_date' => 'required|date',
             'position' => 'nullable|string|max:100',
             'department' => 'nullable|string|max:100',
-            'status' => ['required', Rule::in(['active', 'inactive'])],
+            'status' => ['required', Rule::in(['active', 'inactive', 'terminated', 'resigned'])],
             'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             // Family Details
             'relations' => 'nullable|array',
@@ -180,7 +180,7 @@ class EmployeeController extends Controller
                 'hire_date' => 'required|date',
                 'position' => 'nullable|string|max:100',
                 'department' => 'nullable|string|max:100',
-                'status' => ['required', Rule::in(['active', 'inactive'])],
+                'status' => ['required', Rule::in(['active', 'inactive', 'terminated', 'resigned'])],
                 'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
                 // Family Details
                 'relations' => 'nullable|array',
@@ -515,6 +515,30 @@ private function updateRelatedRecords(Employee $employee, Request $request)
     }
 
     /**
+     * Terminate the specified employee.
+     */
+    public function terminate(Employee $employee)
+    {
+        $employee->update(['status' => 'terminated']);
+
+        $this->logActivity('terminate', 'Employee', $employee->id, 'Employee terminated successfully');
+
+        return redirect()->route('employees.index')->with('success', 'Employee terminated successfully.');
+    }
+
+    /**
+     * Mark the specified employee as resigned.
+     */
+    public function resign(Employee $employee)
+    {
+        $employee->update(['status' => 'resigned']);
+
+        $this->logActivity('resign', 'Employee', $employee->id, 'Employee resigned successfully');
+
+        return redirect()->route('employees.index')->with('success', 'Employee resigned successfully.');
+    }
+
+    /**
      * Remove the specified employee from storage.
      */
     public function destroy(Employee $employee)
@@ -560,6 +584,16 @@ private function updateRelatedRecords(Employee $employee, Request $request)
         $credentials = $request->only('employee_code', 'password');
 
         if (Auth::guard('employee')->attempt($credentials)) {
+            $employee = Auth::guard('employee')->user();
+
+            // Check if employee status is active
+            if ($employee->status !== 'active') {
+                Auth::guard('employee')->logout();
+                return back()->withErrors([
+                    'employee_code' => 'Your account is not active. Please contact administrator.',
+                ]);
+            }
+
             return redirect()->intended(route('employee.dashboard'));
         }
 

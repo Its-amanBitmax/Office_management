@@ -104,7 +104,22 @@
                                             <span class="badge bg-warning text-dark">LWP</span>
                                         @endif
                                     @else
-                                        <span class="badge bg-secondary">NM</span>
+                                        @php
+                                            $currentDateObj = \Carbon\Carbon::create($date->year, $date->month, $day);
+                                            $showStatus = false;
+                                            if ($summary['inactive_date'] && in_array($summary['employee']->status, ['resigned', 'terminated']) && $currentDateObj->gt($summary['inactive_date'])) {
+                                                $showStatus = true;
+                                            }
+                                        @endphp
+                                        @if($showStatus)
+                                            @if($summary['employee']->status == 'resigned')
+                                                <span class="badge bg-warning text-dark">{{ ucfirst($summary['employee']->status) }}</span>
+                                            @elseif($summary['employee']->status == 'terminated')
+                                                <span class="badge bg-danger">{{ ucfirst($summary['employee']->status) }}</span>
+                                            @endif
+                                        @else
+                                            <span class="badge bg-secondary">NM</span>
+                                        @endif
                                     @endif
                                 </td>
                             @endfor

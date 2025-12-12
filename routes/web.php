@@ -87,6 +87,8 @@ Route::prefix('admin')->group(function () {
                 'update' => 'employees.update',
                 'destroy' => 'employees.destroy',
             ]);
+            Route::put('employees/{employee}/terminate', [\App\Http\Controllers\EmployeeController::class, 'terminate'])->name('employees.terminate');
+            Route::put('employees/{employee}/resign', [\App\Http\Controllers\EmployeeController::class, 'resign'])->name('employees.resign');
             Route::get('employees/{employee}/card', [\App\Http\Controllers\EmployeeController::class, 'card'])->name('employees.card');
         });
 

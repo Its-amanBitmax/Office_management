@@ -99,6 +99,23 @@
     @else
         <a href="{{ route('attendance.create') }}" class="btn btn-sm btn-success">Add</a>
     @endif
+
+    @if($employee->status === 'active')
+        <form action="{{ route('employees.terminate', $employee) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to terminate this employee?');">
+            @csrf
+            @method('PUT')
+            <button type="submit" class="btn btn-sm btn-outline-danger mx-1" title="Terminate">
+                <i class="fas fa-user-times"></i>
+            </button>
+        </form>
+        <form action="{{ route('employees.resign', $employee) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to mark this employee as resigned?');">
+            @csrf
+            @method('PUT')
+            <button type="submit" class="btn btn-sm btn-outline-warning mx-1" title="Resign">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </form>
+    @endif
 </td>
 
             </tr>

@@ -66,8 +66,8 @@
                                         {{ strtoupper(substr($employee->name, 0, 1)) }}
                                     </div>
                                 @endif
-                                <strong class="d-block mb-1"></strong> 
-                                 <span class="badge bg-{{ $employee->status === 'active' ? 'success' : 'secondary' }}">
+                                <strong class="d-block mb-1"></strong>
+                                 <span class="badge bg-{{ $employee->status === 'active' ? 'success' : ($employee->status === 'inactive' ? 'secondary' : ($employee->status === 'terminated' ? 'danger' : ($employee->status === 'resigned' ? 'warning' : 'secondary'))) }}">
                                             {{ ucfirst($employee->status) }}
                                         </span>
                             </div>

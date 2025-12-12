@@ -354,9 +354,9 @@ foreach ($admins as $adminUser) {
             // Get all employees and create summaries (even for those with no attendance)
             $employeeSummaries = [];
             foreach ($employees as $employee) {
-                // Determine inactive date - use updated_at if employee is currently inactive
+                // Determine inactive date - use updated_at if employee is currently inactive, resigned, or terminated
                 $inactiveDate = null;
-                if ($employee->status === 'inactive') {
+                if (in_array($employee->status, ['inactive', 'resigned', 'terminated'])) {
                     $inactiveDate = Carbon::parse($employee->updated_at);
                 }
 
@@ -449,6 +449,12 @@ foreach ($admins as $adminUser) {
             $daysInMonth = $date->daysInMonth;
             $monthlyData = [];
 
+            // Determine inactive date for resigned/terminated employees
+            $inactiveDate = null;
+            if (in_array($employee->status, ['resigned', 'terminated'])) {
+                $inactiveDate = Carbon::parse($employee->updated_at);
+            }
+
             for ($day = 1; $day <= $daysInMonth; $day++) {
                 $currentDate = Carbon::create($year, $monthNum, $day, 0, 0, 0, 'Asia/Kolkata');
                 // Use closure for accurate date comparison
@@ -456,11 +462,17 @@ foreach ($admins as $adminUser) {
                     return $att->date->format('Y-m-d') === $currentDate->format('Y-m-d');
                 });
 
+                $status = $attendance ? $attendance->status : 'Not Marked';
+                // If no attendance and employee is resigned/terminated and current date is after inactive date, show status
+                if (!$attendance && $inactiveDate && $currentDate->gt($inactiveDate)) {
+                    $status = ucfirst($employee->status);
+                }
+
                 $monthlyData[] = [
                     'date' => $currentDate->format('Y-m-d'),
                     'day' => $day,
                     'day_name' => $currentDate->format('D'),
-                    'status' => $attendance ? $attendance->status : 'Not Marked',
+                    'status' => $status,
                     'marked_at' => $attendance ? $attendance->updated_at->setTimezone('Asia/Kolkata')->format('H:i') : null,
                     'remarks' => $attendance ? $attendance->remarks : null,
                 ];

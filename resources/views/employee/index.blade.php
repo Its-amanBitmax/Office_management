@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+    @extends('layouts.admin')
 
 @section('title', 'Employees')
 @section('page-title', 'Employees Management')
@@ -34,6 +34,8 @@
                         <option value="">All Statuses</option>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
+                        <option value="terminated">Terminated</option>
+                        <option value="resigned">Resigned</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -80,7 +82,7 @@
                                 <td>{{ $employee->position ?? 'N/A' }}</td>
                                 <td>{{ $employee->department ?? 'N/A' }}</td>
                                 <td>
-                                    <span class="badge bg-{{ $employee->status === 'active' ? 'success' : 'secondary' }} rounded-pill px-3 py-2">
+                                    <span class="badge bg-{{ $employee->status === 'active' ? 'success' : ($employee->status === 'resigned' ? 'warning' : ($employee->status === 'terminated' ? 'danger' : 'secondary')) }} rounded-pill px-3 py-2">
                                         {{ ucfirst($employee->status) }}
                                     </span>
                                 </td>
