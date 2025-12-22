@@ -6,10 +6,8 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\EmployeeCardController;
 use App\Http\Controllers\ExpenseController;
-use App\Http\Controllers\FormController;
 use App\Http\Controllers\InterviewController;
 use Illuminate\Support\Facades\Mail;
-
 
 Route::get('/', function () {
     // Get dynamic logo and company name for welcome page
@@ -29,6 +27,7 @@ Route::get('/', function () {
     return view('welcome', compact('logo', 'company_name'));
 });
 
+
 Route::get('/terms-of-service', function () {
     return view('terms-of-service');
 })->name('terms');
@@ -37,38 +36,14 @@ Route::get('/privacy-policy', function () {
     return view('privacy-policy');
 })->name('privacy');
 
-// Route::get('/test-hr-mail', function () {
 
-//     Mail::mailer('hr_smtp')->raw(
-//         'HR Mail Test Successful ✅ (Admin CC included)',
-//         function ($msg) {
-
-//             // ✅ HR FROM (IMPORTANT)
-//             $msg->from(
-//                 config('mail.hr_from.address'),
-//                 config('mail.hr_from.name')
-//             );
-
-//             // ✅ Candidate / Receiver
-//             $msg->to('aman@bitmaxgroup.com');
-
-//             // ✅ Admin CC
-//             $msg->cc([
-//                 'abhishek@bitmaxgroup.com', // Admin
-//             ]);
-
-//             $msg->subject('HR SMTP Test with Admin CC');
-//         }
-//     );
-
-//     return 'HR Mail Sent with Admin CC';
-// });
 
 
 Route::prefix('admin')->group(function () {
     Route::get('/login', [AdminController::class, 'showLoginForm'])->name('admin.login');
     Route::post('/login', [AdminController::class, 'login']);
     Route::post('/logout', [AdminController::class, 'logout'])->name('admin.logout');
+      Route::get('/sync-office-ip', [AttendanceController::class, 'syncOfficeIp']);
  Route::post('evaluation-report/save-pdf/{id}', 
         [AdminController::class, 'saveEvaluationPdf']
     )->name('admin.evaluation-report.save-pdf');
@@ -140,7 +115,7 @@ Route::prefix('admin')->group(function () {
         Route::post('sub-admins', [AdminController::class, 'storeSubAdmin'])->name('admin.sub-admins.store');
         Route::get('sub-admins/{id}', [AdminController::class, 'show'])->name('admin.sub-admins.show');
         Route::get('sub-admins/{id}/edit', [AdminController::class, 'editSubAdmin'])->name('admin.sub-admins.edit');
-        Route::put('sub-admins/{id}', [AdminController::class, 'updateSubAdmin'])->name('admin.sub-admins.update');
+        Route::put('sub-admins/{id}', [AdminController::class, 'updateSubAdmin' ])->name('admin.sub-admins.update');
         Route::delete('sub-admins/{id}', [AdminController::class, 'deleteSubAdmin'])->name('admin.sub-admins.destroy');
 
         // Activities Routes
@@ -153,6 +128,21 @@ Route::prefix('admin')->group(function () {
             'update' => 'activities.update',
             'destroy' => 'activities.destroy',
         ]);
+        
+            Route::middleware('admin:form')->group(function () {
+            Route::resource('form', \App\Http\Controllers\FormController::class)->names([
+                'index' => 'admin.form.index',
+                'create' => 'admin.form.create',
+                'store' => 'admin.form.store',
+                'show' => 'admin.form.show',
+                'edit' => 'admin.form.edit',
+                'update' => 'admin.form.update',
+                'destroy' => 'admin.form.destroy',
+            ]);
+            Route::get('form/api', [\App\Http\Controllers\FormController::class, 'api'])->name('admin.form.api');
+            Route::get('form/trip', [\App\Http\Controllers\FormController::class, 'trip'])->name('admin.form.trip');
+        });
+
         Route::post('activities/{activity}/add-to-ratings/{employee}', [\App\Http\Controllers\ActivityController::class, 'addToRatings'])->name('activities.add-to-ratings');
         Route::post('activities/{activity}/reject-rating/{employee}', [\App\Http\Controllers\ActivityController::class, 'rejectRating'])->name('activities.reject-rating');
 
@@ -258,25 +248,15 @@ Route::prefix('admin')->group(function () {
             Route::get('expenses/export/{month}/{year}', [\App\Http\Controllers\ExpenseController::class, 'export'])->name('admin.expenses.export');
         });
 
-        // Form Management Routes
-        Route::middleware('admin:form')->group(function () {
-            Route::resource('form', \App\Http\Controllers\FormController::class)->names([
-                'index' => 'admin.form.index',
-                'create' => 'admin.form.create',
-                'store' => 'admin.form.store',
-                'show' => 'admin.form.show',
-                'edit' => 'admin.form.edit',
-                'update' => 'admin.form.update',
-                'destroy' => 'admin.form.destroy',
-            ]);
-            Route::get('form/api', [\App\Http\Controllers\FormController::class, 'api'])->name('admin.form.api');
-            Route::get('form/trip', [\App\Http\Controllers\FormController::class, 'trip'])->name('admin.form.trip');
-            Route::get('form/{id}/preview', [\App\Http\Controllers\FormController::class, 'preview'])->name('admin.form.preview');
-        });
-
         // Leave Requests Management Routes
         Route::resource('leave-requests', \App\Http\Controllers\LeaveRequestController::class)->names([
             'index' => 'admin.leave-requests.index',
+            'create' => 'admin.leave-requests.create',
+            'store' => 'admin.leave-requests.store',
+            'show' => 'admin.leave-requests.show',
+            'edit' => 'admin.leave-requests.edit',
+            'update' => 'admin.leave-requests.update',
+            'destroy' => 'admin.leave-requests.destroy',
         ]);
 
         // Global Search Route
