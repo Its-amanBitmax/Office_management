@@ -6,8 +6,10 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\EmployeeCardController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\FormController;
 use App\Http\Controllers\InterviewController;
 use Illuminate\Support\Facades\Mail;
+
 
 Route::get('/', function () {
     // Get dynamic logo and company name for welcome page
@@ -256,15 +258,25 @@ Route::prefix('admin')->group(function () {
             Route::get('expenses/export/{month}/{year}', [\App\Http\Controllers\ExpenseController::class, 'export'])->name('admin.expenses.export');
         });
 
+        // Form Management Routes
+        Route::middleware('admin:form')->group(function () {
+            Route::resource('form', \App\Http\Controllers\FormController::class)->names([
+                'index' => 'admin.form.index',
+                'create' => 'admin.form.create',
+                'store' => 'admin.form.store',
+                'show' => 'admin.form.show',
+                'edit' => 'admin.form.edit',
+                'update' => 'admin.form.update',
+                'destroy' => 'admin.form.destroy',
+            ]);
+            Route::get('form/api', [\App\Http\Controllers\FormController::class, 'api'])->name('admin.form.api');
+            Route::get('form/trip', [\App\Http\Controllers\FormController::class, 'trip'])->name('admin.form.trip');
+            Route::get('form/{id}/preview', [\App\Http\Controllers\FormController::class, 'preview'])->name('admin.form.preview');
+        });
+
         // Leave Requests Management Routes
         Route::resource('leave-requests', \App\Http\Controllers\LeaveRequestController::class)->names([
             'index' => 'admin.leave-requests.index',
-            'create' => 'admin.leave-requests.create',
-            'store' => 'admin.leave-requests.store',
-            'show' => 'admin.leave-requests.show',
-            'edit' => 'admin.leave-requests.edit',
-            'update' => 'admin.leave-requests.update',
-            'destroy' => 'admin.leave-requests.destroy',
         ]);
 
         // Global Search Route

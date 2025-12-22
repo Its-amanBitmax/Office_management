@@ -870,7 +870,7 @@ document.addEventListener('click', function(e) {
                 </li>
                 @endif
 
-                @if($admin && $admin->hasAnyPermission(['attendance', 'salary-slips', 'Employee Card', 'expenses']))
+                @if($admin && $admin->hasAnyPermission(['attendance', 'salary-slips', 'Employee Card', 'expenses', 'form']))
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" id="hrm-dropdown-toggle" onclick="toggleDropdown('hrm')" aria-expanded="false">
                         <i>👨‍💼</i> HRM
@@ -893,6 +893,9 @@ document.addEventListener('click', function(e) {
                         @endif
                         @if($admin->hasPermission('interviews'))
                         <li><a class="dropdown-item" href="{{ route('admin.interviews.index') }}"><i>👥</i> Interviews</a></li>
+                        @endif
+                        @if($admin->hasPermission('form'))
+                        <li><a class="dropdown-item" href="{{ route('admin.form.index') }}"><i>📄</i> Form</a></li>
                         @endif
                         <li><a class="dropdown-item" href="{{ route('hr-mis-reports.index') }}"><i>📊</i> HR MIS Reports</a></li>
                    </ul>
