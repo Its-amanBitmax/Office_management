@@ -56,7 +56,7 @@
                     <div class="col-md-6">
                         <h6 class="text-primary">Salary Slip Information</h6>
                         <div class="mb-2">
-                            <strong>Month/Year:</strong> {{ \Carbon\Carbon::createFromFormat('Y-m', $salarySlip->month)->format('F Y') }}
+                            <strong>Month/Year:</strong> {{ \Carbon\Carbon::create()->month((int)$salarySlip->month)->format('F') }} {{ $salarySlip->year }}
                         </div>
                         <div class="mb-2">
                             <strong>Generated At:</strong> {{ $salarySlip->generated_at->format('d M Y, h:i A') }}

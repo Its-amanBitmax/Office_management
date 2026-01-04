@@ -1,11 +1,15 @@
-# TODO: Add 'terminated' and 'resigned' to Employee Status
+# Salary Slip Form Modification - Separate Month and Year Inputs
 
-## Steps to Complete:
-- [x] Update validation rules in `app/Http/Controllers/EmployeeController.php` to include 'terminated' and 'resigned'
-- [x] Update `resources/views/employee/create.blade.php` to add new status options in dropdown
-- [x] Update `resources/views/employee/edit.blade.php` to add new status options in dropdown
-- [x] Update `resources/views/employee/index.blade.php` to handle display of new statuses
-- [x] Update `resources/views/employee/show.blade.php` to handle display of new statuses
-- [x] Update `resources/views/employee/profile.blade.php` to handle display of new statuses
-- [ ] Optionally add status constants in `app/Models/Employee.php`
-- [ ] Test the application to ensure new statuses work correctly
+## Tasks
+- [ ] Update resources/views/admin/salary-slips/create.blade.php
+  - [ ] Replace single month input with separate month select and year number input
+  - [ ] Update JavaScript event listeners for both month and year changes
+  - [ ] Modify AJAX calls to send separate month and year parameters
+- [ ] Update app/Http/Controllers/SalarySlipController.php
+  - [ ] Modify store method validation to accept separate month and year fields
+  - [ ] Update logic to combine month and year for processing
+- [ ] Update resources/views/admin/salary-slips/edit.blade.php (for consistency)
+  - [ ] Replace disabled month input with separate month and year display
+- [ ] Test the implementation
+  - [ ] Verify form submission works correctly
+  - [ ] Check attendance data fetching and salary calculation

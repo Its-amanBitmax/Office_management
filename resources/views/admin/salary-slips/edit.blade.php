@@ -36,11 +36,20 @@
                             <input type="hidden" name="employee_id" value="{{ $salarySlip->employee->id }}">
                             <div class="form-text">Employee cannot be changed after creation</div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label for="month" class="form-label">Salary Month</label>
-                            <input type="month" name="month" id="month" class="form-control"
-                                   value="{{ $salarySlip->month }}" disabled>
+                            <select name="month" id="month" class="form-select" disabled>
+                                <option value="{{ $salarySlip->month }}" selected>
+                                    {{ \Carbon\Carbon::create()->month((int)$salarySlip->month)->format('F') }}
+                                </option>
+                            </select>
                             <div class="form-text">Month cannot be changed after creation</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="year" class="form-label">Salary Year</label>
+                            <input type="number" name="year" id="year" class="form-control"
+                                   value="{{ $salarySlip->year }}" disabled>
+                            <div class="form-text">Year cannot be changed after creation</div>
                         </div>
                     </div>
 

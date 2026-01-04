@@ -205,10 +205,13 @@
                 @if($page === 1)
                     <thead>
                         <tr>
-                            <th style="width: 8%;">S.No</th>
-                            <th style="width: 52%;">Employee Name</th>
-                            <th style="width: 20%;">Status</th>
-                            <th style="width: 20%;">Marked At</th>
+                            <th style="width: 6%;">S.No</th>
+                            <th style="width: 30%;">Employee Name</th>
+                            <th style="width: 12%;">Status</th>
+                            <th style="width: 12%;">Mark In</th>
+                            <th style="width: 12%;">Mark Out</th>
+                            <th style="width: 12%;">Break Time</th>
+                            <th style="width: 16%;">Marked At</th>
                         </tr>
                     </thead>
                 @endif
@@ -224,12 +227,18 @@
                             $attendance = $employee->attendance->first();
                             $currentStatus = $attendance ? $attendance->status : 'Not Marked';
                             $markedAt = $attendance ? $attendance->updated_at->setTimezone('Asia/Kolkata')->format('H:i:s') : '-';
+                            $markIn = $attendance && $attendance->mark_in ? $attendance->mark_in : '-';
+                            $markOut = $attendance && $attendance->mark_out ? $attendance->mark_out : '-';
+                            $breakTime = $attendance && $attendance->break_time ? $attendance->break_time : '-';
                             $statusClass = 'status-' . strtolower(str_replace(' ', '-', $currentStatus));
                         @endphp
                         <tr>
                             <td>{{ $globalIndex }}</td>
                             <td>{{ $employee->name }}</td>
                             <td class="{{ $statusClass }}">{{ $currentStatus }}</td>
+                            <td>{{ $markIn }}</td>
+                            <td>{{ $markOut }}</td>
+                            <td>{{ $breakTime }}</td>
                             <td>{{ $markedAt }}</td>
                         </tr>
                     @endforeach

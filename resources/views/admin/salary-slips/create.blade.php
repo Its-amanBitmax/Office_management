@@ -36,11 +36,22 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label for="month" class="form-label">Salary Month <span class="text-danger">*</span></label>
-                            <input type="month" name="month" id="month" class="form-control"
-                                   value="{{ old('month', now()->format('Y-m')) }}" required>
-                            <div class="form-text">Select the month for which salary is being generated</div>
+                            <select name="month" id="month" class="form-select" required>
+                                <option value="">Month</option>
+                                @for($i = 1; $i <= 12; $i++)
+                                    <option value="{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}" {{ old('month', now()->format('m')) == str_pad($i, 2, '0', STR_PAD_LEFT) ? 'selected' : '' }}>
+                                        {{ \Carbon\Carbon::create()->month($i)->format('F') }}
+                                    </option>
+                                @endfor
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="year" class="form-label">Salary Year <span class="text-danger">*</span></label>
+                            <input type="number" name="year" id="year" class="form-control"
+                                   value="{{ old('year', now()->format('Y')) }}" min="2020" max="2030" required>
+                            <div class="form-text">Select the year for which salary is being generated</div>
                         </div>
                     </div>
 
@@ -160,12 +171,18 @@
 <script>
 let deductionCount = 0;
 
+function getMonthYear() {
+    const month = document.getElementById('month').value;
+    const year = document.getElementById('year').value;
+    return { month, year };
+}
+
 document.getElementById('employee_id').addEventListener('change', function() {
     const employeeId = this.value;
-    const month = document.getElementById('month').value;
+    const { month, year } = getMonthYear();
 
-    if (employeeId && month) {
-        fetchEmployeeData(employeeId, month);
+    if (employeeId && month && year) {
+        fetchEmployeeData(employeeId, month, year);
     } else {
         hideEmployeeData();
     }
@@ -173,26 +190,37 @@ document.getElementById('employee_id').addEventListener('change', function() {
 
 document.getElementById('month').addEventListener('change', function() {
     const employeeId = document.getElementById('employee_id').value;
-    const month = this.value;
+    const { month, year } = getMonthYear();
 
-    if (employeeId && month) {
-        fetchEmployeeData(employeeId, month);
+    if (employeeId && month && year) {
+        fetchEmployeeData(employeeId, month, year);
     } else {
         hideEmployeeData();
     }
 });
 
-function fetchEmployeeData(employeeId, month) {
+document.getElementById('year').addEventListener('change', function() {
+    const employeeId = document.getElementById('employee_id').value;
+    const { month, year } = getMonthYear();
+
+    if (employeeId && month && year) {
+        fetchEmployeeData(employeeId, month, year);
+    } else {
+        hideEmployeeData();
+    }
+});
+
+function fetchEmployeeData(employeeId, month, year) {
     fetch(`/admin/employees/${employeeId}`)
         .then(response => response.json())
         .then(employee => {
             displayEmployeeDetails(employee);
-            return fetch(`/admin/attendance-data/${employeeId}/${month}`);
+            return fetch(`/admin/attendance-data/${employeeId}/${year}-${month}`);
         })
         .then(response => response.json())
         .then(attendanceData => {
             displayAttendanceSummary(attendanceData);
-            calculateSalaryPreview(employeeId, month);
+            calculateSalaryPreview(employeeId, month, year);
         })
         .catch(error => {
             console.error('Error fetching data:', error);
@@ -218,7 +246,7 @@ function displayAttendanceSummary(attendanceData) {
     document.getElementById('attendance-summary').style.display = 'block';
 }
 
-function calculateSalaryPreview(employeeId, month) {
+function calculateSalaryPreview(employeeId, month, year) {
     const deductions = getDeductionsData();
 
     fetch('/admin/calculate-salary', {
@@ -229,7 +257,7 @@ function calculateSalaryPreview(employeeId, month) {
         },
         body: JSON.stringify({
             employee_id: employeeId,
-            month: month,
+            month: `${year}-${month}`,
             deductions: deductions
         })
     })
@@ -315,10 +343,10 @@ function addDeductionRow(type = '', amount = '') {
 
 function updateSalaryPreview() {
     const employeeId = document.getElementById('employee_id').value;
-    const month = document.getElementById('month').value;
+    const { month, year } = getMonthYear();
 
-    if (employeeId && month) {
-        calculateSalaryPreview(employeeId, month);
+    if (employeeId && month && year) {
+        calculateSalaryPreview(employeeId, month, year);
     }
 }
 

@@ -19,18 +19,37 @@
                 </select>
             </div>
             <div class="col-auto">
-                <label for="month" class="form-label">Select Month:</label>
-                <input type="month" name="month" id="month" class="form-control" value="{{ $month ?? \Carbon\Carbon::now()->format('Y-m') }}" required>
+                <label for="year" class="form-label">Select Year:</label>
+                <select name="year" id="year" class="form-select" required>
+                    @php
+                        $currentYear = \Carbon\Carbon::now()->year;
+                        $selectedYear = isset($month) ? explode('-', $month)[0] : $currentYear;
+                    @endphp
+                    @for($y = $currentYear - 5; $y <= $currentYear + 1; $y++)
+                        <option value="{{ $y }}" {{ $selectedYear == $y ? 'selected' : '' }}>{{ $y }}</option>
+                    @endfor
+                </select>
+            </div>
+            <div class="col-auto">
+                <label for="month_num" class="form-label">Select Month:</label>
+                <select name="month_num" id="month_num" class="form-select" required>
+                    @php
+                        $selectedMonth = isset($month) ? explode('-', $month)[1] : \Carbon\Carbon::now()->month;
+                    @endphp
+                    @for($m = 1; $m <= 12; $m++)
+                        <option value="{{ str_pad($m, 2, '0', STR_PAD_LEFT) }}" {{ $selectedMonth == $m ? 'selected' : '' }}>{{ \Carbon\Carbon::create()->month($m)->format('F') }}</option>
+                    @endfor
+                </select>
             </div>
             <div class="col-auto align-self-end">
                 <button type="submit" class="btn btn-primary">View Attendance</button>
             </div>
-            @if((isset($employee) && isset($month)) || (isset($selectedEmployee) && $selectedEmployee == 'all' && isset($month)))
+            @if((isset($employee) && isset($year) && isset($month_num)) || (isset($selectedEmployee) && $selectedEmployee == 'all' && isset($year) && isset($month_num)))
             <div class="col-auto align-self-end">
                 @if(isset($selectedEmployee) && $selectedEmployee == 'all')
-                    <a href="{{ route('attendance.exportMonthly', ['employee_id' => 'all', 'month' => $month]) }}" class="btn btn-success">Export All Employees Excel</a>
+                    <a href="{{ route('attendance.exportMonthly', ['employee_id' => 'all', 'year' => $year, 'month_num' => $month_num]) }}" class="btn btn-success">Export All Employees Excel</a>
                 @else
-                    <a href="{{ route('attendance.exportMonthly', ['employee_id' => $employee->id, 'month' => $month]) }}" class="btn btn-success">Export Monthly Excel</a>
+                    <a href="{{ route('attendance.exportMonthly', ['employee_id' => $employee->id, 'year' => $year, 'month_num' => $month_num]) }}" class="btn btn-success">Export Monthly Excel</a>
                 @endif
             </div>
             @endif

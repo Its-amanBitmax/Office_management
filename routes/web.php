@@ -43,7 +43,7 @@ Route::prefix('admin')->group(function () {
     Route::get('/login', [AdminController::class, 'showLoginForm'])->name('admin.login');
     Route::post('/login', [AdminController::class, 'login']);
     Route::post('/logout', [AdminController::class, 'logout'])->name('admin.logout');
-      Route::get('/sync-office-ip', [AttendanceController::class, 'syncOfficeIp']);
+      Route::get('/sync-office-ip', [AttendanceController::class, 'syncOfficeIp'])->name('admin.sync-office-ip');
  Route::post('evaluation-report/save-pdf/{id}', 
         [AdminController::class, 'saveEvaluationPdf']
     )->name('admin.evaluation-report.save-pdf');
@@ -162,6 +162,16 @@ Route::prefix('admin')->group(function () {
             'update' => 'attendance.update',
             'destroy' => 'attendance.destroy',
         ]);
+        Route::post('attendance/{attendance}/mark-in', [AttendanceController::class, 'markIn'])->name('attendance.mark-in');
+        Route::post('attendance/{attendance}/mark-out', [AttendanceController::class, 'markOut'])->name('attendance.mark-out');
+        Route::post('attendance/{attendance}/mark-break', [AttendanceController::class, 'markBreak'])->name('attendance.mark-break');
+        Route::post('attendance/{attendance}/start-break', [AttendanceController::class, 'startBreak'])->name('attendance.start-break');
+        Route::middleware('admin')->group(function () {
+            Route::post('attendance/mark-in-direct', [AttendanceController::class, 'markInDirect'])->name('attendance.mark-in-direct');
+            Route::post('attendance/mark-out-direct', [AttendanceController::class, 'markOutDirect'])->name('attendance.mark-out-direct');
+            Route::post('attendance/start-break-direct', [AttendanceController::class, 'startBreakDirect'])->name('attendance.start-break-direct');
+            Route::post('attendance/end-break-direct', [AttendanceController::class, 'endBreakDirect'])->name('attendance.end-break-direct');
+        });
         Route::put(
     '/interviews/{id}/toggle-link-status',
     [InterviewController::class, 'toggleLinkStatus']
@@ -496,6 +506,18 @@ Route::prefix('employee')->group(function () {
 
     Route::post('attendance/submit', [AttendanceController::class, 'submit'])
         ->name('employee.attendance.submit');
+
+    Route::post('attendance/mark-in-direct', [AttendanceController::class, 'markInDirect'])
+        ->name('employee.attendance.mark-in-direct');
+
+    Route::post('attendance/mark-out-direct', [AttendanceController::class, 'markOutDirect'])
+        ->name('employee.attendance.mark-out-direct');
+
+    Route::post('attendance/start-break-direct', [AttendanceController::class, 'startBreakDirect'])
+        ->name('employee.attendance.start-break-direct');
+
+    Route::post('attendance/end-break-direct', [AttendanceController::class, 'endBreakDirect'])
+        ->name('employee.attendance.end-break-direct');
 });
 
 });

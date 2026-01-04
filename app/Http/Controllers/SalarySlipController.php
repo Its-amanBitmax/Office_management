@@ -58,15 +58,18 @@ public function store(Request $request)
 {
     $request->validate([
         'employee_id' => 'required|exists:employees,id',
-        'month' => 'required|date_format:Y-m',
+        'month' => 'required|string|in:01,02,03,04,05,06,07,08,09,10,11,12',
+        'year' => 'required|integer|min:2020|max:2030',
         'deductions' => 'nullable|array',
         'deductions.*.type' => 'required|string',
         'deductions.*.amount' => 'required|numeric|min:0',
     ]);
 
+    // Combine month and year into Y-m format for processing
+    $monthYear = $request->year . '-' . $request->month;
+
     // ✅ Check if salary slip already exists
-    $month = Carbon::createFromFormat('Y-m', $request->month);
-    if (SalarySlip::existsForEmployeeMonth($request->employee_id, $request->month, $month->year)) {
+    if (SalarySlip::existsForEmployeeMonth($request->employee_id, $request->month, $request->year)) {
         return redirect()->back()
             ->withErrors(['month' => 'Salary slip already exists for this employee and month.']);
     }
@@ -74,21 +77,21 @@ public function store(Request $request)
     $employee = Employee::findOrFail($request->employee_id);
 
     // ✅ Attendance calculation
-    $attendanceData = $this->calculateAttendanceData($employee, $request->month);
+    $attendanceData = $this->calculateAttendanceData($employee, $monthYear);
 
     // ✅ Salary calculation
     $salaryData = $this->calculateSalary(
         $employee,
         $attendanceData,
         $request->deductions ?? [],
-        $request->month
+        $monthYear
     );
 
     // ✅ Create salary slip
     $salarySlip = SalarySlip::create([
         'employee_id' => $employee->id,
         'month' => $request->month,
-        'year' => $month->year,
+        'year' => $request->year,
         'basic_salary' => $employee->basic_salary ?? 0,
         'hra' => $employee->hra ?? 0,
         'conveyance' => $employee->conveyance ?? 0,

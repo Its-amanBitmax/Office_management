@@ -18,6 +18,10 @@ protected $fillable = [
     'ip_address',
     'image',
     'marked_by_type',
+    'mark_in',
+    'mark_out',
+    'break_start',
+    'break_time',
 ];
 
 

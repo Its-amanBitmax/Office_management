@@ -127,7 +127,7 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge bg-info">{{ \Carbon\Carbon::createFromFormat('Y-m', $salarySlip->month)->format('M Y') }}</span>
+                                    <span class="badge bg-info">{{ \Carbon\Carbon::create()->month((int)$salarySlip->month)->format('M') }} {{ $salarySlip->year }}</span>
                                 </td>
                                 <td>₹{{ number_format($salarySlip->basic_salary, 2) }}</td>
                                 <td>₹{{ number_format($salarySlip->gross_salary, 2) }}</td>

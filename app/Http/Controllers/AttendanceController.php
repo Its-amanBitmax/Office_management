@@ -68,6 +68,9 @@ public function store(Request $request)
             'date' => 'required|date',
             'status' => 'required|in:Present,Absent,Leave,Half Day,Holiday,NCNS,LWP',
             'remarks' => 'nullable|string|max:255',
+            'mark_in' => 'nullable|date_format:H:i:s',
+            'mark_out' => 'nullable|date_format:H:i:s',
+            'break_time' => 'nullable|regex:/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/',
         ]);
 
         // Logged-in admin
@@ -100,6 +103,7 @@ public function store(Request $request)
                 return response()->json([
                     'success' => true,
                     'message' => 'Attendance updated successfully.',
+                    'attendance' => $existingAttendance,
                 ]);
             }
 
@@ -158,6 +162,7 @@ foreach ($admins as $adminUser) {
             return response()->json([
                 'success' => true,
                 'message' => 'Attendance marked successfully.',
+                'attendance' => $attendance,
             ]);
         }
 
@@ -168,7 +173,7 @@ foreach ($admins as $adminUser) {
     } catch (\Illuminate\Validation\ValidationException $e) {
         throw $e;
     } catch (\Exception $e) {
-        \Log::error('Attendance store error: ' . $e->getMessage(), [
+        Log::error('Attendance store error: ' . $e->getMessage(), [
             'request' => $request->all(),
         ]);
 
@@ -226,12 +231,20 @@ foreach ($admins as $adminUser) {
             'status' => 'required|in:Present,Absent,Leave,Half Day,Holiday,NCNS,LWP',
             'remarks' => 'nullable|string|max:255',
             'marked_time' => 'required|date_format:H:i',
+            'mark_in' => 'nullable|date_format:H:i',
+            'mark_out' => 'nullable|date_format:H:i',
+            'break_time' => 'nullable|regex:/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/',
         ]);
 
         $attendance->employee_id = $request->employee_id;
         $attendance->date = $request->date;
         $attendance->status = $request->status;
         $attendance->remarks = $request->remarks;
+
+        // Update time fields
+        $attendance->mark_in = $request->mark_in ? $request->mark_in . ':00' : null;
+        $attendance->mark_out = $request->mark_out ? $request->mark_out . ':00' : null;
+        $attendance->break_time = $request->break_time ?: null;
 
         // Update updated_at with marked_time on the same date
         $dateTimeString = $request->date . ' ' . $request->marked_time;
@@ -243,6 +256,466 @@ foreach ($admins as $adminUser) {
         $this->logActivity('updated', 'Attendance', $attendance->id, 'Updated attendance for ' . $attendance->employee->name . ' to ' . $attendance->status . ' on ' . $attendance->date);
 
         return redirect()->route('attendance.index')->with('success', 'Attendance record updated successfully.');
+    }
+
+    /**
+     * Mark in time for attendance
+     */
+    public function markIn(Request $request, Attendance $attendance)
+    {
+        $request->validate([
+            'mark_in' => 'required|date_format:H:i:s',
+            'status' => 'required|in:Present,Half Day',
+        ]);
+
+        $attendance->update([
+            'mark_in' => $request->mark_in,
+            'status' => $request->status,
+        ]);
+
+        // Log activity
+        $this->logActivity('updated', 'Attendance', $attendance->id, 'Marked in time for ' . $attendance->employee->name . ' as ' . $attendance->status);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Mark in time updated successfully.',
+        ]);
+    }
+
+    /**
+     * Mark out time for attendance
+     */
+    public function markOut(Request $request, Attendance $attendance)
+    {
+        $request->validate([
+            'mark_out' => 'required|date_format:H:i:s',
+        ]);
+
+        $attendance->update([
+            'mark_out' => $request->mark_out,
+        ]);
+
+        // Log activity
+        $this->logActivity('updated', 'Attendance', $attendance->id, 'Marked out time for ' . $attendance->employee->name);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Mark out time updated successfully.',
+        ]);
+    }
+
+    /**
+     * Mark break time for attendance
+     */
+    public function markBreak(Request $request, Attendance $attendance)
+    {
+        $request->validate([
+            'break_time' => 'required|date_format:H:i:s',
+        ]);
+
+        // If break_start is set, calculate duration and store as HH:MM:SS format
+        if ($attendance->break_start) {
+            $breakStart = Carbon::createFromFormat('H:i:s', $attendance->break_start, 'Asia/Kolkata');
+            $breakEnd = Carbon::createFromFormat('H:i:s', $request->break_time, 'Asia/Kolkata');
+            $breakDuration = $breakEnd->diff($breakStart);
+
+            // Format duration as HH:MM:SS
+            $breakTimeFormatted = sprintf('%02d:%02d:%02d',
+                $breakDuration->h,
+                $breakDuration->i,
+                $breakDuration->s
+            );
+
+            $attendance->update([
+                'break_time' => $breakTimeFormatted,
+            ]);
+
+            $this->logActivity('updated', 'Attendance', $attendance->id, 'Ended break for ' . $attendance->employee->name . ' (Duration: ' . $breakTimeFormatted . ')');
+        } else {
+            // If no break_start, store as end time (legacy behavior)
+            $attendance->update([
+                'break_time' => $request->break_time,
+            ]);
+
+            $this->logActivity('updated', 'Attendance', $attendance->id, 'Marked break time for ' . $attendance->employee->name);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Break time updated successfully.',
+        ]);
+    }
+
+    /**
+     * Start break for attendance (set break_start time)
+     */
+    public function startBreak(Request $request, Attendance $attendance)
+    {
+        $request->validate([
+            'break_start' => 'required|date_format:H:i:s',
+        ]);
+
+        $attendance->update([
+            'break_start' => $request->break_start,
+        ]);
+
+        // Log activity
+        $this->logActivity('updated', 'Attendance', $attendance->id, 'Started break for ' . $attendance->employee->name);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Break started successfully.',
+        ]);
+    }
+
+    /**
+     * Mark in direct - creates attendance if doesn't exist
+     */
+    public function markInDirect(Request $request)
+    {
+        // Check if user is admin or employee
+        $isAdmin = auth('admin')->check();
+        $isEmployee = auth('employee')->check();
+
+        $validationRules = [
+            'employee_id' => 'required|exists:employees,id',
+            'date' => 'required|date',
+            'mark_in' => 'required|date_format:H:i:s',
+        ];
+
+        // Only require image for employees, not for admins
+        if (!$isAdmin) {
+            $validationRules['image'] = 'required|string';
+        } else {
+            $validationRules['image'] = 'nullable|string';
+        }
+
+        $request->validate($validationRules);
+
+        // Get IP address
+        $userIp = $request->header('CF-Connecting-IP')
+            ?? $request->header('X-Forwarded-For')
+            ?? $request->ip();
+        $userIp = trim(explode(',', $userIp)[0]);
+
+        // Handle image (only if provided)
+        $path = null;
+        if ($request->image) {
+            $imageData = $request->image;
+            if (!preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+                return response()->json(['success' => false, 'message' => 'Invalid image format'], 400);
+            }
+            $image = base64_decode(substr($imageData, strpos($imageData, ',') + 1));
+            if ($image === false) {
+                return response()->json(['success' => false, 'message' => 'Image decoding failed'], 400);
+            }
+            $extension = strtolower($type[1]);
+            if (!in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                return response()->json(['success' => false, 'message' => 'Invalid image type'], 400);
+            }
+            $fileName = 'attendance_' . $request->employee_id . '_' . now()->timestamp . '.' . $extension;
+            $path = 'attendance/' . $fileName;
+            Storage::disk('public')->put($path, $image);
+        }
+
+        // Check if attendance already exists
+        $attendance = Attendance::where('employee_id', $request->employee_id)
+            ->where('date', $request->date)
+            ->first();
+
+        // Check if mark_in is already set for this day
+        if ($attendance && $attendance->mark_in) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mark In has already been done for this day.',
+            ], 400);
+        }
+
+        // Determine status based on time (before 9:30 = Present, after = Half Day)
+        $markInTime = Carbon::createFromFormat('H:i:s', $request->mark_in, 'Asia/Kolkata');
+        $halfDayThreshold = Carbon::createFromTime(9, 30, 0, 'Asia/Kolkata');
+        $status = $markInTime->greaterThan($halfDayThreshold) ? 'Half Day' : 'Present';
+
+        if ($attendance) {
+            // Update existing attendance
+            $updateData = [
+                'mark_in' => $request->mark_in,
+                'status' => $status,
+                'ip_address' => $userIp,
+                'marked_time' => now()->format('H:i:s'),
+                'marked_by_type' => 'Employee',
+            ];
+            if ($path) {
+                $updateData['image'] = $path;
+            }
+            $attendance->update($updateData);
+
+            $this->logActivity('updated', 'Attendance', $attendance->id, 'Marked in time for ' . $attendance->employee->name . ' as ' . $status);
+        } else {
+            // Create new attendance record
+            $createData = [
+                'employee_id' => $request->employee_id,
+                'date' => $request->date,
+                'status' => $status,
+                'mark_in' => $request->mark_in,
+                'ip_address' => $userIp,
+                'marked_time' => now()->format('H:i:s'),
+                'marked_by_type' => 'Employee',
+            ];
+            if ($path) {
+                $createData['image'] = $path;
+            }
+            $attendance = Attendance::create($createData);
+
+            $this->logActivity('created', 'Attendance', $attendance->id, 'Created attendance and marked in for ' . $attendance->employee->name . ' as ' . $status);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Mark in successful.',
+            'attendance' => $attendance,
+        ]);
+    }
+
+    /**
+     * Mark out direct - creates attendance if doesn't exist
+     */
+    public function markOutDirect(Request $request)
+    {
+        // Check if user is admin or employee
+        $isAdmin = auth('admin')->check();
+        $isEmployee = auth('employee')->check();
+
+        $validationRules = [
+            'employee_id' => 'required|exists:employees,id',
+            'date' => 'required|date',
+            'mark_out' => 'required|date_format:H:i:s',
+        ];
+
+        // Only require image for employees, not for admins
+        if (!$isAdmin) {
+            $validationRules['image'] = 'required|string';
+        } else {
+            $validationRules['image'] = 'nullable|string';
+        }
+
+        $request->validate($validationRules);
+
+        // Validation: Check if mark_in is set before allowing mark_out
+        $existingAttendance = Attendance::where('employee_id', $request->employee_id)
+            ->where('date', $request->date)
+            ->first();
+
+        if (!$existingAttendance || !$existingAttendance->mark_in) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mark In is required before Mark Out.',
+            ], 400);
+        }
+
+        // Get IP address
+        $userIp = $request->header('CF-Connecting-IP')
+            ?? $request->header('X-Forwarded-For')
+            ?? $request->ip();
+        $userIp = trim(explode(',', $userIp)[0]);
+
+        // Handle image (only if provided)
+        $path = null;
+        if ($request->image) {
+            $imageData = $request->image;
+            if (!preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+                return response()->json(['success' => false, 'message' => 'Invalid image format'], 400);
+            }
+            $image = base64_decode(substr($imageData, strpos($imageData, ',') + 1));
+            if ($image === false) {
+                return response()->json(['success' => false, 'message' => 'Image decoding failed'], 400);
+            }
+            $extension = strtolower($type[1]);
+            if (!in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                return response()->json(['success' => false, 'message' => 'Invalid image type'], 400);
+            }
+            $fileName = 'attendance_' . $request->employee_id . '_' . now()->timestamp . '.' . $extension;
+            $path = 'attendance/' . $fileName;
+            Storage::disk('public')->put($path, $image);
+        }
+
+        // Check if attendance already exists
+        $attendance = Attendance::where('employee_id', $request->employee_id)
+            ->where('date', $request->date)
+            ->first();
+
+        if ($attendance) {
+            // Update existing attendance
+            $attendance->update([
+                'mark_out' => $request->mark_out,
+                'image' => $path,
+                'ip_address' => $userIp,
+                'marked_time' => now()->format('H:i:s'),
+                'marked_by_type' => 'Employee',
+            ]);
+
+            $this->logActivity('updated', 'Attendance', $attendance->id, 'Marked out time for ' . $attendance->employee->name);
+        } else {
+            // Create new attendance record
+            $attendance = Attendance::create([
+                'employee_id' => $request->employee_id,
+                'date' => $request->date,
+                'status' => 'Present', // Default status when creating
+                'mark_out' => $request->mark_out,
+                'image' => $path,
+                'ip_address' => $userIp,
+                'marked_time' => now()->format('H:i:s'),
+                'marked_by_type' => 'Employee',
+            ]);
+
+            $this->logActivity('created', 'Attendance', $attendance->id, 'Created attendance and marked out for ' . $attendance->employee->name);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Mark out successful.',
+            'attendance' => $attendance,
+        ]);
+    }
+
+    /**
+     * Start break direct - records break start time
+     */
+    public function startBreakDirect(Request $request)
+    {
+        // Check if user is admin or employee
+        $isAdmin = auth('admin')->check();
+        $isEmployee = auth('employee')->check();
+
+        $validationRules = [
+            'employee_id' => 'required|exists:employees,id',
+            'date' => 'required|date',
+            'break_start' => 'required|string', // Format: HH:MM:SS
+        ];
+
+        // Only require image for employees, not for admins
+        if (!$isAdmin) {
+            $validationRules['image'] = 'required|string';
+        } else {
+            $validationRules['image'] = 'nullable|string';
+        }
+
+        $request->validate($validationRules);
+
+        // Validation: Check if mark_in is set before allowing start break
+        $existingAttendance = Attendance::where('employee_id', $request->employee_id)
+            ->where('date', $request->date)
+            ->first();
+
+        if (!$existingAttendance || !$existingAttendance->mark_in) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mark In is required before starting break.',
+            ], 400);
+        }
+
+        // Check if attendance already exists
+        $attendance = Attendance::where('employee_id', $request->employee_id)
+            ->where('date', $request->date)
+            ->first();
+
+        if ($attendance) {
+            // Update existing attendance
+            $attendance->update([
+                'break_start' => $request->break_start,
+            ]);
+
+            $this->logActivity('updated', 'Attendance', $attendance->id, 'Started break for ' . $attendance->employee->name);
+        } else {
+            // Create new attendance record
+            $attendance = Attendance::create([
+                'employee_id' => $request->employee_id,
+                'date' => $request->date,
+                'status' => 'Present', // Default status when creating
+                'break_start' => $request->break_start,
+            ]);
+
+            $this->logActivity('created', 'Attendance', $attendance->id, 'Created attendance and started break for ' . $attendance->employee->name);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Break started successfully.',
+            'attendance' => $attendance,
+        ]);
+    }
+
+    /**
+     * End break direct - calculates and records break duration
+     */
+    public function endBreakDirect(Request $request)
+    {
+        // Check if user is admin or employee
+        $isAdmin = auth('admin')->check();
+        $isEmployee = auth('employee')->check();
+
+        $validationRules = [
+            'employee_id' => 'required|exists:employees,id',
+            'date' => 'required|date',
+            'break_time' => 'required|string', // Format: HH:MM:SS (end time)
+        ];
+
+        // Only require image for employees, not for admins
+        if (!$isAdmin) {
+            $validationRules['image'] = 'required|string';
+        } else {
+            $validationRules['image'] = 'nullable|string';
+        }
+
+        $request->validate($validationRules);
+
+        // Check if attendance already exists
+        $attendance = Attendance::where('employee_id', $request->employee_id)
+            ->where('date', $request->date)
+            ->first();
+
+        $breakTimeFormatted = '00:00:00'; // Default duration
+
+        if ($attendance && $attendance->break_start) {
+            // Calculate break duration using break_start and the sent break_time as end time
+            $breakStart = Carbon::createFromFormat('H:i:s', $attendance->break_start, 'Asia/Kolkata');
+            $breakEnd = Carbon::createFromFormat('H:i:s', $request->break_time, 'Asia/Kolkata');
+            $breakDuration = $breakEnd->diff($breakStart);
+
+            // Format duration as HH:MM:SS
+            $breakTimeFormatted = sprintf('%02d:%02d:%02d',
+                $breakDuration->h,
+                $breakDuration->i,
+                $breakDuration->s
+            );
+
+            // Update existing attendance
+            $attendance->update([
+                'break_time' => $breakTimeFormatted,
+            ]);
+
+            $this->logActivity('updated', 'Attendance', $attendance->id, 'Ended break for ' . $attendance->employee->name . ' (Duration: ' . $breakTimeFormatted . ')');
+        } else {
+            // If no break_start, create or update attendance with default break time
+            $attendance = Attendance::updateOrCreate(
+                [
+                    'employee_id' => $request->employee_id,
+                    'date' => $request->date,
+                ],
+                [
+                    'status' => 'Present', // Default status when creating
+                    'break_time' => $breakTimeFormatted,
+                ]
+            );
+
+            $this->logActivity('updated', 'Attendance', $attendance->id, 'Ended break for ' . $attendance->employee->name . ' (No start time recorded)');
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Break ended successfully.',
+            'attendance' => $attendance,
+        ]);
     }
 
     /**
@@ -324,11 +797,14 @@ foreach ($admins as $adminUser) {
     {
         $request->validate([
             'employee_id' => 'required',
-            'month' => 'required|date_format:Y-m',
+            'year' => 'required|integer|min:2000|max:2030',
+            'month_num' => 'required|integer|min:1|max:12',
         ]);
 
         $employees = Employee::all();
-        $month = $request->month;
+        $year = $request->year;
+        $monthNum = $request->month_num;
+        $month = sprintf('%04d-%02d', $year, $monthNum);
 
         // Parse month and year
         $date = Carbon::createFromFormat('Y-m', $month, 'Asia/Kolkata');
@@ -465,7 +941,7 @@ foreach ($admins as $adminUser) {
                 $status = $attendance ? $attendance->status : 'Not Marked';
                 // If no attendance and employee is resigned/terminated and current date is after inactive date, show status
                 if (!$attendance && $inactiveDate && $currentDate->gt($inactiveDate)) {
-                    $status = ucfirst($employee->status);
+                        $status = ucfirst($employee->status);
                 }
 
                 $monthlyData[] = [
@@ -588,7 +1064,7 @@ foreach ($admins as $adminUser) {
     } else {
         $totalDaysInMonth = Carbon::now()->daysInMonth; // Fallback
     }
-
+    
     // Daily salary rates
     $basicDaily = $basicSalary / $totalDaysInMonth;
     $hraDaily = $hra / $totalDaysInMonth;
@@ -691,8 +1167,19 @@ public function mark(Request $request)
         ], 200);
     }
 
+    // ✅ Get current attendance status for today
+    $employeeId = auth('employee')->id();
+    $today = now()->toDateString();
+    $attendance = Attendance::where('employee_id', $employeeId)
+        ->where('date', $today)
+        ->first();
+
+    $hasMarkedIn = $attendance && $attendance->mark_in;
+    $hasMarkedOut = $attendance && $attendance->mark_out;
+    $breakStarted = $attendance && $attendance->break_start && !$attendance->break_time;
+
     // ✅ Normal page load
-    return view('employee.attendance.mark');
+    return view('employee.attendance.mark', compact('hasMarkedIn', 'hasMarkedOut', 'breakStarted'));
 }
 
 /**
