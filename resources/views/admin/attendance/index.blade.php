@@ -55,18 +55,59 @@
                 $markedAt = $attendance ? $attendance->updated_at->setTimezone('Asia/Kolkata')->format('H:i:s') : '-';
                 $twh = '-';
                 if ($attendance && $attendance->mark_in && $attendance->mark_out) {
-                    $markIn = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $date . ' ' . $attendance->mark_in);
-                    $markOut = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $date . ' ' . $attendance->mark_out);
-                    $totalSeconds = $markOut->diffInSeconds($markIn, false);
+                    try {
+                        // Parse times more safely - handle potential microseconds or extra data
+                        $markInTime = substr($attendance->mark_in, 0, 8); // Take only HH:MM:SS
+                        $markOutTime = substr($attendance->mark_out, 0, 8); // Take only HH:MM:SS
 
-                    // TWH = Mark Out - Mark In
-                    $workingSeconds = max(0, $totalSeconds);
-                    $hours = floor($workingSeconds / 3600);
-                    $minutes = floor(($workingSeconds % 3600) / 60);
-                    $seconds = $workingSeconds % 60;
-                    $twh = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+                        $date = $attendance->date->format('Y-m-d');
+                        $markIn = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $date . ' ' . $markInTime, 'Asia/Kolkata');
+
+                        // Handle case where mark_out might be next day (if time is less than mark_in)
+                        $markOutDate = $date;
+                        if ($markOutTime < $markInTime) {
+                            $markOutDate = \Carbon\Carbon::createFromFormat('Y-m-d', $date, 'Asia/Kolkata')->addDay()->format('Y-m-d');
+                        }
+                        $markOut = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $markOutDate . ' ' . $markOutTime, 'Asia/Kolkata');
+
+                        // Calculate total seconds manually to avoid timezone issues
+                        $markInSeconds = ($markIn->hour * 3600) + ($markIn->minute * 60) + $markIn->second;
+                        $markOutSeconds = ($markOut->hour * 3600) + ($markOut->minute * 60) + $markOut->second;
+                        $totalSeconds = $markOutSeconds - $markInSeconds;
+
+                        // Subtract break time - break_time is always duration in HH:MM:SS format
+                        if ($attendance->break_time && $attendance->break_time !== '00:00:00') {
+                            $breakTime = substr($attendance->break_time, 0, 8); // Take only HH:MM:SS
+                            $breakParts = explode(':', $breakTime);
+                            if (count($breakParts) === 3) {
+                                $breakSeconds = ($breakParts[0] * 3600) + ($breakParts[1] * 60) + $breakParts[2];
+                                $totalSeconds -= $breakSeconds;
+                            }
+                        }
+
+                        // TWH = Mark Out - Mark In - Break Time
+                        $workingSeconds = max(0, $totalSeconds);
+                        $hours = floor($workingSeconds / 3600);
+                        $minutes = floor(($workingSeconds % 3600) / 60);
+                        $seconds = $workingSeconds % 60;
+                        $twh = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+                    } catch (\Exception $e) {
+                        // If parsing fails, show error in debug
+                        $twh = 'Error';
+                        error_log('TWH calculation error for employee ' . $employee->id . ': ' . $e->getMessage() . ' | Date: ' . $attendance->date . ' | Mark In: ' . $attendance->mark_in . ' | Mark Out: ' . $attendance->mark_out);
+                    }
                 }
             @endphp
+            <script>
+                console.log('Admin TWH Debug for {{ $employee->name }} ({{ $employee->id }}):', {
+                    mark_in: '{{ $attendance ? $attendance->mark_in : null }}',
+                    mark_out: '{{ $attendance ? $attendance->mark_out : null }}',
+                    break_time: '{{ $attendance ? $attendance->break_time : null }}',
+                    break_start: '{{ $attendance ? $attendance->break_start : null }}',
+                    twh: '{{ $twh }}',
+                    date: '{{ $date }}'
+                });
+            </script>
             <tr id="employee-row-{{ $employee->id }}">
                 <td>{{ $employee->name }}</td>
                 <td>
@@ -1160,6 +1201,7 @@ function openAttendanceModal(attendanceId)
                 <tr><th>Mark In</th><td>${data.mark_in || '-'}</td></tr>
                 <tr><th>Mark Out</th><td>${data.mark_out || '-'}</td></tr>
                 <tr><th>Break Time</th><td>${data.break_time || '-'}</td></tr>
+                <tr><th>Total Working Hours</th><td>${data.twh || '-'}</td></tr>
                 <tr><th>Marked Time</th><td>${data.marked_time}</td></tr>
                 <tr><th>Marked By</th><td>${data.marked_by}</td></tr>
                 <tr><th>IP Address</th><td>${data.ip}</td></tr>

@@ -1157,20 +1157,51 @@ private function updateRelatedRecords(Employee $employee, Request $request)
     /**
      * Calculate Total Working Hours (TWH)
      */
-    private function calculateTWH($markIn, $markOut, $breakTime = null)
+    private function calculateTWH($markIn, $markOut, $breakTime = null, $date = null)
     {
-        $markInTime = Carbon::createFromFormat('H:i:s', $markIn, 'Asia/Kolkata');
-        $markOutTime = Carbon::createFromFormat('H:i:s', $markOut, 'Asia/Kolkata');
+        try {
+            // Use current date if not provided
+            $attendanceDate = $date ? Carbon::parse($date) : Carbon::now('Asia/Kolkata');
+            $dateStr = $attendanceDate->format('Y-m-d');
 
-        $totalHours = $markOutTime->diffInMinutes($markInTime) / 60;
+            // Parse times more safely - handle potential microseconds or extra data
+            $markInTime = substr($markIn, 0, 8); // Take only HH:MM:SS
+            $markOutTime = substr($markOut, 0, 8); // Take only HH:MM:SS
 
-        if ($breakTime) {
-            // break_time is stored as HH:MM:SS, convert to hours
-            $breakParts = explode(':', $breakTime);
-            $breakHours = ($breakParts[0] * 60 + $breakParts[1]) / 60; // Convert to hours
-            $totalHours -= $breakHours;
+            $markInCarbon = Carbon::createFromFormat('Y-m-d H:i:s', $dateStr . ' ' . $markInTime, 'Asia/Kolkata');
+
+            // Handle case where mark_out might be next day (if time is less than mark_in)
+            $markOutDate = $dateStr;
+            if ($markOutTime < $markInTime) {
+                $markOutDate = Carbon::createFromFormat('Y-m-d', $dateStr, 'Asia/Kolkata')->addDay()->format('Y-m-d');
+            }
+            $markOutCarbon = Carbon::createFromFormat('Y-m-d H:i:s', $markOutDate . ' ' . $markOutTime, 'Asia/Kolkata');
+
+            // Calculate total seconds manually to avoid timezone issues
+            $markInSeconds = ($markInCarbon->hour * 3600) + ($markInCarbon->minute * 60) + $markInCarbon->second;
+            $markOutSeconds = ($markOutCarbon->hour * 3600) + ($markOutCarbon->minute * 60) + $markOutCarbon->second;
+            $totalSeconds = $markOutSeconds - $markInSeconds;
+
+            // Subtract break time - break_time is always duration in HH:MM:SS format
+            if ($breakTime && $breakTime !== '00:00:00') {
+                $breakTimeClean = substr($breakTime, 0, 8); // Take only HH:MM:SS
+                $breakParts = explode(':', $breakTimeClean);
+                if (count($breakParts) === 3) {
+                    $breakSeconds = ($breakParts[0] * 3600) + ($breakParts[1] * 60) + $breakParts[2];
+                    $totalSeconds -= $breakSeconds;
+                }
+            }
+
+            // Convert to hours and format as HH:MM:SS
+            $workingSeconds = max(0, $totalSeconds);
+            $hours = floor($workingSeconds / 3600);
+            $minutes = floor(($workingSeconds % 3600) / 60);
+            $seconds = $workingSeconds % 60;
+
+            return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+        } catch (\Exception $e) {
+            // Return null if calculation fails
+            return null;
         }
-
-        return round($totalHours, 2);
     }
 }

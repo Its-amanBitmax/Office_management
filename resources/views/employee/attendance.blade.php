@@ -163,10 +163,13 @@
                                 <td>{{ $data['mark_in'] ? \Carbon\Carbon::createFromFormat('H:i:s', $data['mark_in'])->format('H:i') : '-' }}</td>
                                 <td>{{ $data['mark_out'] ? \Carbon\Carbon::createFromFormat('H:i:s', $data['mark_out'])->format('H:i') : '-' }}</td>
                                 <td>{{ $data['break_time'] ? $data['break_time'] : '-' }}</td>
-                                <td>{{ $data['twh'] ? $data['twh'] . ' hrs' : '-' }}</td>
+                                <td>{{ $data['twh'] ?? '-' }}</td>
                                 <td>{{ $data['marked_at'] ?? '-' }}</td>
                                 <td>{{ $data['remarks'] ?? '-' }}</td>
                             </tr>
+                            <script>
+                                console.log('TWH Debug for {{ $data['date'] }}:', {{ json_encode($data['twh']) }}, 'Type:', typeof {{ json_encode($data['twh']) }});
+                            </script>
                             @endforeach
                         </tbody>
                     </table>

@@ -197,10 +197,60 @@ foreach ($admins as $adminUser) {
 {
     $attendance = Attendance::with('employee')->findOrFail($id);
 
+    // Calculate TWH (Total Working Hours)
+    $twh = '-';
+    if ($attendance->mark_in && $attendance->mark_out) {
+        try {
+            // Parse times more safely - handle potential microseconds or extra data
+            $markInTime = substr($attendance->mark_in, 0, 8); // Take only HH:MM:SS
+            $markOutTime = substr($attendance->mark_out, 0, 8); // Take only HH:MM:SS
+
+            $date = $attendance->date->format('Y-m-d');
+            $markIn = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $date . ' ' . $markInTime, 'Asia/Kolkata');
+
+            // Handle case where mark_out might be next day (if time is less than mark_in)
+            $markOutDate = $date;
+            if ($markOutTime < $markInTime) {
+                $markOutDate = \Carbon\Carbon::createFromFormat('Y-m-d', $date, 'Asia/Kolkata')->addDay()->format('Y-m-d');
+            }
+            $markOut = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $markOutDate . ' ' . $markOutTime, 'Asia/Kolkata');
+
+            // Calculate total seconds manually to avoid timezone issues
+            $markInSeconds = ($markIn->hour * 3600) + ($markIn->minute * 60) + $markIn->second;
+            $markOutSeconds = ($markOut->hour * 3600) + ($markOut->minute * 60) + $markOut->second;
+            $totalSeconds = $markOutSeconds - $markInSeconds;
+
+            // Subtract break time - break_time is always duration in HH:MM:SS format
+            if ($attendance->break_time && $attendance->break_time !== '00:00:00') {
+                $breakTime = substr($attendance->break_time, 0, 8); // Take only HH:MM:SS
+                $breakParts = explode(':', $breakTime);
+                if (count($breakParts) === 3) {
+                    $breakSeconds = ($breakParts[0] * 3600) + ($breakParts[1] * 60) + $breakParts[2];
+                    $totalSeconds -= $breakSeconds;
+                }
+            }
+
+            // TWH = Mark Out - Mark In - Break Time
+            $workingSeconds = max(0, $totalSeconds);
+            $hours = floor($workingSeconds / 3600);
+            $minutes = floor(($workingSeconds % 3600) / 60);
+            $seconds = $workingSeconds % 60;
+            $twh = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+        } catch (\Exception $e) {
+            // If parsing fails, show error in debug
+            $twh = 'Error';
+            error_log('TWH calculation error for attendance ' . $attendance->id . ': ' . $e->getMessage() . ' | Date: ' . $attendance->date . ' | Mark In: ' . $attendance->mark_in . ' | Mark Out: ' . $attendance->mark_out);
+        }
+    }
+
     return response()->json([
         'success' => true,
         'employee' => $attendance->employee->name,
         'status' => $attendance->status,
+        'mark_in' => $attendance->mark_in,
+        'mark_out' => $attendance->mark_out,
+        'break_time' => $attendance->break_time,
+        'twh' => $twh,
         'marked_time' => $attendance->marked_time,
         'marked_by' => $attendance->marked_by_type,
         'ip' => $attendance->ip_address,
