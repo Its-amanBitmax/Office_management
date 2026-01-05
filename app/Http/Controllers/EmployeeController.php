@@ -1144,9 +1144,33 @@ private function updateRelatedRecords(Employee $employee, Request $request)
                 'status' => $attendance ? $attendance->status : 'Not Marked',
                 'marked_at' => $attendance ? $attendance->updated_at->setTimezone('Asia/Kolkata')->format('H:i') : null,
                 'remarks' => $attendance ? $attendance->remarks : null,
+                'mark_in' => $attendance ? $attendance->mark_in : null,
+                'mark_out' => $attendance ? $attendance->mark_out : null,
+                'break_time' => $attendance ? $attendance->break_time : null,
+                'twh' => $attendance && $attendance->mark_in && $attendance->mark_out ? $this->calculateTWH($attendance->mark_in, $attendance->mark_out, $attendance->break_time) : null,
             ];
         }
 
         return view('employee.attendance', compact('employee', 'month', 'summary', 'monthlyData', 'attendances'));
+    }
+
+    /**
+     * Calculate Total Working Hours (TWH)
+     */
+    private function calculateTWH($markIn, $markOut, $breakTime = null)
+    {
+        $markInTime = Carbon::createFromFormat('H:i:s', $markIn, 'Asia/Kolkata');
+        $markOutTime = Carbon::createFromFormat('H:i:s', $markOut, 'Asia/Kolkata');
+
+        $totalHours = $markOutTime->diffInMinutes($markInTime) / 60;
+
+        if ($breakTime) {
+            // break_time is stored as HH:MM:SS, convert to hours
+            $breakParts = explode(':', $breakTime);
+            $breakHours = ($breakParts[0] * 60 + $breakParts[1]) / 60; // Convert to hours
+            $totalHours -= $breakHours;
+        }
+
+        return round($totalHours, 2);
     }
 }

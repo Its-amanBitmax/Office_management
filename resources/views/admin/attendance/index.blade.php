@@ -553,7 +553,7 @@ function markOutDirect(employeeId, date) {
     // Frontend validation: Check if Mark In has been done
     const markInCell = document.querySelector(`#employee-row-${employeeId} td:nth-child(4)`);
     if (markInCell && (markInCell.textContent.trim() === '-' || markInCell.querySelector('button'))) {
-        alert('Mark In is required before Mark Out.');
+        toastr.error('Mark In is required before Mark Out.');
         return;
     }
 
@@ -683,7 +683,7 @@ function startBreakDirect(employeeId, date) {
     // Frontend validation: Check if Mark In has been done
     const markInCell = document.querySelector(`#employee-row-${employeeId} td:nth-child(4)`);
     if (markInCell && (markInCell.textContent.trim() === '-' || markInCell.querySelector('button'))) {
-        alert('Mark In is required before starting break.');
+        toastr.error('Mark In is required before starting break.');
         return;
     }
 
@@ -841,7 +841,7 @@ function markTime(attendanceId, employeeId, action) {
     if (action === 'mark_out') {
         const markInCell = document.querySelector(`#employee-row-${employeeId} td:nth-child(4)`);
         if (markInCell && (markInCell.textContent.trim() === '-' || markInCell.querySelector('button'))) {
-            alert('Mark In is required before Mark Out.');
+            toastr.error('Mark In is required before Mark Out.');
             return;
         }
     }

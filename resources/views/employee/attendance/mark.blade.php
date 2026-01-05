@@ -133,7 +133,7 @@ document.getElementById('status-preview').innerHTML =
 ------------------------------ */
 function validateBeforeSubmit() {
     if (!document.getElementById('image').value) {
-        alert('Please capture photo before submitting');
+        toastr.error('Please capture photo before submitting');
         return false;
     }
     return true;
@@ -153,7 +153,7 @@ function showAttendanceError(message) {
 ------------------------------ */
 function markIn() {
     if (!document.getElementById('image').value) {
-        alert('Please capture photo before marking in');
+        toastr.error('Please capture photo before marking in');
         return;
     }
 
@@ -171,7 +171,7 @@ function markIn() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Marked in successfully');
+            toastr.success('Marked in successfully');
             document.getElementById('status-preview').classList.remove('alert-info', 'alert-success');
             document.getElementById('status-preview').classList.add('alert-success');
             document.getElementById('status-preview').innerHTML = '<i class="fas fa-check-circle me-1"></i> Marked in successfully';
@@ -198,12 +198,12 @@ function markIn() {
 function markOut() {
     // Frontend validation: Check if Mark In has been done
     @if(!$hasMarkedIn)
-    alert('Mark In is required before Mark Out.');
+    toastr.error('Mark In is required before Mark Out.');
     return;
     @endif
 
     if (!document.getElementById('image').value) {
-        alert('Please capture photo before marking out');
+        toastr.error('Please capture photo before marking out');
         return;
     }
 
@@ -221,7 +221,7 @@ function markOut() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Marked out successfully');
+            toastr.success('Marked out successfully');
             document.getElementById('status-preview').classList.remove('alert-info', 'alert-success');
             document.getElementById('status-preview').classList.add('alert-success');
             document.getElementById('status-preview').innerHTML = '<i class="fas fa-check-circle me-1"></i> Marked out successfully';
@@ -241,12 +241,12 @@ function markOut() {
 function startBreak() {
     // Frontend validation: Check if Mark In has been done
     @if(!$hasMarkedIn)
-    alert('Mark In is required before starting break.');
+    toastr.error('Mark In is required before starting break.');
     return;
     @endif
 
     if (!document.getElementById('image').value) {
-        alert('Please capture photo before starting break');
+        toastr.error('Please capture photo before starting break');
         return;
     }
 
@@ -264,7 +264,7 @@ function startBreak() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Break started successfully');
+            toastr.success('Break started successfully');
             document.getElementById('status-preview').classList.remove('alert-info', 'alert-success');
             document.getElementById('status-preview').classList.add('alert-success');
             document.getElementById('status-preview').innerHTML = '<i class="fas fa-check-circle me-1"></i> Break started successfully';
@@ -286,10 +286,16 @@ function startBreak() {
    End Break Function
 ------------------------------ */
 function endBreak() {
+    if (!document.getElementById('image').value) {
+        toastr.error('Please capture photo before ending break');
+        return;
+    }
+
     const formData = new FormData();
     formData.append('employee_id', {{ auth('employee')->id() }});
     formData.append('date', new Date().toISOString().split('T')[0]);
     formData.append('break_time', new Date().toTimeString().split(' ')[0]);
+    formData.append('image', document.getElementById('image').value);
     formData.append('_token', '{{ csrf_token() }}');
 
     fetch('{{ route("employee.attendance.end-break-direct") }}', {
@@ -300,7 +306,7 @@ function endBreak() {
     .then(data => {
         if (data.success) {
             const breakDuration = data.attendance.break_time || '00:00:00';
-            alert('Break ended successfully. Break duration: ' + breakDuration);
+            toastr.success('Break ended successfully. Break duration: ' + breakDuration);
             document.getElementById('status-preview').classList.remove('alert-info', 'alert-success');
             document.getElementById('status-preview').classList.add('alert-success');
             document.getElementById('status-preview').innerHTML = '<i class="fas fa-check-circle me-1"></i> Break ended successfully (Duration: ' + breakDuration + ')';

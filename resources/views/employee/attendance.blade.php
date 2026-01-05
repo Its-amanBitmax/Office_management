@@ -130,6 +130,10 @@
                                 <th>Date</th>
                                 <th>Day</th>
                                 <th>Status</th>
+                                <th>Mark In</th>
+                                <th>Mark Out</th>
+                                <th>Break Time</th>
+                                <th>TWH</th>
                                 <th>Marked At</th>
                                 <th>Remarks</th>
                             </tr>
@@ -156,6 +160,10 @@
                                         {{ $data['status'] }}
                                     </span>
                                 </td>
+                                <td>{{ $data['mark_in'] ? \Carbon\Carbon::createFromFormat('H:i:s', $data['mark_in'])->format('H:i') : '-' }}</td>
+                                <td>{{ $data['mark_out'] ? \Carbon\Carbon::createFromFormat('H:i:s', $data['mark_out'])->format('H:i') : '-' }}</td>
+                                <td>{{ $data['break_time'] ? $data['break_time'] : '-' }}</td>
+                                <td>{{ $data['twh'] ? $data['twh'] . ' hrs' : '-' }}</td>
                                 <td>{{ $data['marked_at'] ?? '-' }}</td>
                                 <td>{{ $data['remarks'] ?? '-' }}</td>
                             </tr>
