@@ -827,7 +827,7 @@ foreach ($admins as $adminUser) {
     /**
      * Show monthly attendance selection form
      */
-    public function monthly($employee = null)
+    public function monthly(Request $request, $employee = null)
     {
         $employees = Employee::all();
         $selectedEmployee = null;
@@ -836,7 +836,10 @@ foreach ($admins as $adminUser) {
             $selectedEmployee = Employee::findOrFail($employee);
         }
 
-        return view('admin.attendance.monthly', compact('employees', 'selectedEmployee'));
+        $year = $request->get('year', Carbon::now()->year);
+        $month_num = $request->get('month_num', Carbon::now()->month);
+
+        return view('admin.attendance.monthly', compact('employees', 'selectedEmployee', 'year', 'month_num'));
     }
 
   
@@ -946,7 +949,15 @@ foreach ($admins as $adminUser) {
                 }
             ]);
 
-            return view('admin.attendance.monthly', compact('employees', 'selectedEmployee', 'month', 'employeeSummaries', 'attendances'));
+            return view('admin.attendance.monthly', [
+                'employees' => $employees,
+                'selectedEmployee' => $selectedEmployee,
+                'month' => $month,
+                'year' => $year,
+                'month_num' => $monthNum,
+                'employeeSummaries' => $employeeSummaries,
+                'attendances' => $attendances,
+            ]);
         } else {
             // Show individual employee data
             $employee = Employee::findOrFail($request->employee_id);
@@ -1004,7 +1015,17 @@ foreach ($admins as $adminUser) {
                 ];
             }
 
-            return view('admin.attendance.monthly', compact('employees', 'employee', 'selectedEmployee', 'month', 'summary', 'monthlyData', 'attendances'));
+            return view('admin.attendance.monthly', [
+                'employees' => $employees,
+                'employee' => $employee,
+                'selectedEmployee' => $selectedEmployee,
+                'month' => $month,
+                'year' => $year,
+                'month_num' => $monthNum,
+                'summary' => $summary,
+                'monthlyData' => $monthlyData,
+                'attendances' => $attendances,
+            ]);
         }
     }
 

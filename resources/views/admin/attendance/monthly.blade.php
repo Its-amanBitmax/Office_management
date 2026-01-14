@@ -23,21 +23,17 @@
                 <select name="year" id="year" class="form-select" required>
                     @php
                         $currentYear = \Carbon\Carbon::now()->year;
-                        $selectedYear = isset($month) ? explode('-', $month)[0] : $currentYear;
                     @endphp
                     @for($y = $currentYear - 5; $y <= $currentYear + 1; $y++)
-                        <option value="{{ $y }}" {{ $selectedYear == $y ? 'selected' : '' }}>{{ $y }}</option>
+                        <option value="{{ $y }}" {{ (isset($year) && $year == $y) ? 'selected' : '' }}>{{ $y }}</option>
                     @endfor
                 </select>
             </div>
             <div class="col-auto">
                 <label for="month_num" class="form-label">Select Month:</label>
                 <select name="month_num" id="month_num" class="form-select" required>
-                    @php
-                        $selectedMonth = isset($month) ? explode('-', $month)[1] : \Carbon\Carbon::now()->month;
-                    @endphp
                     @for($m = 1; $m <= 12; $m++)
-                        <option value="{{ str_pad($m, 2, '0', STR_PAD_LEFT) }}" {{ $selectedMonth == $m ? 'selected' : '' }}>{{ \Carbon\Carbon::create()->month($m)->format('F') }}</option>
+                        <option value="{{ $m }}" {{ (isset($month_num) && (int)$month_num === $m) ? 'selected' : '' }}>{{ \Carbon\Carbon::create()->month($m)->format('F') }}</option>
                     @endfor
                 </select>
             </div>
