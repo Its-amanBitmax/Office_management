@@ -25,6 +25,11 @@ class AdminController extends Controller
 
     public function showLoginForm()
     {
+        // Check if admin is already logged in
+        if (Auth::guard('admin')->check()) {
+            return redirect()->route('admin.dashboard');
+        }
+
         // Get dynamic logo and company name for login page
         $logo = '';
         $company_name = 'Bitmax Group'; // Default
@@ -137,6 +142,7 @@ public function saveEvaluationPdf($id)
         $incompleteTasks = $admin->hasPermission('tasks') ? \App\Models\Task::where('status', '!=', 'completed')->count() : 0;
         $pendingReviews = $admin->hasPermission('reports') ? \App\Models\Report::where('admin_status', 'pending')->count() : 0;
         $totalSalaryExpenses = $admin->hasPermission('employees') ? \App\Models\Employee::sum(DB::raw('COALESCE(basic_salary, 0) + COALESCE(hra, 0) + COALESCE(conveyance, 0) + COALESCE(medical, 0)')) : 0;
+        $totalOtherExpenses = \App\Models\Expense::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->sum('amount');
         $systemAlerts = 0; // Placeholder for system alerts, can be implemented later if needed
 
         $tasks = $admin->hasPermission('tasks') ? \App\Models\Task::with(['assignedEmployee', 'teamLead'])->paginate(10) : collect();
@@ -180,7 +186,32 @@ public function saveEvaluationPdf($id)
             });
         }
 
-        return view('admin.dashboard', compact('admin', 'tasks', 'totalUsers', 'activeTasks', 'incompleteTasks', 'pendingReviews', 'totalSalaryExpenses', 'systemAlerts', 'recentEmployees', 'executiveStats'));
+        // Recent leave requests
+        $recentLeaveRequests = \App\Models\LeaveRequest::with('employee')
+            ->orderBy('created_at', 'desc')
+            ->take(3)
+            ->get();
+
+        // Employee report status for current date - show only 3 recent submissions
+        $today = now()->toDateString();
+        $recentReportSubmissions = \App\Models\ReportSubmission::where('report_date', $today)
+            ->with('employee')
+            ->orderBy('created_at', 'desc')
+            ->take(3)
+            ->get();
+
+        $reportStatuses = $recentReportSubmissions->keyBy('employee_id');
+        $employees = $recentReportSubmissions->map(function($submission) {
+            return $submission->employee;
+        });
+
+        // Get total count of all employees for the progress calculation
+        $totalEmployeesCount = \App\Models\Employee::count();
+
+        // Get employee performance data for chart (last 30 days)
+        $performanceData = $this->getDashboardPerformanceData();
+
+        return view('admin.dashboard', compact('admin', 'tasks', 'totalUsers', 'activeTasks', 'incompleteTasks', 'pendingReviews', 'totalSalaryExpenses', 'totalOtherExpenses', 'systemAlerts', 'recentEmployees', 'executiveStats', 'recentLeaveRequests', 'reportStatuses', 'employees', 'today', 'performanceData', 'totalEmployeesCount'));
     }
 
     public function profile()
@@ -1979,5 +2010,63 @@ public function search(Request $request)
             'evaluationHr' => $report->evaluationHr,
             'evaluationOverall' => $report->evaluationOverall
         ]);
+    }
+
+    /**
+     * Get performance data for dashboard chart (last 30 days)
+     */
+    private function getDashboardPerformanceData()
+    {
+        $startDate = now()->subDays(30)->startOfDay();
+        $endDate = now()->endOfDay();
+
+        // Get evaluation reports from last 30 days
+        $reports = EvaluationReport::with(['employee', 'evaluationOverall'])
+            ->whereBetween('evaluation_date', [$startDate, $endDate])
+            ->whereNotNull('overall_score')
+            ->get();
+
+        // Group by employee and calculate average performance
+        $employeePerformance = [];
+        foreach ($reports as $report) {
+            if (!$report->evaluationOverall) continue;
+
+            $empId = $report->employee_id;
+            $score = $report->overall_score; // 0-100 scale
+
+            if (!isset($employeePerformance[$empId])) {
+                $employeePerformance[$empId] = [
+                    'employee' => $report->employee,
+                    'total_score' => 0,
+                    'report_count' => 0,
+                    'average_score' => 0
+                ];
+            }
+
+            $employeePerformance[$empId]['total_score'] += $score;
+            $employeePerformance[$empId]['report_count']++;
+            $employeePerformance[$empId]['average_score'] = round($employeePerformance[$empId]['total_score'] / $employeePerformance[$empId]['report_count'], 1);
+        }
+
+        // Sort by average score descending and take top 10
+        usort($employeePerformance, function($a, $b) {
+            return $b['average_score'] <=> $a['average_score'];
+        });
+
+        $topPerformers = array_slice($employeePerformance, 0, 10);
+
+        // Prepare data for Chart.js
+        $labels = [];
+        $scores = [];
+        foreach ($topPerformers as $performance) {
+            $labels[] = $performance['employee']->name;
+            $scores[] = $performance['average_score'];
+        }
+
+        return [
+            'labels' => $labels,
+            'scores' => $scores,
+            'hasData' => count($topPerformers) > 0
+        ];
     }
 }

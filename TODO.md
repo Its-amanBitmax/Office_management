@@ -1,15 +1,6 @@
-# Salary Slip Form Modification - Separate Month and Year Inputs
+# TODO: Add Session Check for Admin and Employee Login
 
 ## Tasks
-- [ ] Update resources/views/admin/salary-slips/create.blade.php
-  - [ ] Replace single month input with separate month select and year number input
-  - [ ] Update JavaScript event listeners for both month and year changes
-  - [ ] Modify AJAX calls to send separate month and year parameters
-- [ ] Update app/Http/Controllers/SalarySlipController.php
-  - [ ] Modify store method validation to accept separate month and year fields
-  - [ ] Update logic to combine month and year for processing
-- [ ] Update resources/views/admin/salary-slips/edit.blade.php (for consistency)
-  - [ ] Replace disabled month input with separate month and year display
-- [ ] Test the implementation
-  - [ ] Verify form submission works correctly
-  - [ ] Check attendance data fetching and salary calculation
+- [x] Edit AdminController::showLoginForm to check if admin is already logged in and redirect to dashboard
+- [x] Edit EmployeeController::showLoginForm to check if employee is already logged in and redirect to dashboard
+- [x] Test the login forms to ensure redirection works
