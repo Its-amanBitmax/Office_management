@@ -6,6 +6,7 @@ use App\Models\Activity;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Report;
+use App\Models\ReportSubmission;
 use App\Models\Task;
 use App\Traits\Loggable;
 use Illuminate\Http\Request;
@@ -390,26 +391,28 @@ private function updateRelatedRecords(Employee $employee, Request $request)
     // ----------------- Documents -----------------
     if ($request->document_types && is_array($request->document_types)) {
         foreach ($request->document_types as $index => $type) {
-            $existingDocument = $employee->documents[$index] ?? null;
+            if (!empty($type)) {
+                $existingDocument = $employee->documents[$index] ?? null;
 
-            // Determine file path
-            if ($request->hasFile("document_files.{$index}") && $request->file("document_files.{$index}")->isValid()) {
-                $filePath = $request->file("document_files.{$index}")->store('documents', 'public');
-            } else {
-                // Preserve old file from hidden input or existing document
-                $filePath = $request->old_document_files[$index] ?? ($existingDocument->file_path ?? null);
-            }
+                // Determine file path
+                if ($request->hasFile("document_files.{$index}") && $request->file("document_files.{$index}")->isValid()) {
+                    $filePath = $request->file("document_files.{$index}")->store('documents', 'public');
+                } else {
+                    // Preserve old file from hidden input or existing document
+                    $filePath = $request->old_document_files[$index] ?? ($existingDocument->file_path ?? null);
+                }
 
-            if ($existingDocument) {
-                $existingDocument->update([
-                    'document_type' => $type,
-                    'file_path' => $filePath,
-                ]);
-            } else {
-                $employee->documents()->create([
-                    'document_type' => $type,
-                    'file_path' => $filePath,
-                ]);
+                if ($existingDocument) {
+                    $existingDocument->update([
+                        'document_type' => $type,
+                        'file_path' => $filePath,
+                    ]);
+                } else {
+                    $employee->documents()->create([
+                        'document_type' => $type,
+                        'file_path' => $filePath,
+                    ]);
+                }
             }
         }
     }
@@ -1203,5 +1206,27 @@ private function updateRelatedRecords(Employee $employee, Request $request)
             // Return null if calculation fails
             return null;
         }
+    }
+
+     public function storeReportStatus(Request $request)
+    {
+        $request->validate([
+            'is_submitted' => 'required|boolean',
+        ]);
+
+        ReportSubmission::updateOrCreate(
+            [
+                'employee_id' => Auth::guard('employee')->id(),
+                'report_date' => now()->toDateString(),
+            ],
+            [
+                'is_submitted' => $request->is_submitted,
+            ]
+        );
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Report status saved successfully'
+        ]);
     }
 }

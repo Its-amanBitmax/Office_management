@@ -51,12 +51,13 @@
                     <i class="fas fa-sign-in-alt me-1"></i> Mark In
                 </button>
 
-                <button type="button"
-                        class="btn btn-warning"
-                        onclick="markOut()"
-                        @if(!$hasMarkedIn) disabled @endif>
-                    <i class="fas fa-sign-out-alt me-1"></i> Mark Out
-                </button>
+               <button type="button"
+    class="btn btn-warning"
+    onclick="openReportConfirmation()"
+    @if(!$hasMarkedIn) disabled @endif>
+    <i class="fas fa-sign-out-alt me-1"></i> Mark Out
+</button>
+
 
                 <button type="button"
                         class="btn btn-success"
@@ -77,6 +78,70 @@
         </form>
     </div>
 </div>
+
+<div class="modal fade" id="reportConfirmationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Daily Report Confirmation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p class="mb-0">
+                    Have you submitted your report for today?
+                </p>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary"
+                        onclick="submitReportStatus(false)">
+                    No, Not Yet
+                </button>
+
+                <button class="btn btn-success"
+                        onclick="submitReportStatus(true)">
+                    Yes, Submitted
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function openReportConfirmation() {
+    const modal = new bootstrap.Modal(
+        document.getElementById('reportConfirmationModal')
+    );
+    modal.show();
+}
+
+function submitReportStatus(isSubmitted) {
+
+    fetch('/employee/report-status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            is_submitted: isSubmitted
+        })
+    })
+    .then(() => {
+        // close modal
+        bootstrap.Modal.getInstance(
+            document.getElementById('reportConfirmationModal')
+        ).hide();
+
+        // proceed with mark out
+        markOut();
+    });
+}
+</script>
+
 
 {{-- ✅ SCRIPT --}}
 <script>

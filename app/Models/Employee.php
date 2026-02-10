@@ -17,6 +17,7 @@ class Employee extends Authenticatable
         'department',
         'status',
         'profile_image',
+        'position',
         'password',
         'bank_name',
         'account_number',
@@ -94,5 +95,10 @@ class Employee extends Authenticatable
     public function performanceReports()
     {
         return $this->hasMany(EvaluationReport::class);
+    }
+
+    public function reportSubmissions()
+    {
+        return $this->hasMany(ReportSubmission::class);
     }
 }

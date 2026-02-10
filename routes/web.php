@@ -37,7 +37,9 @@ Route::get('/privacy-policy', function () {
 })->name('privacy');
 
 
-
+Route::post('/employee/report-status',
+    [EmployeeController::class, 'storeReportStatus']
+)->name('employee.report.status');
 
 Route::prefix('admin')->group(function () {
     Route::get('/login', [AdminController::class, 'showLoginForm'])->name('admin.login');

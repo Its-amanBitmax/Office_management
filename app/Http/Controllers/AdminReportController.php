@@ -2,53 +2,104 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Report;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Employee;
+use Illuminate\Http\Request;
+use App\Traits\Loggable;
 
 class AdminReportController extends Controller
 {
-    public function index()
+    use Loggable;
+
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
     {
-        $reports = Report::where('sent_to_admin', true)
-            ->with('employee', 'task')
+        $reports = Report::with(['employee', 'task'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        return view('admin.reports.index', compact('reports'));
+        // Get selected date from request, default to today
+        $selectedDate = $request->get('date', now()->toDateString());
+
+        // Get all employees with their report submission status for the selected date
+        $employees = Employee::where('status', 'active')
+            ->with(['reportSubmissions' => function($query) use ($selectedDate) {
+                $query->where('report_date', $selectedDate);
+            }])
+            ->get()
+            ->map(function($employee) use ($selectedDate) {
+                $submission = $employee->reportSubmissions->first();
+                $employee->report_status = $submission ? ($submission->is_submitted ? 'Submitted' : 'Not Submitted') : 'Not Submitted';
+                $employee->report_date = $submission ? $submission->report_date : null;
+                return $employee;
+            });
+
+        return view('admin.reports.index', compact('reports', 'employees', 'selectedDate'));
     }
 
-    public function show($id)
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
     {
-        $report = Report::where('sent_to_admin', true)
-            ->with('employee', 'task')
-            ->findOrFail($id);
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        //
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Report $report)
+    {
+        $report->load(['employee', 'task']);
 
         return view('admin.reports.show', compact('report'));
     }
 
-    public function update(Request $request, $id)
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Report $report)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Report $report)
     {
         $request->validate([
-            'status' => 'required|in:sent,read,responded',
-            'review' => 'nullable|string|max:1000',
+            'admin_status' => 'required|in:sent,read,responded',
+            'admin_review' => 'nullable|string|max:1000',
             'rating' => 'nullable|integer|min:1|max:5',
         ]);
 
-        $report = Report::where('sent_to_admin', true)->findOrFail($id);
+        $report->update([
+            'admin_status' => $request->admin_status,
+            'admin_review' => $request->admin_review,
+            'rating' => $request->rating,
+        ]);
 
-        $updateData = [
-            'admin_status' => $request->status,
-            'admin_review' => $request->review,
-        ];
+        $this->logActivity('update', 'Report', $report->id, 'Admin reviewed report for ' . $report->employee->name);
 
-        // Only save rating when task is completed
-        if ($report->task && $report->task->status === 'Completed' && $request->rating) {
-            $updateData['admin_rating'] = $request->rating;
-        }
+        return redirect()->route('admin.reports.show', $report->id)->with('success', 'Report reviewed successfully.');
+    }
 
-        $report->update($updateData);
-
-        return redirect()->route('admin.reports.show', $report->id)->with('success', 'Report updated successfully!');
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Report $report)
+    {
+        //
     }
 }

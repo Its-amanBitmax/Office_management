@@ -48,6 +48,56 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Employee Report Status</h5>
+                <form method="GET" action="{{ route('admin.reports.index') }}" class="d-flex gap-2">
+                    <input type="date" name="date" value="{{ $selectedDate }}" class="form-control" style="width: auto;">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </form>
+            </div>
+            <div class="card-body">
+                @if($employees->count() > 0)
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Employee Name</th>
+                                    <th>Employee Code</th>
+                                    <th>Report Status</th>
+                                    <th>Report Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($employees as $employee)
+                                    <tr>
+                                        <td>{{ $employee->name }}</td>
+                                        <td>{{ $employee->employee_code }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ $employee->report_status === 'Submitted' ? 'success' : 'danger' }}">
+                                                {{ $employee->report_status }}
+                                            </span>
+                                        </td>
+                                        <td>{{ $employee->report_date ? \Carbon\Carbon::parse($employee->report_date)->format('M d, Y') : 'N/A' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No employees found</h5>
+                        <p class="text-muted">No active employees available.</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Employee Reports</h5>
             </div>
             <div class="card-body">
