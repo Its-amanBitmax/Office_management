@@ -1,6 +1,5 @@
-# TODO: Add Session Check for Admin and Employee Login
+# TODO List for Employee Dashboard Attendance Summary
 
-## Tasks
-- [x] Edit AdminController::showLoginForm to check if admin is already logged in and redirect to dashboard
-- [x] Edit EmployeeController::showLoginForm to check if employee is already logged in and redirect to dashboard
-- [x] Test the login forms to ensure redirection works
+- [x] Update EmployeeController dashboard method to fetch current month attendance summary
+- [x] Modify employee dashboard view to display attendance summary cards
+- [x] Test the implementation to ensure summary displays correctly

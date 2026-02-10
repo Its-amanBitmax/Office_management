@@ -49,23 +49,83 @@
 
 <div class="row mt-4">
     <div class="col-12">
+        <h5 class="mb-3">Current Month Attendance Summary</h5>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col-md-2">
+        <div class="stat-card" style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 4px solid #6c757d; text-align: center;">
+            <i class="fas fa-calendar fa-2x text-secondary mb-2"></i>
+            <h6 style="margin: 0 0 0.5rem 0; color: #333;">Total Days</h6>
+            <p style="font-size: 1.2rem; font-weight: bold; color: #6c757d; margin: 0;">{{ $attendanceSummary['total_days'] }}</p>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card" style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 4px solid #28a745; text-align: center;">
+            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+            <h6 style="margin: 0 0 0.5rem 0; color: #333;">Present</h6>
+            <p style="font-size: 1.2rem; font-weight: bold; color: #28a745; margin: 0;">{{ $attendanceSummary['present'] }}</p>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card" style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 4px solid #dc3545; text-align: center;">
+            <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+            <h6 style="margin: 0 0 0.5rem 0; color: #333;">Absent</h6>
+            <p style="font-size: 1.2rem; font-weight: bold; color: #dc3545; margin: 0;">{{ $attendanceSummary['absent'] }}</p>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card" style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 4px solid #ffc107; text-align: center;">
+            <i class="fas fa-briefcase fa-2x text-warning mb-2"></i>
+            <h6 style="margin: 0 0 0.5rem 0; color: #333;">Leave</h6>
+            <p style="font-size: 1.2rem; font-weight: bold; color: #ffc107; margin: 0;">{{ $attendanceSummary['leave'] }}</p>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card" style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 4px solid #17a2b8; text-align: center;">
+            <i class="fas fa-clock fa-2x text-info mb-2"></i>
+            <h6 style="margin: 0 0 0.5rem 0; color: #333;">Half Day</h6>
+            <p style="font-size: 1.2rem; font-weight: bold; color: #17a2b8; margin: 0;">{{ $attendanceSummary['half_day'] }}</p>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card" style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 4px solid #e83e8c; text-align: center;">
+            <i class="fas fa-gift fa-2x text-pink mb-2"></i>
+            <h6 style="margin: 0 0 0.5rem 0; color: #333;">Holiday</h6>
+            <p style="font-size: 1.2rem; font-weight: bold; color: #e83e8c; margin: 0;">{{ $attendanceSummary['holiday'] }}</p>
+        </div>
+    </div>
+</div>
+
+
+
+<div id="attendance-alert"></div>
+
+<div class="row mt-4">
+    <div class="col-12">
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">Quick Actions</h5>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3 mb-3">
                         <a href="{{ route('employee.profile') }}" class="btn btn-outline-primary btn-lg w-100">
                             <i class="fas fa-user me-2"></i>View Profile
                         </a>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <a href="{{ route('employee.tasks') }}" class="btn btn-outline-primary btn-lg w-100">
-                            <i class="fas fa-tasks me-2"></i>My Tasks
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ route('employee.attendance.mark') }}" class="btn btn-outline-primary btn-lg w-100">
+                            <i class="fas fa-clock me-2"></i>Mark Attendance
                         </a>
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ route('employee.leave-requests.create') }}" class="btn btn-outline-primary btn-lg w-100">
+                            <i class="fas fa-calendar-times me-2"></i>Apply for Leave
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
                         <button type="button" class="btn btn-outline-primary btn-lg w-100" data-bs-toggle="modal" data-bs-target="#idCardModal">
                             <i class="fas fa-id-card me-2"></i>View ID Card
                         </button>
@@ -174,9 +234,141 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <a href="{{ route('employee.card.pdf') }}" class="btn btn-primary">Download PDF</a>
+                
             </div>
         </div>
     </div>
 </div>
 @endsection
+
+<script>
+$(document).ready(function () {
+
+    $('#mark-attendance-btn').on('click', function (e) {
+        e.preventDefault();
+
+        const btn = $(this);
+
+        // ✅ Local time-based automatic status (UX only)
+        const now = new Date();
+        const currentMinutes = (now.getHours() * 60) + now.getMinutes();
+        const halfDayTime = (9 * 60) + 30;
+
+        const autoStatus = currentMinutes > halfDayTime ? 'Half Day' : 'Present';
+
+        btn.prop('disabled', true)
+           .html('<i class="fas fa-spinner fa-spin me-1"></i> Checking...');
+
+        $('#attendance-alert').html('');
+
+        $.ajax({
+            url: '{{ route("employee.attendance.mark") }}',
+            type: 'GET',
+            dataType: 'json',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+
+            success: function (response) {
+                if (response && response.success === true) {
+                    window.location.href =
+                        '{{ route("employee.attendance.mark") }}?auto_status=' + autoStatus;
+                } else {
+                    showError('Attendance not allowed');
+                }
+            },
+
+            error: function (xhr) {
+                let message = 'Attendance not allowed';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    message = xhr.responseJSON.message;
+                }
+                showError(message);
+            },
+
+            complete: function () {
+                btn.prop('disabled', false)
+                   .html('<i class="fas fa-clock me-1"></i> Mark Attendance');
+            }
+        });
+    });
+
+    function showError(msg) {
+        $('#attendance-alert').html(`
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="fas fa-exclamation-triangle me-2"></i>${msg}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `);
+        $('html, body').animate({ scrollTop: 0 }, 'fast');
+    }
+
+});
+</script>
+
+<script>
+$(document).ready(function () {
+
+    $('#mark-attendance-btn').on('click', function (e) {
+        e.preventDefault();
+
+        const btn = $(this);
+
+        // ✅ Local time-based automatic status (UX only)
+        const now = new Date();
+        const currentMinutes = (now.getHours() * 60) + now.getMinutes();
+        const halfDayTime = (9 * 60) + 30;
+
+        const autoStatus = currentMinutes > halfDayTime ? 'Half Day' : 'Present';
+
+        btn.prop('disabled', true)
+           .html('<i class="fas fa-spinner fa-spin me-1"></i> Checking...');
+
+        $('#attendance-alert').html('');
+
+        $.ajax({
+            url: '{{ route("employee.attendance.mark") }}',
+            type: 'GET',
+            dataType: 'json',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+
+            success: function (response) {
+                if (response && response.success === true) {
+                    window.location.href =
+                        '{{ route("employee.attendance.mark") }}?auto_status=' + autoStatus;
+                } else {
+                    showError('Attendance not allowed');
+                }
+            },
+
+            error: function (xhr) {
+                let message = 'Attendance not allowed';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    message = xhr.responseJSON.message;
+                }
+                showError(message);
+            },
+
+            complete: function () {
+                btn.prop('disabled', false)
+                   .html('<i class="fas fa-clock me-1"></i> Mark Attendance');
+            }
+        });
+    });
+
+    function showError(msg) {
+        $('#attendance-alert').html(`
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="fas fa-exclamation-triangle me-2"></i>${msg}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `);
+        $('html, body').animate({ scrollTop: 0 }, 'fast');
+    }
+
+});
+</script>

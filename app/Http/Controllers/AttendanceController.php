@@ -563,6 +563,14 @@ foreach ($admins as $adminUser) {
             ], 400);
         }
 
+        // Validation: Check if mark_out is already set for this day
+        if ($existingAttendance->mark_out) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mark Out has already been done for this day.',
+            ], 400);
+        }
+
         // Get IP address
         $userIp = $request->header('CF-Connecting-IP')
             ?? $request->header('X-Forwarded-For')
@@ -1327,7 +1335,7 @@ public function submit(Request $request)
     );
 
     return redirect()->route('employee.attendance')
-        ->with('success', 'Attendance saved as ' . $status);
+            ->with('success', 'Attendance saved as ' . $status);
 }
 
 

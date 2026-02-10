@@ -622,7 +622,27 @@ private function updateRelatedRecords(Employee $employee, Request $request)
     public function dashboard()
     {
         $employee = Auth::guard('employee')->user();
-        return view('employee.dashboard', compact('employee'));
+
+        // Get current month attendance summary
+        $currentMonth = Carbon::now('Asia/Kolkata');
+        $year = $currentMonth->year;
+        $month = $currentMonth->month;
+
+        $attendances = Attendance::where('employee_id', $employee->id)
+            ->whereYear('date', $year)
+            ->whereMonth('date', $month)
+            ->get();
+
+        $attendanceSummary = [
+            'total_days' => $attendances->count(),
+            'present' => $attendances->where('status', 'Present')->count(),
+            'absent' => $attendances->where('status', 'Absent')->count(),
+            'leave' => $attendances->where('status', 'Leave')->count(),
+            'half_day' => $attendances->where('status', 'Half Day')->count(),
+            'holiday' => $attendances->where('status', 'Holiday')->count(),
+        ];
+
+        return view('employee.dashboard', compact('employee', 'attendanceSummary'));
     }
 
     /**
@@ -780,6 +800,15 @@ private function updateRelatedRecords(Employee $employee, Request $request)
             ->paginate(10);
 
         return view('employee.reports', compact('reports'));
+    }
+
+    /**
+     * Display the daily report template for the authenticated employee.
+     */
+    public function dailyReport()
+    {
+        $employee = Auth::guard('employee')->user();
+        return view('employee.daily-report', compact('employee'));
     }
 
     /**
