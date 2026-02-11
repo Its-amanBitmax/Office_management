@@ -339,14 +339,26 @@ foreach ($admins as $adminUser) {
     {
         $request->validate([
             'mark_out' => 'required|date_format:H:i:s',
+            'is_report_submitted' => 'required|boolean',
         ]);
 
         $attendance->update([
             'mark_out' => $request->mark_out,
         ]);
 
+        // Store report submission status
+        \App\Models\ReportSubmission::updateOrCreate(
+            [
+                'employee_id' => $attendance->employee_id,
+                'report_date' => $attendance->date,
+            ],
+            [
+                'is_submitted' => $request->is_report_submitted,
+            ]
+        );
+
         // Log activity
-        $this->logActivity('updated', 'Attendance', $attendance->id, 'Marked out time for ' . $attendance->employee->name);
+        $this->logActivity('updated', 'Attendance', $attendance->id, 'Marked out time for ' . $attendance->employee->name . ' with report status: ' . ($request->is_report_submitted ? 'Submitted' : 'Not Submitted'));
 
         return response()->json([
             'success' => true,

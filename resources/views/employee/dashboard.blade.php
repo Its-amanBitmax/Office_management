@@ -116,7 +116,7 @@
                         </a>
                     </div>
                     <div class="col-md-3 mb-3">
-                        <a href="{{ route('employee.attendance.mark') }}" class="btn btn-outline-primary btn-lg w-100">
+                        <a href="{{ route('employee.attendance.mark') }}" id="mark-attendance-btn" class="btn btn-outline-primary btn-lg w-100" style="transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#007bff'; this.style.color='white'; this.style.borderColor='#007bff'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,123,255,0.3)';" onmouseout="this.style.backgroundColor=''; this.style.color=''; this.style.borderColor=''; this.style.transform=''; this.style.boxShadow='';">
                             <i class="fas fa-clock me-2"></i>Mark Attendance
                         </a>
                     </div>
