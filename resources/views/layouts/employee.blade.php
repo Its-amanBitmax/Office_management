@@ -499,7 +499,7 @@
 <header class="header">
 
     <!-- LEFT -->
-    <div class="header-left sidebar-shown">
+    <div class="header-left">
         <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
         <span class="company-name">
             {{ $admin->company_name ?? 'Employee Panel' }}
@@ -651,7 +651,7 @@ document.addEventListener('click', function(e) {
 
 
     <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar hidden" id="sidebar">
         <div class="sidebar-header">
             @if($admin && $admin->company_logo)
                 <img src="{{ asset('storage/company_logos/' . $admin->company_logo) }}" alt="Company Logo">

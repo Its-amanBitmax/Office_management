@@ -19,8 +19,15 @@
         </div>
 
         {{-- ✅ Camera --}}
-        <video id="video" width="300" autoplay playsinline></video>
-        <canvas id="canvas" width="300" class="d-none"></canvas>
+        <div class="d-flex flex-column align-items-center gap-3 mb-3">
+            <video id="video" width="400" autoplay playsinline></video>
+            <button type="button"
+                    class="btn btn-warning"
+                    onclick="takeSnapshot()">
+                <i class="fas fa-camera me-1"></i> Capture Photo
+            </button>
+        </div>
+        <canvas id="canvas" width="400" class="d-none"></canvas>
 
         <form method="POST"
               action="{{ route('employee.attendance.submit') }}"
@@ -32,14 +39,6 @@
             {{-- ✅ Hidden fields --}}
             <input type="hidden" name="image" id="image">
             <input type="hidden" name="auto_status" id="auto_status">
-
-            <div class="mt-3">
-                <button type="button"
-                        class="btn btn-warning"
-                        onclick="takeSnapshot()">
-                    <i class="fas fa-camera me-1"></i> Capture Photo
-                </button>
-            </div>
 
             
 
@@ -111,6 +110,8 @@
 </div>
 
 <script>
+let hasMarkedOut = false;
+
 function openReportConfirmation() {
     const modal = new bootstrap.Modal(
         document.getElementById('reportConfirmationModal')
@@ -119,6 +120,19 @@ function openReportConfirmation() {
 }
 
 function submitReportStatus(isSubmitted) {
+    let proceed = true;
+    if (!isSubmitted) {
+        // Show confirm dialog when user hasn't submitted report
+        proceed = confirm('Please remember to submit your daily report! You can do this from the Reports section.');
+    }
+
+    if (!proceed) {
+        // close modal and do not proceed with mark out
+        bootstrap.Modal.getInstance(
+            document.getElementById('reportConfirmationModal')
+        ).hide();
+        return;
+    }
 
     fetch('/employee/report-status', {
         method: 'POST',
@@ -261,6 +275,12 @@ function markIn() {
    Mark Out Function
 ------------------------------ */
 function markOut() {
+    // Check if already marked out
+    if (hasMarkedOut) {
+        toastr.error('You have already marked out for today.');
+        return;
+    }
+
     // Frontend validation: Check if Mark In has been done
     @if(!$hasMarkedIn)
     toastr.error('Mark In is required before Mark Out.');
@@ -290,6 +310,12 @@ function markOut() {
             document.getElementById('status-preview').classList.remove('alert-info', 'alert-success');
             document.getElementById('status-preview').classList.add('alert-success');
             document.getElementById('status-preview').innerHTML = '<i class="fas fa-check-circle me-1"></i> Marked out successfully';
+
+            // Set flag to prevent multiple mark outs
+            hasMarkedOut = true;
+
+            // Disable Mark Out button
+            document.querySelector('button[onclick="openReportConfirmation()"]').disabled = true;
         } else {
             showAttendanceError(data.message);
         }

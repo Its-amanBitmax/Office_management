@@ -7,7 +7,28 @@
 @section('content')
 <div class="row">
     <div class="col-12">
-        <div class="card">
+        <!-- Daily Report Template Card -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="card-title mb-2">
+                            <i class="fas fa-file-alt text-primary me-2"></i>Daily Work Report Template
+                        </h5>
+                        <p class="card-text text-muted mb-0">
+                            Generate and fill out your daily work report with a comprehensive template including project information, tasks completed, and more.
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="{{ route('employee.daily-report') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Create Daily Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">My Reports</h5>
                 <a href="{{ route('employee.reports.create') }}" class="btn btn-primary">
@@ -102,7 +123,7 @@
                     </div>
                 @endif
             </div>
-        </div>
+        </div> --}}
     </div>
 </div>
 

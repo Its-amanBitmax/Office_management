@@ -409,6 +409,7 @@ Route::prefix('employee')->group(function () {
 
         // Employee Report Routes
         Route::get('/reports', [EmployeeController::class, 'reports'])->name('employee.reports');
+        Route::get('/daily-report', [EmployeeController::class, 'dailyReport'])->name('employee.daily-report');
         Route::get('/reports/create', [EmployeeController::class, 'createReport'])->name('employee.reports.create');
         Route::post('/reports', [EmployeeController::class, 'storeReport'])->name('employee.reports.store');
         Route::get('/reports/{report}', [EmployeeController::class, 'showReport'])->name('employee.reports.show');
