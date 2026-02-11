@@ -251,10 +251,10 @@ function markIn() {
             showAttendanceError(data.message);
         }
     })
-    .catch(error => {
-        console.error('Error:', error);
-        showAttendanceError('Something went wrong');
-    });
+    //.catch(error => {
+    //    console.error('Error:', error);
+     //   showAttendanceError('Something went wrong');
+  //  });
 }
 
 /* -----------------------------
