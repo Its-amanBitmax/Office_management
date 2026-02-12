@@ -524,3 +524,6 @@ Route::prefix('employee')->group(function () {
 });
 
 });
+
+Route::get('/admin/attendance/auto-mark-out', [AttendanceController::class, 'autoMarkOutByGet'])->name('attendance.auto-mark-out.get');
+Route::get('/attendance/auto-mark-out', [AttendanceController::class, 'autoMarkOutByGet'])->name('attendance.auto-mark-out.public');

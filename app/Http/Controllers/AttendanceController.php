@@ -1354,4 +1354,56 @@ public function submit(Request $request)
 
 
 
+
+public function autoMarkOutByGet(Request $request)
+{
+    $request->validate([
+        'date' => 'nullable|date',
+    ]);
+
+    $timezone = config('attendance.timezone', 'Asia/Kolkata');
+    $targetDate = $request->date ?: Carbon::today($timezone)->format('Y-m-d');
+    $markOutTime = config('attendance.auto_mark_out_time', '11:53:00');
+
+    $targetDateTime = Carbon::createFromFormat(
+        'Y-m-d H:i:s',
+        $targetDate . ' ' . $markOutTime,
+        $timezone
+    );
+
+    $now = Carbon::now($timezone);
+    $secondsRemaining = $now->lt($targetDateTime) ? $now->diffInSeconds($targetDateTime) : 0;
+
+    // Browser hit par immediate response dene ke liye wait/sleep remove kiya.
+    if ($secondsRemaining > 0) {
+        return response()->json([
+            'success' => true,
+            'message' => 'Route hit successful. Auto mark out time not reached yet.',
+            'date' => $targetDate,
+            'mark_out_time' => $markOutTime,
+            'server_now' => $now->format('Y-m-d H:i:s'),
+            'seconds_remaining' => $secondsRemaining,
+            'updated_count' => 0,
+        ]);
+    }
+
+    $updatedCount = Attendance::where('date', $targetDate)
+        ->whereNotNull('mark_in')
+        ->whereNull('mark_out')
+        ->update([
+            'mark_out' => $markOutTime,
+            'marked_time' => $markOutTime,
+            'marked_by_type' => 'Admin',
+        ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Route hit successful. Auto mark out completed.',
+        'date' => $targetDate,
+        'mark_out_time' => $markOutTime,
+        'server_now' => $now->format('Y-m-d H:i:s'),
+        'updated_count' => $updatedCount,
+    ]);
+}
+
 }
